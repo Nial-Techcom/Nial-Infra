@@ -1,8 +1,3 @@
-Voici le fichier **README.md** parfaitement formaté pour GitHub, avec toute la mise en forme Markdown (titres, tableaux, blocs de code, emojis, badges, etc.).
-
----
-
-```markdown
 <!--
 ================================================================================
   _____   _   _   _____   ______   _____   _   _   _____   ______   _____
