@@ -27,8 +27,8 @@
 
 **[Website](https://nial-tech.com)** •
 **[Documentation](https://docs.netforge.io)** •
-**[Report Bug](https://github.com/your-org/netforge/issues)** •
-**[Request Feature](https://github.com/your-org/netforge/issues)** •
+**[Report Bug](https://github.com/Flunch4456/NetForge/issues)** •
+**[Request Feature](https://github.com/Flunch4456/NetForge/pulls)** •
 **[Contact](mailto:contact@nial-tech.com)**
 
 </div>
