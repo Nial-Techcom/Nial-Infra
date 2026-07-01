@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NetForge - Professional Network Designer</title>
+  <meta name="description" content="NetForge est un editeur professionnel de schemas reseau avec import CSV/JPG/PNG, rack sizing, export JSON/CSV/SVG et edition interactive complete." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">NF</div>
+      <div>
+        <p class="eyebrow">NetForge</p>
+        <h1 data-i18n="title">Professional Network Designer</h1>
+      </div>
+    </div>
+
+    <div class="topbar-actions" role="toolbar" aria-label="Main actions">
+      <button id="newProjectBtn" class="button button-secondary" type="button" data-i18n="newProject">Nouveau</button>
+      <button id="importTrigger" class="button button-secondary" type="button" data-i18n="import">Importer</button>
+      <div class="menu-wrap">
+        <button id="exportMenuToggle" class="button button-secondary" type="button" data-i18n="export">Exporter</button>
+        <div id="exportMenu" class="menu hidden">
+          <button id="exportJsonBtn" class="menu-item" type="button">JSON</button>
+          <button id="exportCsvBtn" class="menu-item" type="button">CSV</button>
+          <button id="exportSvgBtn" class="menu-item" type="button">SVG</button>
+        </div>
+      </div>
+      <button id="saveLocalBtn" class="button button-secondary" type="button" data-i18n="saveLocal">Sauver</button>
+      <button id="loadLocalBtn" class="button button-secondary" type="button" data-i18n="loadLocal">Charger</button>
+      <button id="langToggle" class="button button-primary" type="button">FR / EN</button>
+    </div>
+
+    <input id="fileImport" class="hidden" type="file" multiple aria-label="File importer" accept=".json,.csv,.png,.jpg,.jpeg,image/png,image/jpeg,text/csv,application/json" />
+  </header>
+
+  <main class="studio">
+    <aside class="leftbar panel">
+      <section>
+        <p class="eyebrow">Tools</p>
+        <h2 data-i18n="toolsTitle">Outils</h2>
+        <div class="tool-grid">
+          <button id="selectModeBtn" class="tool-button active" type="button" data-mode="select" data-i18n="selectMode">Selection</button>
+          <button id="linkModeBtn" class="tool-button" type="button" data-mode="link" data-i18n="linkMode">Lier</button>
+          <button id="deleteSelectedBtn" class="tool-button" type="button" data-i18n="deleteSelected">Supprimer</button>
+          <button id="fitViewBtn" class="tool-button" type="button" data-i18n="fitView">Centrer</button>
+        </div>
+      </section>
+
+      <section>
+        <p class="eyebrow">Equipment</p>
+        <h3 data-i18n="libraryTitle">Materiel</h3>
+        <div id="deviceLibrary" class="library"></div>
+        <div class="left-actions">
+          <button id="addSampleBtn" class="button button-secondary" type="button" data-i18n="addSample">Exemple</button>
+          <button id="importImageBtn" class="button button-secondary" type="button" data-i18n="importImage">Importer image</button>
+        </div>
+      </section>
+    </aside>
+
+    <section class="center panel">
+      <div class="center-header">
+        <div>
+          <p class="eyebrow">Canvas</p>
+          <h2 data-i18n="canvasTitle">Schema reseau interactif</h2>
+        </div>
+
+        <div class="rack-controls">
+          <label for="rackSize" data-i18n="rackSize">Taille baie</label>
+          <select id="rackSize">
+            <option value="12">12U</option>
+            <option value="24">24U</option>
+            <option value="42" selected>42U</option>
+            <option value="48">48U</option>
+          </select>
+          <label class="checkline">
+            <input id="rackSnap" type="checkbox" />
+            <span data-i18n="rackSnap">Aligner sur baie</span>
+          </label>
+        </div>
+      </div>
+
+      <div id="canvas" class="canvas" aria-label="Network diagram canvas">
+        <div id="rackLayer" class="rack-layer"></div>
+        <svg id="linkLayer" class="link-layer"></svg>
+        <div id="nodeLayer" class="node-layer"></div>
+        <div id="canvasHint" class="canvas-hint" data-i18n="canvasHint">Utilise la bibliotheque pour creer ton premier equipement.</div>
+      </div>
+    </section>
+
+    <aside class="rightbar panel">
+      <section class="status-block">
+        <p class="eyebrow">Status</p>
+        <div class="status-card">
+          <div><span data-i18n="nodesLabel">Nodes</span><strong id="nodeCount">0</strong></div>
+          <div><span data-i18n="linksLabel">Links</span><strong id="linkCount">0</strong></div>
+          <div><span data-i18n="modeLabel">Mode</span><strong id="modeIndicator">Select</strong></div>
+        </div>
+      </section>
+
+      <section class="card validation-card">
+        <div class="card-heading">
+          <h3 data-i18n="validationTitle">Validation</h3>
+          <span id="validationCount">0</span>
+        </div>
+        <ul id="validationList" class="validation-list"></ul>
+      </section>
+
+      <section class="card inspector-card">
+        <div class="card-heading">
+          <h3 data-i18n="inspectorTitle">Inspector</h3>
+          <span id="selectionType">None</span>
+        </div>
+        <div id="inspectorEmpty" class="muted" data-i18n="inspectorEmpty">Selectionne un equipement ou un lien pour modifier ses proprietes.</div>
+
+        <form id="deviceForm" class="editor-form hidden">
+          <label data-i18n="typeLabel">Type
+            <select id="deviceType"></select>
+          </label>
+          <label data-i18n="nameLabel">Nom
+            <input id="deviceName" type="text" />
+          </label>
+          <label data-i18n="roleLabel">Role
+            <input id="deviceRole" type="text" placeholder="core / access / dmz" />
+          </label>
+          <label data-i18n="mgmtIpLabel">IP management
+            <input id="deviceMgmtIp" type="text" placeholder="192.168.1.10/24" />
+          </label>
+          <label data-i18n="portsLabel">Ports
+            <input id="devicePorts" type="number" min="0" max="96" />
+          </label>
+          <label data-i18n="widthLabel">Largeur
+            <input id="deviceWidth" type="number" min="120" max="480" />
+          </label>
+          <button class="button button-primary" type="submit" data-i18n="applyDevice">Appliquer equipement</button>
+        </form>
+
+        <form id="linkForm" class="editor-form hidden">
+          <label data-i18n="sourceLabel">Port source
+            <input id="linkSourcePort" type="text" placeholder="Gi1/0/1" />
+          </label>
+          <label data-i18n="destLabel">Port destination
+            <input id="linkDestPort" type="text" placeholder="Gi1/0/2" />
+          </label>
+          <label data-i18n="modeLabelSmall">Mode
+            <select id="linkMode">
+              <option value="access">Access</option>
+              <option value="trunk">Trunk</option>
+            </select>
+          </label>
+          <label data-i18n="nativeVlanLabel">VLAN native
+            <input id="linkNativeVlan" type="number" min="1" max="4094" />
+          </label>
+          <label data-i18n="taggedVlansLabel">VLANs tagues
+            <input id="linkTaggedVlans" type="text" placeholder="10,20,30" />
+          </label>
+          <label data-i18n="accessVlanLabel">VLAN access
+            <input id="linkAccessVlan" type="number" min="1" max="4094" />
+          </label>
+          <button class="button button-primary" type="submit" data-i18n="applyLink">Appliquer lien</button>
+        </form>
+      </section>
+    </aside>
+  </main>
+
+  <template id="libraryItemTemplate">
+    <button class="library-item" type="button">
+      <span class="library-icon"></span>
+      <span class="library-name"></span>
+      <small class="library-meta"></small>
+    </button>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
