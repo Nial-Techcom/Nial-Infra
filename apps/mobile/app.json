@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "NetForge",
+    "slug": "netforge",
+    "version": "1.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#141A22",
+    "ios": { "supportsTablet": true, "bundleIdentifier": "com.netforge.mobile", "infoPlist": { "NSAppTransportSecurity": { "NSAllowsLocalNetworking": true } } },
+    "android": { "package": "com.netforge.mobile", "usesCleartextTraffic": true },
+    "plugins": ["expo-secure-store"]
+  }
+}

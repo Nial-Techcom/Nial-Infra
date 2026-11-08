@@ -1,0 +1,49 @@
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import 'reactflow/dist/style.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root,
+[data-theme='dark'] {
+  --bg: 20 26 34; --panel: 28 36 48; --raised: 36 46 60; --line: 44 55 70; --ink: 221 228 236; --mute: 130 146 164;
+  --access: 76 141 246; --trunk: 240 166 58; --crit: 242 85 90; --warn: 240 166 58; --info: 99 179 237; --ok: 74 200 140;
+  color-scheme: dark;
+}
+[data-theme='light'] {
+  --bg: 236 239 243; --panel: 255 255 255; --raised: 245 247 250; --line: 210 217 226; --ink: 24 32 44; --mute: 98 112 130;
+  --access: 37 99 220; --trunk: 192 112 10; --crit: 214 40 52; --warn: 176 100 8; --info: 14 116 190; --ok: 22 140 90;
+  color-scheme: light;
+}
+
+html, body, #root { height: 100%; }
+body { @apply bg-bg font-sans text-ink antialiased; margin: 0; font-size: 14px; }
+:focus-visible { outline: 2px solid rgb(var(--access)); outline-offset: 1px; }
+::selection { background: rgb(var(--access) / 0.35); }
+* { scrollbar-width: thin; scrollbar-color: rgb(var(--line)) transparent; }
+
+.nf-input { @apply w-full rounded border border-line bg-bg px-2.5 py-1.5 text-ink placeholder:text-mute/70 disabled:opacity-50; }
+.nf-input:focus { border-color: rgb(var(--access)); outline: none; box-shadow: 0 0 0 1px rgb(var(--access)); }
+.nf-btn { @apply inline-flex items-center justify-center gap-1.5 rounded border border-line bg-raised px-3 py-1.5 font-medium text-ink transition-colors hover:border-mute disabled:cursor-not-allowed disabled:opacity-50; }
+.nf-btn-primary { background: rgb(var(--access)); border-color: rgb(var(--access)); color: #fff; }
+.nf-btn-primary:hover { filter: brightness(1.1); border-color: rgb(var(--access)); }
+.nf-btn-danger { color: rgb(var(--crit)); }
+.nf-btn-ghost { @apply border-transparent bg-transparent hover:bg-raised; }
+.mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 0.92em; }
+
+/* React Flow theming */
+.react-flow { background: rgb(var(--bg)); }
+.react-flow__controls { box-shadow: none; border: 1px solid rgb(var(--line)); border-radius: 6px; overflow: hidden; }
+.react-flow__controls-button { background: rgb(var(--panel)); border-bottom: 1px solid rgb(var(--line)); fill: rgb(var(--ink)); }
+.react-flow__controls-button:hover { background: rgb(var(--raised)); }
+.react-flow__minimap { background: rgb(var(--panel)); border: 1px solid rgb(var(--line)); border-radius: 6px; }
+.react-flow__attribution { display: none; }
+.react-flow__handle { width: 10px; height: 10px; border: 2px solid rgb(var(--panel)); background: rgb(var(--trunk)); }
+.nf-fill-handle { width: 100% !important; height: 100% !important; top: 0; left: 0; transform: none !important; border: 0; border-radius: 6px; background: transparent !important; opacity: 0; }
+.react-flow__edge.selected .nf-cable { stroke-width: 4; }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

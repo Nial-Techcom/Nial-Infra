@@ -1,0 +1,30 @@
+{
+  "name": "@netforge/desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NetForge desktop app (Electron shell around the web UI)",
+  "main": "main.js",
+  "author": "NetForge",
+  "license": "MIT",
+  "scripts": {
+    "dev": "NETFORGE_DEV_URL=http://localhost:3000 electron .",
+    "start": "electron .",
+    "prepare-renderer": "node scripts/copy-web.js",
+    "build": "npm run build -w @netforge/web && node scripts/copy-web.js",
+    "dist": "npm run build && electron-builder",
+    "typecheck": "node --check main.js && node --check preload.js"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.netforge.desktop",
+    "productName": "NetForge",
+    "directories": { "output": "release" },
+    "files": ["main.js", "preload.js", "renderer/**/*"],
+    "win": { "target": "nsis" },
+    "mac": { "target": "dmg", "category": "public.app-category.developer-tools" },
+    "linux": { "target": ["AppImage", "deb"], "category": "Network" }
+  }
+}
