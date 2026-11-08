@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+release/
+.env
+*.log
+.expo/
+.DS_Store
+coverage/
+apps/mobile/.expo/
+apps/desktop/renderer/

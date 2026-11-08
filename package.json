@@ -1,0 +1,18 @@
+{
+  "name": "netforge",
+  "private": true,
+  "version": "1.0.0",
+  "description": "NetForge - Infrastructure Topology Designer (server, web, desktop, mobile)",
+  "workspaces": ["packages/*", "apps/server", "apps/web", "apps/desktop", "apps/mobile"],
+  "scripts": {
+    "build:shared": "npm run build -w @netforge/shared",
+    "dev:server": "npm run dev -w @netforge/server",
+    "dev:web": "npm run dev -w @netforge/web",
+    "dev:desktop": "npm run dev -w @netforge/desktop",
+    "build": "npm run build -w @netforge/shared && npm run build -w @netforge/server && npm run build -w @netforge/web && npm run build -w @netforge/desktop",
+    "test": "npm run test -w @netforge/shared && npm run test -w @netforge/server",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "engines": { "node": ">=20" },
+  "license": "MIT"
+}

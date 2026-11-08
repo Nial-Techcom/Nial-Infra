@@ -1,0 +1,9 @@
+**/node_modules
+**/dist
+**/release
+**/renderer
+.git
+.env
+apps/mobile
+apps/desktop
+legacy-prototype
