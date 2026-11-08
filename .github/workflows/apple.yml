@@ -1,0 +1,84 @@
+name: Apple (iOS IPA + macOS app)
+on:
+  push:
+    branches: [apple]
+    tags: ['apple-v*']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+      - name: Build shared package
+        run: npm run build:shared
+      - name: Generate native iOS project
+        working-directory: apps/mobile
+        run: npx expo prebuild --platform ios --no-install --clean
+      - name: Install CocoaPods
+        working-directory: apps/mobile/ios
+        run: pod install
+      - name: Build unsigned app
+        working-directory: apps/mobile
+        run: |
+          xcodebuild -workspace ios/NetForge.xcworkspace -scheme NetForge \
+            -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+      - name: Package unsigned IPA (for SideStore / LiveContainer)
+        working-directory: apps/mobile
+        run: |
+          mkdir Payload
+          cp -R build/Build/Products/Release-iphoneos/NetForge.app Payload/
+          zip -qr ../../NetForge-ios-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NetForge-ios-ipa
+          path: NetForge-ios-unsigned.ipa
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+      - name: Build shared package
+        run: npm run build:shared
+      - name: Build web UI and stage it for Electron
+        run: npm run build -w @netforge/desktop
+      - name: Build .dmg and .zip (arm64 + x64)
+        working-directory: apps/desktop
+        run: npx electron-builder --mac --arm64 --x64 --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NetForge-macos
+          path: |
+            apps/desktop/release/*.dmg
+            apps/desktop/release/*.zip
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [ios, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: out/*
