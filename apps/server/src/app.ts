@@ -13,8 +13,9 @@ export function createApp(pool: Pool, cfg: Config) {
   app.use(helmet());
   app.use(
     cors({
-      // No Origin header = native apps / curl; browsers must be in the allow-list.
-      origin: (origin, cb) => cb(null, !origin || cfg.corsOrigins.includes('*') || cfg.corsOrigins.includes(origin)),
+      // No Origin header = mobile app / curl. The desktop app loads its UI from a file, so the browser engine
+      // sends the literal origin "null": allowed too. Auth uses a Bearer token (no cookies), so this adds no CSRF risk.
+      origin: (origin, cb) => cb(null, !origin || origin === 'null' || cfg.corsOrigins.includes('*') || cfg.corsOrigins.includes(origin)),
       allowedHeaders: ['Authorization', 'Content-Type'],
       exposedHeaders: ['Content-Disposition'],
     }),
