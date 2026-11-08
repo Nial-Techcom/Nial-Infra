@@ -4,7 +4,10 @@
   "private": true,
   "description": "NetForge desktop app (Electron shell around the web UI)",
   "main": "main.js",
-  "author": "NetForge",
+  "author": {
+    "name": "NetForge",
+    "email": "contact@nial-tech.com"
+  },
   "license": "MIT",
   "scripts": {
     "dev": "NETFORGE_DEV_URL=http://localhost:3000 electron .",
@@ -21,10 +24,41 @@
   "build": {
     "appId": "com.netforge.desktop",
     "productName": "NetForge",
-    "directories": { "output": "release" },
-    "files": ["main.js", "preload.js", "renderer/**/*"],
-    "win": { "target": "nsis" },
-    "mac": { "target": "dmg", "category": "public.app-category.developer-tools" },
-    "linux": { "target": ["AppImage", "deb"], "category": "Network" }
-  }
+    "directories": {
+      "output": "release"
+    },
+    "artifactName": "NetForge-${version}-${os}-${arch}.${ext}",
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "msi"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.developer-tools",
+      "identity": null
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Network",
+      "maintainer": "NetForge <contact@nial-tech.com>"
+    }
+  },
+  "homepage": "https://github.com/Flunch4456/NetForge"
 }

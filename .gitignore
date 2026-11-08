@@ -9,3 +9,6 @@ release/
 coverage/
 apps/mobile/.expo/
 apps/desktop/renderer/
+apps/mobile/android/
+apps/mobile/ios/
+apps/desktop/release/

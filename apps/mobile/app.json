@@ -6,8 +6,16 @@
     "orientation": "default",
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#141A22",
-    "ios": { "supportsTablet": true, "bundleIdentifier": "com.netforge.mobile", "infoPlist": { "NSAppTransportSecurity": { "NSAllowsLocalNetworking": true } } },
-    "android": { "package": "com.netforge.mobile", "usesCleartextTraffic": true },
-    "plugins": ["expo-secure-store"]
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.netforge.mobile",
+      "buildNumber": "1",
+      "infoPlist": { "NSAppTransportSecurity": { "NSAllowsArbitraryLoads": true } }
+    },
+    "android": { "package": "com.netforge.mobile", "versionCode": 1 },
+    "plugins": [
+      "expo-secure-store",
+      ["expo-build-properties", { "android": { "usesCleartextTraffic": true } }]
+    ]
   }
 }

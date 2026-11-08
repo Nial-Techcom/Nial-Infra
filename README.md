@@ -25,6 +25,8 @@ Une seule API, trois clients qui partagent le même moteur de validation, les m�
 
 `legacy-prototype/` contient l'ancien prototype HTML/JS (v4) et la spec d'origine, gardés pour référence.
 
+📘 **Nouveau ici ? Lis le [tutoriel pas à pas](docs/TUTORIAL.md)** (installation, démo, VLANs, alertes, desktop, mobile).
+
 ## Fonctionnalités
 
 - Bibliothèque d'équipements (pare-feux, switchs, routeurs, serveurs, bornes Wi-Fi, clients) + équipements personnalisés
