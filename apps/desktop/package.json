@@ -27,6 +27,7 @@
     "directories": {
       "output": "release"
     },
+    "artifactName": "NetForge-${version}-${os}-${arch}.${ext}",
     "files": [
       "main.js",
       "preload.js",
@@ -34,36 +35,18 @@
     ],
     "win": {
       "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "msi",
-          "arch": [
-            "x64"
-          ]
-        }
+        "nsis",
+        "msi"
       ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
     },
     "mac": {
       "target": [
-        {
-          "target": "dmg",
-          "arch": [
-            "arm64",
-            "x64"
-          ]
-        },
-        {
-          "target": "zip",
-          "arch": [
-            "arm64",
-            "x64"
-          ]
-        }
+        "dmg",
+        "zip"
       ],
       "category": "public.app-category.developer-tools",
       "identity": null
@@ -75,8 +58,7 @@
       ],
       "category": "Network",
       "maintainer": "NetForge <contact@nial-tech.com>"
-    },
-    "artifactName": "NetForge-${version}-${os}-${arch}.${ext}"
+    }
   },
   "homepage": "https://github.com/Flunch4456/NetForge"
 }
