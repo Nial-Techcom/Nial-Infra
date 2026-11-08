@@ -25,6 +25,8 @@ Une seule API, trois clients qui partagent le même moteur de validation, les m�
 
 `legacy-prototype/` contient l'ancien prototype HTML/JS (v4) et la spec d'origine, gardés pour référence.
 
+🖥️ **Installer le serveur sur un LXC Proxmox neuf : [docs/INSTALL-LXC.md](docs/INSTALL-LXC.md)** (de A à Z, avec script) · version générique : [INSTALLATION.md](INSTALLATION.md)
+
 📘 **Nouveau ici ? Lis le [tutoriel pas à pas](docs/TUTORIAL.md)** (installation, démo, VLANs, alertes, desktop, mobile).
 
 ## Fonctionnalités
