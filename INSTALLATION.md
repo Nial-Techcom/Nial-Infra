@@ -1,5 +1,7 @@
 # Installer le serveur NetForge
 
+> Tu as un conteneur LXC Proxmox tout neuf ? Suis plutôt **[docs/INSTALL-LXC.md](docs/INSTALL-LXC.md)** : de la création du conteneur jusqu'au premier écran, avec un script qui fait le gros du travail.
+
 Le serveur est le **centre de tout** : le site web, l'app Windows/macOS et l'app Android/iPhone lisent et écrivent tous dans lui. On l'installe **une seule fois**, puis on y connecte les apps (étape 8).
 
 Chaque étape explique pourquoi on la fait. Vérifie le ✅ avant de passer à la suivante.
@@ -57,7 +59,8 @@ nano .env
 Remplis chaque ligne. Pour les secrets, génère-les au hasard :
 
 ```bash
-openssl rand -base64 32     # lance-le 3 fois : mot de passe base, JWT_SECRET, ENCRYPTION_KEY
+openssl rand -hex 24        # pour POSTGRES_PASSWORD (lettres et chiffres seulement : il est placé dans une URL)
+openssl rand -base64 32     # lance-le 2 fois : JWT_SECRET puis ENCRYPTION_KEY
 ```
 
 | Variable | Rôle | Attention |
