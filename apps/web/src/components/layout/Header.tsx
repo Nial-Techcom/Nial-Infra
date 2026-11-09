@@ -1,11 +1,11 @@
-import { ChevronDown, Download, History, Languages, LogOut, Moon, PanelLeft, Search, Sun, Users, KeyRound, TriangleAlert } from 'lucide-react';
+import { ChevronDown, Download, Network, Server, Settings, History, Languages, LogOut, Moon, PanelLeft, Search, Sun, Users, KeyRound, TriangleAlert } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useReactFlow } from 'reactflow';
 import { exportCsv, exportPdf, exportShmnlt, importShmnlt } from '../../lib/exports';
 import { exportDiagram } from '../../lib/exportImage';
 import { useAlerts } from '../../lib/useAlerts';
-import { canEdit, isAdmin, useAuth } from '../../store/auth';
+import { useCanEdit, useIsAdmin, useAuth } from '../../store/auth';
 import { useTopology } from '../../store/topology';
 import { useUi } from '../../store/ui';
 import { SeverityDot } from '../ui';
@@ -39,7 +39,8 @@ export function Header() {
   const { clients, clientId, selectClient } = useTopology();
   const { counts } = useAlerts();
   const ui = useUi();
-  const edit = canEdit(user);
+  const edit = useCanEdit();
+  const admin = useIsAdmin();
   const clientName = clients.find((c) => c.id === clientId)?.name ?? 'diagram';
   const lang = i18n.resolvedLanguage === 'fr' ? 'fr' : 'en';
 
@@ -54,11 +55,23 @@ export function Header() {
         {clients.length === 0 && <option value="">{t('sidebar.selectClient')}</option>}
         {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
       </select>
+      {/* Schema and Rack: two views of the same client data */}
+      <div role="group" aria-label="View" className="flex overflow-hidden rounded-md border border-line">
+        {(['schema', 'rack'] as const).map((v) => (
+          <button key={v} aria-pressed={ui.view === v} onClick={() => ui.setView(v)} className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm ${ui.view === v ? 'bg-access text-white' : 'bg-panel text-mute hover:text-ink'}`}>
+            {v === 'schema' ? <Network size={14} /> : <Server size={14} />}<span className="hidden sm:inline">{t(v === 'schema' ? 'rack.viewSchema' : 'rack.viewRack')}</span>
+          </button>
+        ))}
+      </div>
       <button className="nf-btn text-mute" onClick={() => ui.open({ kind: 'search' })} aria-label={t('common.search')}>
         <Search size={14} /><span className="hidden md:inline">{t('common.search')}</span><kbd className="mono hidden rounded border border-line px-1 text-[10px] md:inline">{t('search.hint')}</kbd>
       </button>
 
       <div className="ml-auto flex items-center gap-2">
+        <span className="hidden items-center gap-2 text-xs text-mute xl:flex" aria-label={t('modals.cable.medium')}>
+          <span className="flex items-center gap-1"><span className="inline-block h-1.5 w-5 rounded-full ring-1 ring-[rgb(var(--eth-halo))]/60" style={{ background: 'rgb(var(--eth))' }} />Ethernet</span>
+          <span className="flex items-center gap-1"><span className="inline-block h-1.5 w-5 rounded-full" style={{ background: 'rgb(var(--fiber))' }} />{lang === 'fr' ? 'Fibre' : 'Fibre'}</span>
+        </span>
         <button className="nf-btn" onClick={() => ui.setAlertsOpen(!ui.alertsOpen)} aria-pressed={ui.alertsOpen} aria-label={t('alerts.title')}>
           <TriangleAlert size={14} />
           <span className="flex items-center gap-2 text-xs"><span className="flex items-center gap-1"><SeverityDot type="critical" />{counts.critical}</span><span className="flex items-center gap-1"><SeverityDot type="warning" />{counts.warning}</span><span className="hidden items-center gap-1 sm:flex"><SeverityDot type="info" />{counts.info}</span></span>
@@ -85,7 +98,8 @@ export function Header() {
             <>
               <div className="px-3 py-1.5 text-xs text-mute">{user.email}<br />{t(`roles.${user.role}`)}</div>
               <div className="my-1 border-t border-line" />
-              {isAdmin(user) && <Item onClick={() => { close(); ui.open({ kind: 'users' }); }}><Users size={14} />{t('users.title')}</Item>}
+              {admin && <Item onClick={() => { close(); ui.open({ kind: 'admin' }); }}><Settings size={14} />{t('admin.title')}</Item>}
+              {admin && <Item onClick={() => { close(); ui.open({ kind: 'users' }); }}><Users size={14} />{t('users.title')}</Item>}
               <Item onClick={() => { close(); ui.open({ kind: 'password' }); }}><KeyRound size={14} />{t('auth.changePassword')}</Item>
               <Item danger onClick={() => { close(); logout(); }}><LogOut size={14} />{t('common.logout')}</Item>
             </>

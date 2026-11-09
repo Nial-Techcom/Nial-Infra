@@ -3,13 +3,14 @@ import { Alert, FlatList, RefreshControl, Text, TextInput, View } from 'react-na
 import {
   DEVICE_COLORS, DEVICE_LIBRARY, alertMessage, buildShmnlt, cablingMatrixCsv, generateClientConfig, parseShmnlt, summarizeAlerts, validateTopology, VENDORS, type Vendor,
 } from '@netforge/shared';
-import { api, canEdit, errorText, useSession, useT, useTopology } from '../store';
+import { api, useCanEdit, errorText, useSession, useT, useTopology } from '../store';
 import { pickText, shareText } from '../share';
 import { useTheme } from '../theme';
 import { Button, Card, Chip, Dot, Header, Muted } from '../ui';
 import { Diagram } from './Diagram';
+import { Racks } from './Racks';
 
-type Tab = 'diagram' | 'devices' | 'cables' | 'alerts' | 'export';
+type Tab = 'diagram' | 'racks' | 'devices' | 'cables' | 'alerts' | 'export';
 
 export function Topology({ onBack, onDevice, onLink }: { onBack: () => void; onDevice: (id: string) => void; onLink: (id?: string) => void }) {
   const t = useT();
@@ -17,7 +18,7 @@ export function Topology({ onBack, onDevice, onLink }: { onBack: () => void; onD
   const user = useSession((s) => s.user);
   const locale = useSession((s) => s.locale);
   const { clients, clientId, devices, links, loading, reload } = useTopology();
-  const edit = canEdit(user);
+  const edit = useCanEdit();
   const [tab, setTab] = useState<Tab>('diagram');
   const [q, setQ] = useState('');
   const [vendor, setVendor] = useState<Vendor>('cisco');
@@ -53,7 +54,7 @@ export function Topology({ onBack, onDevice, onLink }: { onBack: () => void; onD
   }
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: 'diagram', label: t('mobile.diagram') }, { id: 'devices', label: t('canvas.devices') }, { id: 'cables', label: t('mobile.cables') },
+    { id: 'diagram', label: t('mobile.diagram') }, { id: 'racks', label: t('rack.viewRack') }, { id: 'devices', label: t('canvas.devices') }, { id: 'cables', label: t('mobile.cables') },
     { id: 'alerts', label: `${t('alerts.title')} ${alerts.length ? `(${alerts.length})` : ''}` }, { id: 'export', label: t('exports.title') },
   ];
   const filtered = devices.filter((d) => !q.trim() || [d.name, d.mgmtIp, d.model, d.serial].some((v) => v?.toLowerCase().includes(q.trim().toLowerCase())));
@@ -66,6 +67,8 @@ export function Topology({ onBack, onDevice, onLink }: { onBack: () => void; onD
       </View>
 
       {tab === 'diagram' && <Diagram onDevice={onDevice} onLink={(id) => onLink(id)} />}
+
+      {tab === 'racks' && <Racks onDevice={onDevice} />}
 
       {tab === 'devices' && (
         <FlatList
@@ -101,7 +104,7 @@ export function Topology({ onBack, onDevice, onLink }: { onBack: () => void; onD
           renderItem={({ item: l }) => (
             <Card onPress={() => onLink(l.id)}>
               <Text style={{ color: c.ink, fontWeight: '600' }}>{nameOf(l.sourceId)} {l.sourcePort} ↔ {nameOf(l.destId)} {l.destPort}</Text>
-              <Muted>{l.mode === 'trunk' ? `trunk · native ${l.nativeVlan ?? '—'} · tagged ${l.taggedVlans.length}` : `access · VLAN ${l.accessVlan ?? '?'}`}</Muted>
+              <Muted>{l.medium === 'fiber' ? 'fibre · ' : 'ethernet · '}{l.mode === 'trunk' ? `trunk · native ${l.nativeVlan ?? '—'} · tagged ${l.taggedVlans.length}` : `access · VLAN ${l.accessVlan ?? '?'}`}</Muted>
             </Card>
           )}
         />
@@ -124,7 +127,7 @@ export function Topology({ onBack, onDevice, onLink }: { onBack: () => void; onD
       {tab === 'export' && (
         <View style={{ padding: 12, gap: 10 }}>
           <Button title={t('exports.csv')} onPress={() => void share(`${safe}-cabling.csv`, '﻿' + cablingMatrixCsv(devices, links), 'text/csv')} />
-          <Button title={t('exports.shmnlt')} onPress={() => client && void share(`${safe}.shmnlt`, JSON.stringify(buildShmnlt(client.name, useTopology.getState().sites, devices, links), null, 2), 'application/json')} />
+          <Button title={t('exports.shmnlt')} onPress={() => client && void share(`${safe}.shmnlt`, JSON.stringify(buildShmnlt(client.name, useTopology.getState().sites, devices, links, useTopology.getState().racks), null, 2), 'application/json')} />
           {edit ? <Button title={t('exports.importShmnlt')} onPress={() => void importFile()} /> : null}
           <Text style={{ color: c.mute, fontWeight: '600', marginTop: 6 }}>{t('exports.config')}</Text>
           <View style={{ flexDirection: 'row' }}>{VENDORS.map((v) => <Chip key={v} label={t(`exports.${v}`)} active={vendor === v} onPress={() => setVendor(v)} />)}</View>

@@ -34,9 +34,11 @@ export function authenticate(pool: Pool, cfg: Config) {
       } catch {
         throw new HttpError(401, 'Invalid or expired token');
       }
-      const user = payload.sub ? await users.get(pool, payload.sub) : null;
-      if (!user) throw new HttpError(401, 'Invalid or expired token');
-      req.user = user;
+      const found = payload.sub ? await users.getAuth(pool, payload.sub) : null;
+      if (!found) throw new HttpError(401, 'Invalid or expired token');
+      // A password reset revokes every token issued before it (compared in whole seconds, the JWT precision).
+      if ((payload.iat ?? 0) < Math.floor(found.passwordChangedAt / 1000)) throw new HttpError(401, 'Invalid or expired token');
+      req.user = found.user;
       next();
     } catch (e) {
       next(e);

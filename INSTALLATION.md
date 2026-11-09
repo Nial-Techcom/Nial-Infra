@@ -100,7 +100,19 @@ Dans le site : menu en haut à droite → **Utilisateurs** → ajoute les autres
 - **Technicien** : modifie les schémas, voit les mots de passe d'équipements
 - **Lecteur** : regarde et exporte seulement
 
+(Ces rôles s'appliquent aussi **par client** quand tu invites quelqu'un à rejoindre un client.)
+
 *Pourquoi plusieurs rôles ?* Pour que quelqu'un puisse consulter le réseau sans pouvoir le casser.
+
+### Inscription, invitations et e-mails
+
+Les nouveaux comptes (bouton *Pas encore de compte ?*) **ne voient aucun client** tant qu'un admin ne les a pas invités par e-mail. Pour que les e-mails (invitations, « mot de passe oublié ») partent, configure le SMTP : menu en haut à droite → **Administration** :
+
+1. **Adresse publique** : `https://netforge.tondomaine.fr` (ou `http://IP:3000`). *Pourquoi ?* Les liens des e-mails sont construits avec cette valeur, jamais avec l'adresse de la requête reçue (sinon quelqu'un pourrait faire envoyer des liens piégés). Tu peux aussi la fixer avec `PUBLIC_URL` dans `.env`.
+2. **Serveur SMTP** : celui de ton fournisseur (OVH, Gmail avec mot de passe d'application, Brevo, Mailjet…). Port 587 (STARTTLS) ou 465 (TLS direct, coche la case).
+3. **Envoyer un e-mail de test** à ta propre adresse. Si ça échoue, le message d'erreur du serveur s'affiche (mauvais mot de passe, port bloqué…).
+
+Sans SMTP, tout marche quand même : en invitant quelqu'un, NetForge affiche le lien à lui transmettre toi-même. Seul « mot de passe oublié » nécessite l'e-mail (sinon, l'admin réinitialise le mot de passe depuis *Utilisateurs*).
 
 Si tu as perdu l'accès admin :
 ```bash

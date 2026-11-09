@@ -99,11 +99,42 @@ Le bouton horloge enregistre une **version** (avec une note) et permet de **rest
 
 | Rôle | Peut faire |
 |---|---|
-| **Admin** | Tout : clients, sites, utilisateurs |
-| **Technicien** | Modifier équipements et câbles, voir les mots de passe |
-| **Lecteur** | Regarder et exporter, rien modifier |
+| **Admin** | Tout : clients, sites, utilisateurs, invitations, SMTP, catalogue — et il voit tous les clients |
+| **Technicien** (d'un client) | Modifier équipements, baies et câbles de ce client, voir les mots de passe |
+| **Lecteur** (d'un client) | Regarder et exporter ce client, rien modifier |
 
-Les droits sont vérifiés **côté serveur** : cacher un bouton ne suffit pas, la requête est refusée même si quelqu'un la forge. Crée les comptes depuis le menu utilisateur → *Users*.
+Les droits sont vérifiés **côté serveur** : cacher un bouton ne suffit pas, la requête est refusée même si quelqu'un la forge. Les rôles Technicien/Lecteur sont donnés **par client** via l'invitation ; l'admin peut aussi créer un compte directement (menu → *Utilisateurs*), mais ce compte n'a accès à aucun client tant qu'il n'est pas invité.
+
+### Les comptes : créer un compte, invitation, mot de passe oublié
+
+- **Créer un compte** : sur l'écran de connexion, *Pas encore de compte ?*. Un nouveau compte **ne voit aucun client** : il tombe sur « Aucun client pour l'instant ». *Pourquoi ?* Pour qu'un inconnu qui s'inscrit ne voie jamais les réseaux de tes clients.
+- **Donner accès à un client** : l'admin sélectionne le client, clique sur l'icône « personnes » à côté de son nom, saisit l'e-mail et le rôle (technicien ou lecteur) → **Inviter**. La personne reçoit un lien (valable 7 jours, utilisable une seule fois) ; elle crée son compte avec cette adresse (ou se connecte) et le client apparaît. Sans SMTP configuré, NetForge affiche le lien : copie-le et envoie-le toi-même. Sur mobile, colle le lien dans *Rejoindre avec une invitation*.
+- **Mot de passe oublié** : sur l'écran de connexion, *Mot de passe oublié ?* → un lien valable 1 heure est envoyé. Il ne marche qu'une fois, et déconnecte les anciennes sessions. Pour des raisons de sécurité, la réponse est la même que l'adresse existe ou non.
+- **Rôle par client** : un même utilisateur peut être technicien chez ACME et lecteur chez Globex.
+
+### Le panneau Administration (admin)
+
+Menu en haut à droite → **Administration** :
+- **Adresse publique** : l'adresse écrite dans les liens des e-mails (ex. `https://netforge.mondomaine.fr`).
+- **Création de comptes libre** : coche/décoche. Décochée, seules les personnes invitées peuvent s'inscrire.
+- **Serveur e-mail (SMTP)** : serveur, port (587 = STARTTLS, 465 = TLS direct), identifiant, mot de passe, expéditeur. Le mot de passe est **chiffré** en base et n'est jamais réaffiché. Le bouton *Envoyer un e-mail de test* vérifie que tout marche avant d'envoyer de vraies invitations.
+- **Catalogue d'équipements** : ajoute tes propres modèles (nom, type, ports, hauteur en U). Ils apparaissent dans la bibliothèque (bordure en pointillés) pour tous les clients.
+
+### Vue Schéma et vue Baies
+
+En haut, le sélecteur **Schéma | Baies** change seulement la façon de dessiner : ce sont **les mêmes équipements et les mêmes câbles**.
+- **Baies** : ajoute une baie (42 U par défaut), puis glisse un équipement de la liste « Hors baie » sur un emplacement libre (ou clique l'équipement puis l'emplacement, pratique sur tablette). U1 est en bas, comme dans la vraie baie. Un équipement de 2 U occupe deux emplacements ; les chevauchements sont refusés.
+- Sous chaque baie, **Câbles qui quittent cette baie** liste ce qui est branché dans une autre baie (ou sur un équipement non rangé). Le badge ↗ sur un équipement signale la même chose. Clique un équipement pour voir tous ses câbles.
+- Le nom de la baie et le U s'affichent aussi sur l'équipement dans la vue Schéma.
+
+### Couleur des câbles
+
+| Câble | Couleur |
+|---|---|
+| **Ethernet** | **noir** |
+| **Fibre** | **orange** |
+
+Le type se choisit dans la fenêtre du câble. Le mode (access/trunk) reste lisible sur l'étiquette VLAN : bleu = access, violet = trunk (le trunk n'est plus orange pour ne pas confondre avec la fibre). Le noir a un fin liseré clair pour rester visible en thème sombre. Le type de câble est aussi dans l'export CSV (colonne *Cable*) et le PDF.
 
 ## 6. L'app desktop
 

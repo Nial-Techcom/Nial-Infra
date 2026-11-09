@@ -45,7 +45,7 @@ export const fr: Translation = {
       title: 'Configuration du câble', sourcePort: 'Port source', destPort: 'Port destination', mode: 'Mode',
       access: 'Accès', trunk: 'Trunk', nativeVlan: 'VLAN natif (Untagged)', destNativeVlan: 'VLAN natif (côté destination)',
       taggedVlans: 'VLANs tagués', taggedHint: 'ex : 10,20,30-35', accessVlan: 'VLAN d’accès', from: 'De', to: 'Vers',
-      sameAsSource: 'identique à la source',
+      sameAsSource: 'identique à la source', medium: 'Type de câble', ethernet: 'Ethernet (noir)', fiber: 'Fibre (orange)',
     },
   },
   alerts: {
@@ -79,7 +79,7 @@ export const fr: Translation = {
   },
   users: {
     title: 'Utilisateurs', add: 'Ajouter un utilisateur', role: 'Rôle', email: 'E-mail', name: 'Nom', password: 'Mot de passe',
-    deleteSelf: 'Vous ne pouvez pas supprimer votre propre compte.',
+    deleteSelf: 'Vous ne pouvez pas supprimer votre propre compte.', confirmPassword: 'Confirmer le mot de passe', passwordMismatch: 'Les deux mots de passe sont différents.',
   },
   canvas: {
     empty: 'Glissez un équipement depuis la bibliothèque pour commencer', connectHint: 'Tirez depuis la poignée d’un équipement vers un autre pour créer un câble',
@@ -92,6 +92,38 @@ export const fr: Translation = {
     server: 'URL du serveur (ex. https://netforge.exemple.com)', empty: 'Rien ici pour le moment', pullToRefresh: 'Tirez vers le bas pour actualiser',
     shareFailed: 'Impossible de partager le fichier', settings: 'Réglages', deleteDevice: 'Supprimer l’équipement', deleteCable: 'Supprimer le câble',
     portInUse: 'utilisé', sameDevice: 'Choisissez deux équipements différents', tapDevice: 'Touchez un équipement pour l’ouvrir', imported: 'Import terminé',
+  },
+  account: {
+    createAccount: 'Créer un compte', register: 'Créer mon compte', haveAccount: 'Déjà un compte ? Se connecter', noAccount: 'Pas encore de compte ? En créer un',
+    forgot: 'Mot de passe oublié ?', forgotTitle: 'Réinitialiser le mot de passe', forgotHelp: 'Saisis ton e-mail. Si un compte existe, un lien pour choisir un nouveau mot de passe t’est envoyé.',
+    sendLink: 'Envoyer le lien', linkSent: 'Si un compte existe pour cette adresse, un e-mail a été envoyé. Regarde ta boîte de réception (et les spams).',
+    emailDisabled: 'L’envoi d’e-mails n’est pas configuré sur ce serveur. Demande à un administrateur de réinitialiser ton mot de passe.', resetTitle: 'Choisir un nouveau mot de passe',
+    resetDone: 'Mot de passe modifié. Tu peux te connecter.', resetInvalid: 'Ce lien est invalide ou a expiré. Demande-en un nouveau.', backToSignIn: 'Retour à la connexion',
+    registrationClosed: 'La création de compte est désactivée sur ce serveur.', fullName: 'Nom complet', passwordHint: '8 caractères minimum',
+    noClientTitle: 'Aucun client pour le moment', noClientBody: 'Ton compte n’a accès à aucun client. Demande à un administrateur ou un collègue de t’inviter par e-mail, puis ouvre le lien reçu.',
+    inviteTitle: 'Invitation', inviteFor: 'Tu es invité à rejoindre « {{client}} » en tant que {{role}}.', inviteWrongUser: 'Cette invitation a été envoyée à {{email}}. Connecte-toi avec cette adresse.',
+    inviteAccept: 'Rejoindre le client', inviteAccepted: 'Tu as rejoint le client.', inviteInvalid: 'Cette invitation est invalide, déjà utilisée ou expirée.', inviteHintMobile: 'Colle le lien ou le code d’invitation reçu par e-mail',
+  },
+  admin: {
+    title: 'Administration', general: 'Général', publicUrl: 'Adresse publique de NetForge', publicUrlHint: 'Utilisée dans les liens envoyés par e-mail, ex. https://netforge.exemple.com',
+    allowRegistration: 'Autoriser tout le monde à créer un compte (sans invitation, aucun client n’est visible)', smtp: 'Serveur d’e-mail (SMTP)',
+    smtpHelp: 'Nécessaire pour envoyer les invitations et les liens de réinitialisation.', host: 'Serveur', port: 'Port', secure: 'TLS implicite (port 465)',
+    smtpUser: 'Identifiant', smtpPassword: 'Mot de passe', smtpPasswordKept: 'Un mot de passe est enregistré. Laisse vide pour le garder.', from: 'Adresse d’expédition',
+    fromHint: 'ex. NetForge <netforge@exemple.com>', testTo: 'Envoyer un test à', test: 'Envoyer un e-mail de test', testSent: 'E-mail de test envoyé', saved: 'Réglages enregistrés',
+    library: 'Catalogue d’équipements', libraryHelp: 'Les modèles ajoutés ici apparaissent dans la bibliothèque de tous les clients.', libraryAdd: 'Ajouter un modèle',
+    libraryEmpty: 'Aucun modèle personnalisé pour le moment.', label: 'Nom dans la bibliothèque', units: 'Hauteur (U)', users: 'Utilisateurs',
+  },
+  members: {
+    title: 'Accès à ce client', invite: 'Inviter par e-mail', email: 'Adresse e-mail', role: 'Rôle', pending: 'Invitations en attente', revoke: 'Annuler l’invitation',
+    copyLink: 'Copier le lien', sent: 'Invitation envoyée à {{email}}', notSent: 'E-mail non envoyé (SMTP non configuré ou en erreur). Copie le lien et envoie-le toi-même.',
+    remove: 'Retirer l’accès', empty: 'Personne d’autre n’a accès.', expires: 'expire le {{date}}', admins: 'Les administrateurs ont toujours accès.',
+  },
+  rack: {
+    viewSchema: 'Schéma', viewRack: 'Baies', racks: 'Baies', addRack: 'Ajouter une baie', rackName: 'Nom de la baie', units: 'Hauteur (U)', unplaced: 'Hors baie',
+    place: 'Placer dans la baie', removeFromRack: 'Sortir de la baie', used: '{{used}}/{{total}} U utilisés', position: 'Position (U, depuis le bas)', height: 'Hauteur (U)',
+    rackOf: 'Baie', notRacked: 'Hors baie', crossRack: 'Autre baie', sameRack: 'Même baie', plugged: 'Branché sur', noRack: 'Aucune baie sur ce site pour le moment.',
+    full: 'Plus de place dans cette baie.', overlap: 'Cette position est déjà prise.', deleteRack: 'Supprimer la baie', renameRack: 'Renommer la baie', connections: 'Câbles de cet équipement',
+    dragHint: 'Glisse un équipement de la liste dans une baie, ou clique sur un emplacement libre.', cablesOut: 'Câbles qui sortent de cette baie', none: 'Aucun câble ne sort de cette baie.',
   },
   errors: {
     network: 'Erreur réseau', unauthorized: 'Session expirée, veuillez vous reconnecter', forbidden: 'Vous n’avez pas la permission',
