@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo } from 'react';
 import ReactFlow, { Background, BackgroundVariant, Controls, MiniMap, useEdgesState, useNodesState, useReactFlow, type Connection, type Edge, type Node } from 'reactflow';
 import { useTranslation } from 'react-i18next';
 import { DEVICE_COLORS, DEVICE_LIBRARY, type Alert } from '@netforge/shared';
-import { createFromPreset } from '../../lib/devices';
+import { createFromPreset, findPreset } from '../../lib/devices';
 import { useAlerts } from '../../lib/useAlerts';
-import { canEdit, useAuth } from '../../store/auth';
+import { useCanEdit } from '../../store/auth';
 import { useTopology } from '../../store/topology';
 import { useUi } from '../../store/ui';
 import { CableEdge, type CableEdgeData } from './CableEdge';
@@ -23,9 +23,9 @@ function worst(alerts: Alert[]): 'critical' | 'warning' | 'info' | null {
 export function NetForgeCanvas() {
   const { t } = useTranslation();
   const rf = useReactFlow();
-  const { devices, links, sites, activeSiteId, focus, clientId, moveDevice } = useTopology();
+  const { devices, links, sites, racks, library, activeSiteId, focus, clientId, moveDevice } = useTopology();
   const { alerts } = useAlerts();
-  const editable = canEdit(useAuth((s) => s.user));
+  const editable = useCanEdit();
   const theme = useUi((s) => s.theme);
   const [nodes, setNodes, onNodesChange] = useNodesState<DeviceNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<CableEdgeData>([]);
@@ -33,6 +33,7 @@ export function NetForgeCanvas() {
   // Devices -> nodes. Selection is carried over so editing a device does not drop it.
   useEffect(() => {
     const siteName = new Map(sites.map((s) => [s.id, s.name]));
+    const rackName = new Map(racks.map((r) => [r.id, r.name]));
     const used = new Map<string, Record<string, 'access' | 'trunk'>>();
     for (const l of links) {
       for (const [id, port] of [[l.sourceId, l.sourcePort], [l.destId, l.destPort]] as const) used.set(id, { ...(used.get(id) ?? {}), [port]: l.mode });
@@ -44,10 +45,11 @@ export function NetForgeCanvas() {
         data: {
           device: d, usedPorts: used.get(d.id) ?? {}, severity: worst(alerts.filter((a) => a.deviceId === d.id)),
           dim: !!activeSiteId && d.siteId !== activeSiteId, siteName: d.siteId ? siteName.get(d.siteId) ?? null : null, editable,
+          rackLabel: d.rackId && d.rackPos ? `${rackName.get(d.rackId) ?? '?'} U${d.rackPos}` : null,
         },
       }));
     });
-  }, [devices, links, sites, alerts, activeSiteId, editable, setNodes]);
+  }, [devices, links, sites, racks, alerts, activeSiteId, editable, setNodes]);
 
   // Links -> edges (parallel cables between the same pair get an index so they fan out).
   useEffect(() => {
@@ -100,11 +102,11 @@ export function NetForgeCanvas() {
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const key = e.dataTransfer.getData('application/netforge-preset');
-    const preset = DEVICE_LIBRARY.find((p) => p.key === key);
+    const preset = findPreset(key, library, DEVICE_LIBRARY);
     if (!preset || !editable) return;
     const p = rf.screenToFlowPosition({ x: e.clientX, y: e.clientY });
     void createFromPreset(preset, { x: p.x - 95, y: p.y - 30 });
-  }, [rf, editable]);
+  }, [rf, editable, library]);
 
   const askDelete = useCallback(() => {
     if (!editable) return;

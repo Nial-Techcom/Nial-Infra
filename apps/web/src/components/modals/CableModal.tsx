@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { devicePorts, formatVlanList, isValidVlan, parseVlanList, type Device, type LinkMode } from '@netforge/shared';
-import { canEdit, useAuth } from '../../store/auth';
+import { devicePorts, formatVlanList, isValidVlan, parseVlanList, type Device, type LinkMedium, type LinkMode } from '@netforge/shared';
+import { useCanEdit } from '../../store/auth';
 import { useTopology } from '../../store/topology';
 import { useUi } from '../../store/ui';
 import { Field, Modal } from '../ui';
@@ -20,7 +20,7 @@ function PortSelect({ device, value, onChange, taken, label }: { device: Device 
 export function CableModal({ linkId, draft }: { linkId?: string; draft?: { sourceId: string; destId: string } }) {
   const { t } = useTranslation();
   const { devices, links } = useTopology();
-  const edit = canEdit(useAuth((s) => s.user));
+  const edit = useCanEdit();
   const close = useUi((s) => s.close);
   const existing = linkId ? links.find((l) => l.id === linkId) : undefined;
   const sourceId = existing?.sourceId ?? draft?.sourceId ?? '';
@@ -33,7 +33,7 @@ export function CableModal({ linkId, draft }: { linkId?: string; draft?: { sourc
 
   const [f, setF] = useState(() => ({
     sourcePort: existing?.sourcePort ?? firstFree(src), destPort: existing?.destPort ?? firstFree(dst),
-    mode: (existing?.mode ?? 'access') as LinkMode,
+    mode: (existing?.mode ?? 'access') as LinkMode, medium: (existing?.medium ?? 'ethernet') as LinkMedium,
     nativeVlan: existing?.nativeVlan ? String(existing.nativeVlan) : '', destNativeVlan: existing?.destNativeVlan ? String(existing.destNativeVlan) : '',
     tagged: existing ? formatVlanList(existing.taggedVlans) : '', accessVlan: existing?.accessVlan ? String(existing.accessVlan) : '',
   }));
@@ -49,7 +49,7 @@ export function CableModal({ linkId, draft }: { linkId?: string; draft?: { sourc
     if (invalid) return;
     setBusy(true);
     const body = {
-      sourcePort: f.sourcePort.trim(), destPort: f.destPort.trim(), mode: f.mode,
+      sourcePort: f.sourcePort.trim(), destPort: f.destPort.trim(), mode: f.mode, medium: f.medium,
       nativeVlan: trunk && f.nativeVlan ? Number(f.nativeVlan) : null,
       destNativeVlan: trunk && f.destNativeVlan ? Number(f.destNativeVlan) : null,
       taggedVlans: trunk ? parseVlanList(f.tagged) : [],
@@ -78,6 +78,17 @@ export function CableModal({ linkId, draft }: { linkId?: string; draft?: { sourc
           <PortSelect device={src} value={f.sourcePort} onChange={(v) => set('sourcePort', v)} taken={used(src.id)} label={`${t('modals.cable.sourcePort')} (${src.name})`} />
           <PortSelect device={dst} value={f.destPort} onChange={(v) => set('destPort', v)} taken={used(dst.id)} label={`${t('modals.cable.destPort')} (${dst.name})`} />
         </div>
+        <Field label={t('modals.cable.medium')}>
+          <div className="flex gap-4 pt-1">
+            {(['ethernet', 'fiber'] as const).map((m) => (
+              <label key={m} className="flex items-center gap-1.5">
+                <input type="radio" name="medium" checked={f.medium === m} onChange={() => set('medium', m)} />
+                <span className="inline-block h-1.5 w-6 rounded-full border border-line" style={{ background: m === 'fiber' ? 'rgb(var(--fiber))' : 'rgb(var(--eth))' }} aria-hidden />
+                {t(`modals.cable.${m}`)}
+              </label>
+            ))}
+          </div>
+        </Field>
         <Field label={t('modals.cable.mode')}>
           <div className="flex gap-4 pt-1">
             {(['access', 'trunk'] as const).map((m) => (

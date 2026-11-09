@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ReactFlowProvider } from 'reactflow';
-import { Login } from './components/Login';
+import { AuthScreens, InviteAccept, NoClient, urlParams } from './components/AuthScreens';
+import { RackView } from './components/canvas/RackView';
 import { Header } from './components/layout/Header';
 import { NetForgeCanvas } from './components/canvas/NetForgeCanvas';
 import { ModalHost } from './components/modals/ModalHost';
@@ -17,6 +18,7 @@ import { useUi } from './store/ui';
 function Workspace() {
   const alertsOpen = useUi((s) => s.alertsOpen);
   const sidebarOpen = useUi((s) => s.sidebarOpen);
+  const view = useUi((s) => s.view);
   return (
     <div className="flex h-full flex-col">
       <Header />
@@ -25,7 +27,7 @@ function Workspace() {
         <div className={`${sidebarOpen ? 'block' : 'hidden'} absolute inset-y-0 left-0 z-30 lg:static lg:block`}>
           <Sidebar />
         </div>
-        <main className="min-w-0 flex-1"><NetForgeCanvas /></main>
+        <main className="min-w-0 flex-1">{view === 'rack' ? <RackView /> : <NetForgeCanvas />}</main>
         {alertsOpen && <div className="absolute inset-y-0 right-0 z-30 xl:static"><AlertsPanel /></div>}
       </div>
     </div>
@@ -36,6 +38,11 @@ export function App() {
   const user = useAuth((s) => s.user);
   const token = useAuth((s) => s.token);
   const theme = useUi((s) => s.theme);
+  const loaded = useTopology((s) => s.loaded);
+  const clientCount = useTopology((s) => s.clients.length);
+  const [, bump] = useState(0);
+  // Read from the URL on every render: registering with an invitation clears it, signing in with one keeps it.
+  const invite = user && token ? urlParams().invite : null;
 
   useEffect(() => { document.documentElement.dataset.theme = theme; }, [theme]);
 
@@ -70,12 +77,18 @@ export function App() {
   return (
     <>
       {user && token ? (
-        <ReactFlowProvider>
-          <Workspace />
-          <ModalHost />
-        </ReactFlowProvider>
+        invite ? (
+          <InviteAccept token={invite} onDone={() => { bump((n) => n + 1); void useTopology.getState().loadClients(); }} />
+        ) : loaded && clientCount === 0 && user.role !== 'admin' ? (
+          <NoClient />
+        ) : (
+          <ReactFlowProvider>
+            <Workspace />
+            <ModalHost />
+          </ReactFlowProvider>
+        )
       ) : (
-        <Login />
+        <AuthScreens />
       )}
       <ConfirmHost />
       <ToastHost />

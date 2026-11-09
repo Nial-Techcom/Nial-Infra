@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import Svg, { G, Line, Rect, Text as SvgText } from 'react-native-svg';
-import { DEVICE_COLORS, formatVlanList } from '@netforge/shared';
+import { DEVICE_COLORS, MEDIUM_COLORS, formatVlanList } from '@netforge/shared';
 import { useT, useTopology } from '../store';
 import { useTheme } from '../theme';
 import { Button, Muted } from '../ui';
@@ -44,8 +44,10 @@ export function Diagram({ onDevice, onLink }: { onDevice: (id: string) => void; 
             return (
               <G key={l.id} onPress={() => onLink(l.id)}>
                 <Line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="transparent" strokeWidth={22} />
-                <Line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={l.mode === 'trunk' ? c.trunk : c.access} strokeWidth={l.mode === 'trunk' ? 3 : 2} />
-                <SvgText x={(a.x + b.x) / 2} y={(a.y + b.y) / 2 - 4} fill={c.ink} fontSize={11} textAnchor="middle">{label}</SvgText>
+                {/* Wire colour = cable type (black Ethernet / orange fibre); a light halo keeps black visible on dark. */}
+                {l.medium !== 'fiber' && <Line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#C8D0DC" strokeOpacity={0.55} strokeWidth={(l.mode === 'trunk' ? 3 : 2) + 3} />}
+                <Line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={l.medium === 'fiber' ? MEDIUM_COLORS.fiber : MEDIUM_COLORS.ethernet} strokeWidth={l.mode === 'trunk' ? 3 : 2} />
+                <SvgText x={(a.x + b.x) / 2} y={(a.y + b.y) / 2 - 4} fill={l.mode === 'trunk' ? c.trunk : c.access} fontSize={11} fontWeight="700" textAnchor="middle">{label}</SvgText>
               </G>
             );
           })}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { DEVICE_ROLES, MGMT_PROTOCOLS, isValidVlan, parseIpCidr, type DeviceRole, type MgmtProtocol } from '@netforge/shared';
-import { api, canEdit, errorText, useSession, useT, useTopology } from '../store';
+import { api, useCanEdit, errorText, useSession, useT, useTopology } from '../store';
 import { useTheme } from '../theme';
 import { Button, Card, Chip, Field, Header, Muted } from '../ui';
 
@@ -12,7 +12,7 @@ export function DeviceScreen({ id, onBack }: { id: string; onBack: () => void })
   const locale = useSession((s) => s.locale);
   const { devices, links, reload } = useTopology();
   const d = devices.find((x) => x.id === id);
-  const edit = canEdit(user);
+  const edit = useCanEdit();
   const [f, setF] = useState(() => ({
     name: d?.name ?? '', model: d?.model ?? '', serial: d?.serial ?? '', role: (d?.role ?? '') as DeviceRole | '', mgmtIp: d?.mgmtIp ?? '', mgmtGateway: d?.mgmtGateway ?? '',
     mgmtPort: d?.mgmtPort ?? '', mgmtVlan: d?.mgmtVlan ? String(d.mgmtVlan) : '', protocols: (d?.mgmtProtocols ?? []) as MgmtProtocol[], username: d?.credentialsUsername ?? '', password: '',

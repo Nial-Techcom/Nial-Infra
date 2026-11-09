@@ -1,8 +1,9 @@
 import { create } from 'zustand';
-import type { Client, Device, Link, Site } from '@netforge/shared';
+import type { Client, Device, LibraryItem, Link, Rack, Site } from '@netforge/shared';
 import { api, errorText } from '../lib/api';
 import { useUi } from './ui';
 import i18n from '../i18n';
+import { useAuth } from './auth';
 
 const LAST = 'nf.client';
 
@@ -12,6 +13,10 @@ interface TopologyState {
   clients: Client[];
   clientId: string | null;
   sites: Site[];
+  racks: Rack[];
+  library: LibraryItem[];
+  /** true once the list of clients has been fetched (to tell "no access yet" from "still loading") */
+  loaded: boolean;
   devices: Device[];
   links: Link[];
   activeSiteId: string | null;
@@ -21,6 +26,10 @@ interface TopologyState {
   loadClients(): Promise<void>;
   selectClient(id: string | null): Promise<void>;
   reload(): Promise<void>;
+  loadLibrary(): Promise<void>;
+  addRack(name: string, units: number, siteId?: string | null): Promise<Rack | null>;
+  updateRack(id: string, patch: Parameters<typeof api.racks.update>[1]): Promise<Rack | null>;
+  removeRack(id: string): Promise<void>;
   setActiveSite(id: string | null): void;
   requestFocus(kind: FocusReq['kind'], id: string): void;
   createClient(name: string): Promise<void>;
@@ -48,14 +57,20 @@ async function guard<T>(fn: () => Promise<T>): Promise<T | null> {
 }
 
 export const useTopology = create<TopologyState>((set, get) => ({
-  clients: [], clientId: null, sites: [], devices: [], links: [], activeSiteId: null, loading: false, focus: null,
+  clients: [], clientId: null, sites: [], racks: [], library: [], loaded: false, devices: [], links: [], activeSiteId: null, loading: false, focus: null,
 
-  reset: () => set({ clients: [], clientId: null, sites: [], devices: [], links: [], activeSiteId: null, focus: null }),
+  reset: () => { useAuth.getState().setClientRole(null); set({ clients: [], clientId: null, sites: [], racks: [], library: [], loaded: false, devices: [], links: [], activeSiteId: null, focus: null }); },
+
+  loadLibrary: async () => {
+    const r = await guard(() => api.library.list());
+    if (r) set({ library: r.items });
+  },
 
   loadClients: async () => {
     const r = await guard(() => api.clients.list());
     if (!r) return;
-    set({ clients: r.clients });
+    set({ clients: r.clients, loaded: true });
+    void get().loadLibrary();
     let last: string | null = null;
     try { last = localStorage.getItem(LAST); } catch { /* ignore */ }
     const current = get().clientId;
@@ -65,7 +80,9 @@ export const useTopology = create<TopologyState>((set, get) => ({
 
   selectClient: async (id) => {
     try { id ? localStorage.setItem(LAST, id) : localStorage.removeItem(LAST); } catch { /* ignore */ }
-    set({ clientId: id, activeSiteId: null, sites: [], devices: [], links: [] });
+    const mine = get().clients.find((c) => c.id === id);
+    useAuth.getState().setClientRole(mine?.myRole ?? null);
+    set({ clientId: id, activeSiteId: null, sites: [], racks: [], devices: [], links: [] });
     if (id) await get().reload();
   },
 
@@ -75,7 +92,7 @@ export const useTopology = create<TopologyState>((set, get) => ({
     set({ loading: true });
     const t = await guard(() => api.clients.topology(id));
     // Ignore a late answer if the user already switched client.
-    if (t && get().clientId === id) set({ sites: t.sites, devices: t.devices, links: t.links });
+    if (t && get().clientId === id) set({ sites: t.sites, racks: t.racks ?? [], devices: t.devices, links: t.links });
     set({ loading: false });
   },
 
@@ -107,6 +124,23 @@ export const useTopology = create<TopologyState>((set, get) => ({
   deleteSite: async (id) => {
     if (!(await guard(() => api.sites.remove(id)))) return;
     set({ sites: get().sites.filter((s) => s.id !== id), devices: get().devices.map((d) => (d.siteId === id ? { ...d, siteId: null } : d)), activeSiteId: get().activeSiteId === id ? null : get().activeSiteId });
+  },
+
+  addRack: async (name, units, siteId = null) => {
+    const clientId = get().clientId;
+    if (!clientId) return null;
+    const r = await guard(() => api.racks.create({ clientId, name, units, siteId }));
+    if (r) set({ racks: [...get().racks, r.rack].sort((a, b) => a.name.localeCompare(b.name)) });
+    return r?.rack ?? null;
+  },
+  updateRack: async (id, patch) => {
+    const r = await guard(() => api.racks.update(id, patch));
+    if (r) set({ racks: get().racks.map((x) => (x.id === id ? r.rack : x)) });
+    return r?.rack ?? null;
+  },
+  removeRack: async (id) => {
+    if (!(await guard(() => api.racks.remove(id)))) return;
+    set({ racks: get().racks.filter((x) => x.id !== id), devices: get().devices.map((d) => (d.rackId === id ? { ...d, rackId: null, rackPos: null } : d)) });
   },
 
   addDevice: async (input) => {

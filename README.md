@@ -32,14 +32,16 @@ Une seule API, trois clients qui partagent le même moteur de validation, les m�
 ## Fonctionnalités
 
 - Bibliothèque d'équipements (pare-feux, switchs, routeurs, serveurs, bornes Wi-Fi, clients) + équipements personnalisés
-- Câbles : ports source/destination, mode Access/Trunk, VLAN natif (par extrémité), VLANs tagués, VLAN d'accès
+- Câbles **Ethernet (noir)** et **fibre (orange)** ; ports source/destination, mode Access/Trunk, VLAN natif (par extrémité), VLANs tagués, VLAN d'accès
 - Fiche équipement à 3 onglets : identité, management (IP, passerelle, protocoles, identifiants **chiffrés AES-256-GCM**), VLAN de management
 - Multi-clients / multi-sites, filtrage par site
 - Validation temps réel (règles R001–R012) : trunk sur un PC, mismatch de VLAN natif, switch↔switch en access, IP de management manquante/dupliquée/invalide, port utilisé deux fois…
 - Recherche globale `Ctrl+P` (nom, IP, port, client)
 - Exports : matrice de câblage CSV/PDF, schéma PNG/SVG (web/desktop), scripts CLI Cisco/Huawei/Arista, fichier `.shmnlt`
+- **Vue Baies** (rack 42 U, placement par glisser-déposer, câbles vers une autre baie signalés) et **vue Schéma** : mêmes données, deux affichages
 - Historique des versions avec restauration
-- Rôles : **Admin** (tout, utilisateurs), **Technicien** (édition + identifiants), **Lecteur** (lecture seule)
+- Comptes : création de compte, **mot de passe oublié**, **invitation par e-mail** à un client (un nouveau compte ne voit aucun client sans invitation)
+- Rôles : **Admin** (tout, SMTP, catalogue d'équipements), **Technicien** / **Lecteur** **par client**
 - Interface FR/EN, thème clair/sombre
 
 ## Démarrage rapide (Docker)
@@ -83,12 +85,12 @@ Sans `TEST_DATABASE_URL`, les tests serveur démarrent un PostgreSQL embarqué (
 
 ## API (`/api/v1`)
 
-`POST /auth/login` · `GET /auth/me` · `/users` · `/clients` (+ `/topology`, `/export`, `/import`, `/revisions`) · `/sites` · `/devices` (+ `/:id/credentials`) · `/links` · `POST /validate` · `GET /export/csv|pdf|config`.
-Détails des schémas : `packages/shared/src/schemas.ts`. Toutes les routes sauf `/auth/login` et `/health` demandent `Authorization: Bearer <jwt>`.
+`POST /auth/login|register|forgot-password|reset-password` · `GET /auth/me|config` · `/invitations/preview|accept` · `/clients/:id/members|invitations` · `/admin/settings` (+ `/smtp-test`) · `/library` · `/racks` · `/users` · `/clients` (+ `/topology`, `/export`, `/import`, `/revisions`) · `/sites` · `/devices` (+ `/:id/credentials`) · `/links` · `POST /validate` · `GET /export/csv|pdf|config`.
+Détails des schémas : `packages/shared/src/schemas.ts`. Toutes les routes sauf `/auth/*` (login, register, forgot/reset, config), `/invitations/preview` et `/health` demandent `Authorization: Bearer <jwt>`.
 
 ## Sécurité
 
-Mots de passe hachés (bcrypt), JWT, limitation de débit sur le login, `helmet`, CORS en liste blanche, identifiants des équipements chiffrés (AES-256-GCM) et jamais exportés dans les `.shmnlt`. Le mot de passe d'un équipement n'est renvoyé que par `GET /devices/:id/credentials` (admin/technicien).
+Mots de passe hachés (bcrypt), JWT (révoqués après un reset de mot de passe), droits vérifiés **par client** côté serveur, jetons d'invitation/reset aléatoires stockés hachés (usage unique, 7 j / 1 h), mot de passe SMTP chiffré, liens d'e-mail construits depuis l'adresse publique configurée (jamais depuis l'en-tête Host), limitation de débit sur le login, `helmet`, CORS en liste blanche, identifiants des équipements chiffrés (AES-256-GCM) et jamais exportés dans les `.shmnlt`. Le mot de passe d'un équipement n'est renvoyé que par `GET /devices/:id/credentials` (admin/technicien).
 
 ## Contact & licence
 
