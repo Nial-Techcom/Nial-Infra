@@ -34,6 +34,9 @@ export function CableEdge({ id, source, target, data, selected }: EdgeProps<Cabl
   const a: Box = { x: sn.positionAbsolute.x, y: sn.positionAbsolute.y, w: sn.width, h: sn.height };
   const b: Box = { x: tn.positionAbsolute.x, y: tn.positionAbsolute.y, w: tn.width, h: tn.height };
   const trunk = link.mode === 'trunk';
+  const fiber = link.medium === 'fiber';
+  // The wire itself shows the cable type (black = Ethernet, orange = fibre); the VLAN chip shows the mode.
+  const wire = fiber ? 'rgb(var(--fiber))' : 'rgb(var(--eth))';
   const color = severity === 'critical' ? 'rgb(var(--crit))' : trunk ? 'rgb(var(--trunk))' : 'rgb(var(--access))';
 
   let path: string;
@@ -68,12 +71,14 @@ export function CableEdge({ id, source, target, data, selected }: EdgeProps<Cabl
 
   return (
     <g style={{ opacity: dim ? 0.25 : 1 }}>
+      {/* A thin light halo keeps the black Ethernet cable readable on the dark theme. */}
+      <path d={path} fill="none" stroke="rgb(var(--eth-halo))" strokeOpacity={fiber ? 0 : 0.55} strokeWidth={(trunk ? 3 : 2) + (selected ? 2 : 0) + 3} strokeLinecap="round" style={{ pointerEvents: 'none' }} />
       <BaseEdge id={id} path={path} interactionWidth={18}
-        style={{ stroke: color, strokeWidth: (trunk ? 3 : 2) + (selected ? 2 : 0), strokeDasharray: severity === 'critical' ? '6 4' : undefined }} />
+        style={{ stroke: wire, strokeWidth: (trunk ? 3 : 2) + (selected ? 2 : 0), strokeDasharray: severity === 'critical' ? '6 4' : undefined }} />
       <EdgeLabelRenderer>
-        <div className={tag} style={{ ...place(p1), borderColor: color, color: 'rgb(var(--ink))' }}>{link.sourcePort}</div>
-        <div className={tag} style={{ ...place(p2), borderColor: color, color: 'rgb(var(--ink))' }}>{link.destPort}</div>
-        <div className={`${tag} font-medium`} style={{ ...place(mid), borderColor: color, background: color, color: '#10151c', outline: selected ? '2px solid rgb(var(--ink))' : undefined }}>{vlan}</div>
+        <div className={tag} style={{ ...place(p1), borderColor: wire, color: 'rgb(var(--ink))' }}>{link.sourcePort}</div>
+        <div className={tag} style={{ ...place(p2), borderColor: wire, color: 'rgb(var(--ink))' }}>{link.destPort}</div>
+        <div className={`${tag} font-medium`} style={{ ...place(mid), borderColor: color, background: color, color: '#10151c', outline: selected ? '2px solid rgb(var(--ink))' : undefined }}>{fiber ? '⌁ ' : ''}{vlan}</div>
       </EdgeLabelRenderer>
     </g>
   );
