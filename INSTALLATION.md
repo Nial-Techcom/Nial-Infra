@@ -183,6 +183,8 @@ docker compose up -d --build
 ```
 Les données restent (stockées dans le volume `postgres_data`). Les migrations de base se font automatiquement au démarrage.
 
+👉 Tuto complet pas à pas (sauvegarde, vérifications, retour en arrière) : [docs/UPDATE.md](docs/UPDATE.md).
+
 ## 11. Check-list sécurité
 
 - [ ] Secrets générés au hasard, `.env` jamais publié sur GitHub (il est dans `.gitignore`)
