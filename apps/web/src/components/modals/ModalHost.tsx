@@ -1,6 +1,8 @@
 import { useUi } from '../../store/ui';
 import { CableModal } from './CableModal';
 import { DeviceModal } from './DeviceModal';
+import { AdminModal } from './AdminModal';
+import { MembersModal } from './MembersModal';
 import { ConfigModal, CustomDeviceModal, HistoryModal, NameModal, PasswordModal, SearchModal, UsersModal } from './OtherModals';
 
 /** Renders whichever modal the UI store asks for. Keyed so each opening starts from fresh form state. */
@@ -15,6 +17,8 @@ export function ModalHost() {
     case 'name': return <NameModal title={m.title} label={m.label} initial={m.initial} onSubmit={m.onSubmit} />;
     case 'history': return <HistoryModal />;
     case 'users': return <UsersModal />;
+    case 'admin': return <AdminModal />;
+    case 'members': return <MembersModal />;
     case 'password': return <PasswordModal />;
     case 'search': return <SearchModal />;
   }

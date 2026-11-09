@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import type { Device, Link, Site } from './types';
-import { DEVICE_ROLES, DEVICE_TYPES, MGMT_PROTOCOLS } from './types';
+import type { Device, Link, Rack, Site } from './types';
+import { DEVICE_ROLES, DEVICE_TYPES, LINK_MEDIA, MGMT_PROTOCOLS } from './types';
 
 /**
  * `.shmnlt` is NetForge's portable JSON topology format (one client).
@@ -14,6 +14,7 @@ export const shmnltSchema = z.object({
   exportedAt: z.string().optional(),
   client: z.object({ name: z.string().min(1).max(100) }),
   sites: z.array(z.object({ id: z.string(), name: z.string().min(1).max(100) })).max(500).default([]),
+  racks: z.array(z.object({ id: z.string(), name: z.string().min(1).max(60), units: z.number().int().min(1).max(60), siteId: z.string().nullable().optional() })).max(500).optional(),
   devices: z
     .array(
       z.object({
@@ -31,6 +32,9 @@ export const shmnltSchema = z.object({
         mgmtVlan: vlan.nullable().optional(),
         portCount: z.number().int().min(0).max(512).optional(),
         portPrefix: z.string().max(30).optional(),
+        rackId: z.string().nullable().optional(),
+        rackPos: z.number().int().min(1).max(100).nullable().optional(),
+        rackUnits: z.number().int().min(1).max(48).optional(),
         x: z.number().finite().optional(),
         y: z.number().finite().optional(),
       }),
@@ -45,6 +49,7 @@ export const shmnltSchema = z.object({
         destId: z.string().min(1),
         destPort: z.string().min(1).max(50),
         mode: z.enum(['access', 'trunk']),
+        medium: z.enum(LINK_MEDIA as [string, ...string[]]).optional(),
         nativeVlan: vlan.nullable().optional(),
         destNativeVlan: vlan.nullable().optional(),
         taggedVlans: z.array(vlan).optional(),
@@ -56,13 +61,14 @@ export const shmnltSchema = z.object({
 
 export type ShmnltFile = z.infer<typeof shmnltSchema>;
 
-export function buildShmnlt(clientName: string, sites: Site[], devices: Device[], links: Link[]): ShmnltFile {
+export function buildShmnlt(clientName: string, sites: Site[], devices: Device[], links: Link[], racks: Rack[] = []): ShmnltFile {
   return {
     format: 'shmnlt',
     version: 1,
     exportedAt: new Date().toISOString(),
     client: { name: clientName },
     sites: sites.map((s) => ({ id: s.id, name: s.name })),
+    racks: racks.map((r) => ({ id: r.id, name: r.name, units: r.units, siteId: r.siteId })),
     devices: devices.map((d) => ({
       id: d.id,
       siteId: d.siteId,
@@ -78,6 +84,9 @@ export function buildShmnlt(clientName: string, sites: Site[], devices: Device[]
       mgmtVlan: d.mgmtVlan,
       portCount: d.portCount,
       portPrefix: d.portPrefix,
+      rackId: d.rackId,
+      rackPos: d.rackPos,
+      rackUnits: d.rackUnits,
       x: d.x,
       y: d.y,
     })),
@@ -88,6 +97,7 @@ export function buildShmnlt(clientName: string, sites: Site[], devices: Device[]
       destId: l.destId,
       destPort: l.destPort,
       mode: l.mode,
+      medium: l.medium,
       nativeVlan: l.nativeVlan,
       destNativeVlan: l.destNativeVlan,
       taggedVlans: l.taggedVlans,

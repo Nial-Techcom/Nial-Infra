@@ -18,7 +18,7 @@ export function writeCablingPdf(out: Writable, client: Client, devices: Device[]
 
   doc.fontSize(13).text('Cabling matrix').moveDown(0.3);
   const rows = buildCablingMatrix(devices, links);
-  const widths = [130, 90, 130, 90, 50, 60, 60, 120];
+  const widths = [115, 75, 115, 75, 55, 50, 55, 55, 105];
   const drawRow = (r: unknown[], bold: boolean) => {
     if (doc.y > doc.page.height - 60) doc.addPage();
     const y = doc.y;

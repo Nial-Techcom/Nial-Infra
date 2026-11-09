@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Alert, FlatList, RefreshControl, Text, TextInput, View } from 'react-native';
 import { useState } from 'react';
-import { api, canEdit, errorText, useSession, useT, useTopology } from '../store';
+import { api, isAdmin, errorText, useSession, useT, useTopology } from '../store';
 import { useTheme } from '../theme';
 import { Button, Card, Header, Muted } from '../ui';
 
@@ -12,11 +12,18 @@ export function Clients({ onOpen, onSettings }: { onOpen: (id: string) => void; 
   const locale = useSession((s) => s.locale);
   const { clients, loading, error, loadClients } = useTopology();
   const [name, setName] = useState('');
+  const [code, setCode] = useState('');
   useEffect(() => { void loadClients(); }, [loadClients]);
 
   async function add() {
     if (!name.trim()) return;
     try { await api.clients.create(name.trim()); setName(''); await loadClients(); } catch (e) { Alert.alert(t('common.error'), errorText(e, locale)); }
+  }
+
+  // An invitation arrives by e-mail as a link: paste it (or just its code) to join the client.
+  async function join() {
+    const m = code.match(/invite=([\w-]+)/);
+    try { await api.invitations.accept((m ? m[1] : code).trim()); setCode(''); await loadClients(); } catch (e) { Alert.alert(t('common.error'), errorText(e, locale)); }
   }
 
   return (
@@ -26,12 +33,17 @@ export function Clients({ onOpen, onSettings }: { onOpen: (id: string) => void; 
       <FlatList
         data={clients} keyExtractor={(x) => x.id} contentContainerStyle={{ padding: 12 }}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={loadClients} tintColor={c.mute} />}
-        ListEmptyComponent={loading ? null : <Muted>{t('sidebar.noClient')}</Muted>}
+        ListEmptyComponent={loading ? null : <Muted>{user?.role === 'admin' ? t('sidebar.noClient') : t('account.noClientBody')}</Muted>}
         renderItem={({ item }) => <Card onPress={() => onOpen(item.id)}><Text style={{ color: c.ink, fontSize: 16, fontWeight: '600' }}>{item.name}</Text></Card>}
-        ListFooterComponent={user?.role === 'admin' ? (
+        ListFooterComponent={user?.role !== 'admin' ? (
+          <View style={{ marginTop: 12, gap: 8 }}>
+            <TextInput value={code} onChangeText={setCode} autoCapitalize="none" autoCorrect={false} placeholder={t('account.inviteHintMobile')} placeholderTextColor={c.mute} style={{ color: c.ink, backgroundColor: c.panel, borderColor: c.line, borderWidth: 1, borderRadius: 8, padding: 10, fontSize: 16 }} />
+            <Button kind="primary" title={t('account.inviteAccept')} disabled={code.trim().length < 20} onPress={join} />
+          </View>
+        ) : user?.role === 'admin' ? (
           <View style={{ marginTop: 12, gap: 8 }}>
             <TextInput value={name} onChangeText={setName} placeholder={t('sidebar.newClient')} placeholderTextColor={c.mute} style={{ color: c.ink, backgroundColor: c.panel, borderColor: c.line, borderWidth: 1, borderRadius: 8, padding: 10, fontSize: 16 }} />
-            <Button kind="primary" title={t('common.create')} disabled={!name.trim() || !canEdit(user)} onPress={add} />
+            <Button kind="primary" title={t('common.create')} disabled={!name.trim() || !isAdmin(user)} onPress={add} />
           </View>
         ) : null}
       />

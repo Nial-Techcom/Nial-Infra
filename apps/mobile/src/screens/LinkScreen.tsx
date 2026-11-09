@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { devicePorts, formatVlanList, isValidVlan, parseVlanList, type LinkMode } from '@netforge/shared';
-import { api, canEdit, errorText, useSession, useT, useTopology } from '../store';
+import { api, useCanEdit, errorText, useSession, useT, useTopology } from '../store';
 import { useTheme } from '../theme';
 import { Button, Chip, Field, Header, Muted } from '../ui';
 
@@ -24,9 +24,9 @@ export function LinkScreen({ id, onBack }: { id?: string; onBack: () => void }) 
   const locale = useSession((s) => s.locale);
   const { devices, links, reload } = useTopology();
   const existing = id ? links.find((l) => l.id === id) : undefined;
-  const edit = canEdit(user);
+  const edit = useCanEdit();
   const [f, setF] = useState(() => ({
-    sourceId: existing?.sourceId ?? '', destId: existing?.destId ?? '', sourcePort: existing?.sourcePort ?? '', destPort: existing?.destPort ?? '', mode: (existing?.mode ?? 'access') as LinkMode,
+    sourceId: existing?.sourceId ?? '', destId: existing?.destId ?? '', sourcePort: existing?.sourcePort ?? '', destPort: existing?.destPort ?? '', mode: (existing?.mode ?? 'access') as LinkMode, medium: (existing?.medium ?? 'ethernet') as 'ethernet' | 'fiber',
     nativeVlan: existing?.nativeVlan ? String(existing.nativeVlan) : '', destNativeVlan: existing?.destNativeVlan ? String(existing.destNativeVlan) : '',
     tagged: existing ? formatVlanList(existing.taggedVlans) : '', accessVlan: existing?.accessVlan ? String(existing.accessVlan) : '',
   }));
@@ -50,7 +50,7 @@ export function LinkScreen({ id, onBack }: { id?: string; onBack: () => void }) 
     if (bad) return;
     setBusy(true);
     const body = {
-      sourcePort: f.sourcePort.trim(), destPort: f.destPort.trim(), mode: f.mode,
+      sourcePort: f.sourcePort.trim(), destPort: f.destPort.trim(), mode: f.mode, medium: f.medium,
       nativeVlan: trunk && f.nativeVlan ? Number(f.nativeVlan) : null, destNativeVlan: trunk && f.destNativeVlan ? Number(f.destNativeVlan) : null,
       taggedVlans: trunk ? parseVlanList(f.tagged) : [], accessVlan: !trunk && f.accessVlan ? Number(f.accessVlan) : null,
     };
@@ -87,6 +87,9 @@ export function LinkScreen({ id, onBack }: { id?: string; onBack: () => void }) 
         <Field label={`${t('modals.cable.destPort')}${dst ? ` (${dst.name})` : ''}`} value={f.destPort} onChangeText={(v) => set('destPort', v)} editable={edit} />
         {portChips(dst, f.destPort, (p) => set('destPort', p))}
         <Muted>• = {t('mobile.portInUse')}</Muted>
+
+        <Text style={{ color: c.mute, fontSize: 12, fontWeight: '600', marginVertical: 8 }}>{t('modals.cable.medium')}</Text>
+        <View style={{ flexDirection: 'row', marginBottom: 8 }}>{(['ethernet', 'fiber'] as const).map((m) => <Chip key={m} label={t(`modals.cable.${m}`)} active={f.medium === m} onPress={() => edit && set('medium', m)} />)}</View>
 
         <Text style={{ color: c.mute, fontSize: 12, fontWeight: '600', marginVertical: 8 }}>{t('modals.cable.mode')}</Text>
         <View style={{ flexDirection: 'row', marginBottom: 8 }}>{(['access', 'trunk'] as const).map((m) => <Chip key={m} label={t(`modals.cable.${m}`)} active={f.mode === m} onPress={() => edit && set('mode', m)} />)}</View>
