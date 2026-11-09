@@ -11,12 +11,12 @@
 :root,
 [data-theme='dark'] {
   --bg: 20 26 34; --panel: 28 36 48; --raised: 36 46 60; --line: 44 55 70; --ink: 221 228 236; --mute: 130 146 164;
-  --access: 76 141 246; --trunk: 240 166 58; --crit: 242 85 90; --warn: 240 166 58; --info: 99 179 237; --ok: 74 200 140;
+  --access: 76 141 246; --trunk: 167 139 250; --eth: 17 17 17; --fiber: 242 140 40; --eth-halo: 200 208 220; --crit: 242 85 90; --warn: 240 166 58; --info: 99 179 237; --ok: 74 200 140;
   color-scheme: dark;
 }
 [data-theme='light'] {
   --bg: 236 239 243; --panel: 255 255 255; --raised: 245 247 250; --line: 210 217 226; --ink: 24 32 44; --mute: 98 112 130;
-  --access: 37 99 220; --trunk: 192 112 10; --crit: 214 40 52; --warn: 176 100 8; --info: 14 116 190; --ok: 22 140 90;
+  --access: 37 99 220; --trunk: 109 40 217; --eth: 17 17 17; --fiber: 230 120 10; --eth-halo: 255 255 255; --crit: 214 40 52; --warn: 176 100 8; --info: 14 116 190; --ok: 22 140 90;
   color-scheme: light;
 }
 

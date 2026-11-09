@@ -9,6 +9,8 @@ export type Modal =
   | { kind: 'name'; title: string; label: string; initial: string; onSubmit: (v: string) => Promise<void> }
   | { kind: 'history' }
   | { kind: 'users' }
+  | { kind: 'admin' }
+  | { kind: 'members' }
   | { kind: 'password' }
   | { kind: 'search' }
   | null;
@@ -17,6 +19,7 @@ export interface Toast { id: number; text: string; tone: 'ok' | 'error' }
 export interface ConfirmReq { title: string; message: string; danger?: boolean; confirmLabel?: string; onConfirm: () => void | Promise<void> }
 
 type Theme = 'dark' | 'light';
+export type View = 'schema' | 'rack';
 const savedTheme = (): Theme => {
   try {
     const t = localStorage.getItem('nf.theme');
@@ -30,6 +33,9 @@ interface UiState {
   toasts: Toast[];
   confirm: ConfirmReq | null;
   theme: Theme;
+  /** Schema and Rack are two views of the same data (like a site): only the way it is drawn changes. */
+  view: View;
+  setView(v: View): void;
   alertsOpen: boolean;
   sidebarOpen: boolean;
   open(m: Modal): void;
@@ -48,6 +54,8 @@ export const useUi = create<UiState>((set, get) => ({
   toasts: [],
   confirm: null,
   theme: savedTheme(),
+  view: 'schema',
+  setView: (view) => set({ view }),
   alertsOpen: true,
   sidebarOpen: true,
   open: (modal) => set({ modal }),

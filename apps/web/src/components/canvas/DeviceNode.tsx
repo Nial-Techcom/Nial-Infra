@@ -8,6 +8,7 @@ export interface DeviceNodeData {
   severity: 'critical' | 'warning' | 'info' | null;
   dim: boolean;
   siteName: string | null;
+  rackLabel?: string | null;
   editable: boolean;
 }
 
@@ -16,7 +17,7 @@ const MAX_LEDS = 48;
 
 /** A device drawn as a rack faceplate: one LED per port, lit with the colour of the cable plugged into it. */
 export function DeviceNode({ data, selected }: NodeProps<DeviceNodeData>) {
-  const { device: d, usedPorts, severity, dim, siteName, editable } = data;
+  const { device: d, usedPorts, severity, dim, siteName, rackLabel, editable } = data;
   const Icon = ICONS[d.type];
   const ports = devicePorts({ portCount: d.portCount, portPrefix: d.portPrefix });
   const shown = ports.slice(0, MAX_LEDS);
@@ -44,7 +45,7 @@ export function DeviceNode({ data, selected }: NodeProps<DeviceNodeData>) {
         </div>
       )}
       <div className="flex items-center justify-between px-2.5 pb-1.5 text-[10px] text-mute">
-        <span className="truncate">{siteName ?? ''}</span>
+        <span className="truncate">{[siteName, rackLabel].filter(Boolean).join(' · ')}</span>
         <span className="mono">{Object.keys(usedPorts).length + extraUsed}/{d.portCount}</span>
       </div>
       {editable && <Handle type="source" position={Position.Right} className="!opacity-0 transition-opacity group-hover:!opacity-100" style={{ right: -6 }} />}

@@ -79,7 +79,7 @@ export const fr: Translation = {
   },
   users: {
     title: 'Utilisateurs', add: 'Ajouter un utilisateur', role: 'Rôle', email: 'E-mail', name: 'Nom', password: 'Mot de passe',
-    deleteSelf: 'Vous ne pouvez pas supprimer votre propre compte.',
+    deleteSelf: 'Vous ne pouvez pas supprimer votre propre compte.', confirmPassword: 'Confirmer le mot de passe', passwordMismatch: 'Les deux mots de passe sont différents.',
   },
   canvas: {
     empty: 'Glissez un équipement depuis la bibliothèque pour commencer', connectHint: 'Tirez depuis la poignée d’un équipement vers un autre pour créer un câble',

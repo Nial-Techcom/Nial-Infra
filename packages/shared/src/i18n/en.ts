@@ -77,7 +77,7 @@ export const en = {
   },
   users: {
     title: 'Users', add: 'Add user', role: 'Role', email: 'Email', name: 'Name', password: 'Password',
-    deleteSelf: 'You cannot delete your own account.',
+    deleteSelf: 'You cannot delete your own account.', confirmPassword: 'Confirm password', passwordMismatch: 'The two passwords differ.',
   },
   canvas: {
     empty: 'Drag a device from the library to start', connectHint: 'Drag from a device handle to another device to create a cable',
