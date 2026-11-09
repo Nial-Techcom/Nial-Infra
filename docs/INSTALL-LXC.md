@@ -172,7 +172,7 @@ gunzip -c ~/netforge-2026-11-08.sql.gz | docker compose exec -T postgres psql -U
 ```bash
 cd ~/NetForge && git pull && docker compose up -d --build
 ```
-Les données sont dans un volume Docker : elles restent. Les migrations s'appliquent toutes seules.
+Les données sont dans un volume Docker : elles restent. Les migrations s'appliquent toutes seules. Tuto détaillé : [UPDATE.md](UPDATE.md).
 
 ---
 
