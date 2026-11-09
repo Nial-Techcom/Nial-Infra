@@ -100,7 +100,7 @@ export const en = {
     registrationClosed: 'Account creation is disabled on this server.', fullName: 'Full name', passwordHint: '8 characters minimum',
     noClientTitle: 'No client yet', noClientBody: 'Your account has no access to any client. Ask an administrator or a colleague to invite you by email, then open the link you receive.',
     inviteTitle: 'Invitation', inviteFor: 'You are invited to join "{{client}}" as {{role}}.', inviteWrongUser: 'This invitation was sent to {{email}}. Sign in with that address.',
-    inviteAccept: 'Join the client', inviteAccepted: 'You joined the client.', inviteInvalid: 'This invitation is invalid, already used or expired.',
+    inviteAccept: 'Join the client', inviteAccepted: 'You joined the client.', inviteInvalid: 'This invitation is invalid, already used or expired.', inviteHintMobile: 'Paste the invitation link or code from your email',
   },
   admin: {
     title: 'Administration', general: 'General', publicUrl: 'Public address of NetForge', publicUrlHint: 'Used in the links sent by email, e.g. https://netforge.example.com',

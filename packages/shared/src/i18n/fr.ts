@@ -102,7 +102,7 @@ export const fr: Translation = {
     registrationClosed: 'La création de compte est désactivée sur ce serveur.', fullName: 'Nom complet', passwordHint: '8 caractères minimum',
     noClientTitle: 'Aucun client pour le moment', noClientBody: 'Ton compte n’a accès à aucun client. Demande à un administrateur ou un collègue de t’inviter par e-mail, puis ouvre le lien reçu.',
     inviteTitle: 'Invitation', inviteFor: 'Tu es invité à rejoindre « {{client}} » en tant que {{role}}.', inviteWrongUser: 'Cette invitation a été envoyée à {{email}}. Connecte-toi avec cette adresse.',
-    inviteAccept: 'Rejoindre le client', inviteAccepted: 'Tu as rejoint le client.', inviteInvalid: 'Cette invitation est invalide, déjà utilisée ou expirée.',
+    inviteAccept: 'Rejoindre le client', inviteAccepted: 'Tu as rejoint le client.', inviteInvalid: 'Cette invitation est invalide, déjà utilisée ou expirée.', inviteHintMobile: 'Colle le lien ou le code d’invitation reçu par e-mail',
   },
   admin: {
     title: 'Administration', general: 'Général', publicUrl: 'Adresse publique de NetForge', publicUrlHint: 'Utilisée dans les liens envoyés par e-mail, ex. https://netforge.exemple.com',
