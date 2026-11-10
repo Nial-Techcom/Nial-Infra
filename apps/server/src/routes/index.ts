@@ -15,6 +15,7 @@ import { baseUrl, inviteMail, resetMail, sendMail, smtpReady } from '../mailer';
 import type { Config } from '../config';
 import { adminOnly, authenticate, signToken } from '../auth';
 import { tx } from '../db';
+import { LoginThrottle } from '../throttle';
 import { ah, HttpError } from '../errors';
 import { writeCablingPdf } from '../pdf';
 import * as store from '../store';
@@ -29,24 +30,32 @@ export function buildRouter(pool: Pool, cfg: Config): Router {
   const auth = authenticate(pool, cfg);
   const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: cfg.loginRateLimit, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many attempts, try again later' } });
 
+  const accountThrottle = new LoginThrottle(cfg.accountLockLimit);
+
   r.get('/health', ah(async (_req, res) => { await pool.query('SELECT 1'); res.json({ status: 'ok' }); }));
 
   /* ---------------------------------- auth ---------------------------------- */
   r.post('/auth/login', loginLimiter, ah(async (req, res) => {
     const { email, password } = loginSchema.parse(req.body);
+    const key = email.toLowerCase();
+    const wait = accountThrottle.retryAfter(key);
+    if (wait) { res.setHeader('Retry-After', String(wait)); throw new HttpError(429, 'Too many failed attempts for this account, try again later'); }
     const row = await store.users.getWithHash(pool, email);
     const ok = await bcrypt.compare(password, row?.password_hash ?? DUMMY_HASH);
-    if (!row || !ok) throw new HttpError(401, 'Invalid email or password');
+    if (!row || !ok) { accountThrottle.fail(key); throw new HttpError(401, 'Invalid email or password'); }
+    accountThrottle.ok(key);
     const user = store.mapUser(row);
-    res.json({ token: signToken(user, cfg), user });
+    res.json({ token: signToken(user, cfg, store.passwordVersion(row)), user });
   }));
   r.get('/auth/me', auth, (req, res) => { res.json({ user: req.user }); });
   r.post('/auth/change-password', auth, ah(async (req, res) => {
     const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
     const hash = await store.users.hashOf(pool, req.user!.id);
     if (!hash || !(await bcrypt.compare(currentPassword, hash))) throw new HttpError(400, 'Current password is incorrect');
+    // Every session opened before the change stops working; the caller gets a fresh token so it stays signed in.
     await store.users.update(pool, req.user!.id, { passwordHash: await bcrypt.hash(newPassword, cfg.bcryptRounds) });
-    res.json({ success: true });
+    const fresh = await store.users.getAuth(pool, req.user!.id);
+    res.json({ success: true, token: signToken(req.user!, cfg, fresh?.passwordChangedAt ?? 0) });
   }));
 
   /* ------------------- registration, invitations, password reset ------------------- */
@@ -335,7 +344,8 @@ export function buildRouter(pool: Pool, cfg: Config): Router {
   }));
   r.get('/devices/:id/credentials', auth, ah(async (req, res) => {
     await requireClient(pool, req, await clientOf.device(pool, param(req, 'id')), 'write');
-    res.setHeader('Cache-Control', 'no-store');
+    // Who looked at which device password, and when (stdout → docker compose logs).
+    console.log(`[audit] ${new Date().toISOString()} credentials revealed device=${param(req, 'id')} by user=${req.user!.id}`);
     res.json(await store.devices.credentials(pool, param(req, 'id'), cfg.encryptionKey));
   }));
 

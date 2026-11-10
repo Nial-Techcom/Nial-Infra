@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ApiError, type AuthConfig, type InvitePreview } from '@netforge/shared';
+import { ApiError, isInsecureRemoteUrl, type AuthConfig, type InvitePreview } from '@netforge/shared';
 import { api, errorText } from '../lib/api';
 import { getServerUrl, isDesktop, setServerUrl } from '../lib/platform';
 import { useAuth } from '../store/auth';
@@ -95,6 +95,7 @@ export function AuthScreens() {
         {invite && <p className="rounded border border-access/50 bg-access/10 p-2 text-sm">{t('account.inviteFor', { client: invite.clientName, role: t(`roles.${invite.role}`) })}</p>}
         {inviteBad && <p role="alert" className="rounded border border-crit p-2 text-sm text-crit">{t('account.inviteInvalid')}</p>}
         {isDesktop && mode !== 'reset' && <Field label={t('auth.serverUrl')}><input className="nf-input mono" value={server} onChange={(e) => setServer(e.target.value)} required inputMode="url" autoCapitalize="off" /></Field>}
+        {isDesktop && isInsecureRemoteUrl(server) && <p role="alert" className="rounded border border-warn p-2 text-xs text-warn">{t('auth.insecureServer')}</p>}
         {mode === 'forgot' && <p className="text-sm text-mute">{cfg && !cfg.emailEnabled ? t('account.emailDisabled') : t('account.forgotHelp')}</p>}
         {registerClosed && <p role="alert" className="text-sm text-crit">{t('account.registrationClosed')}</p>}
 

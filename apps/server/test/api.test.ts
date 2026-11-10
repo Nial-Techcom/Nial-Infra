@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import * as store from '../src/store';
 import { setupApp } from './helpers';
 
@@ -216,7 +216,9 @@ describe('users', () => {
   });
   it('changes password', async () => {
     expect((await c.api.post(`${B}/auth/change-password`).set(c.as(c.tokens.viewer)).send({ currentPassword: 'wrong', newPassword: 'newpassword1' })).status).toBe(400);
-    expect((await c.api.post(`${B}/auth/change-password`).set(c.as(c.tokens.viewer)).send({ currentPassword: 'password123', newPassword: 'newpassword1' })).status).toBe(200);
+    const ch = await c.api.post(`${B}/auth/change-password`).set(c.as(c.tokens.viewer)).send({ currentPassword: 'password123', newPassword: 'newpassword1' });
+    expect(ch.status).toBe(200);
+    c.tokens.viewer = ch.body.token; // the old session is revoked, the response carries the new one
     expect((await c.api.post(`${B}/auth/login`).send({ email: 'viewer@test.io', password: 'newpassword1' })).status).toBe(200);
   });
 });
@@ -349,7 +351,6 @@ describe('accounts, invitations and password reset', () => {
     const token = lastLink(/reset=([\w-]+)/).split('=')[1]!;
     expect((await c.api.post(`${B}/auth/reset-password`).send({ token: 'y'.repeat(40), newPassword: 'brandnewpass' })).status).toBe(400);
     const oldToken = await c.login('resetme@test.io');
-    await new Promise((r) => setTimeout(r, 1100));
     expect((await c.api.post(`${B}/auth/reset-password`).send({ token, newPassword: 'brandnewpass' })).status).toBe(200);
     // single use, old password and old sessions are dead
     expect((await c.api.post(`${B}/auth/reset-password`).send({ token, newPassword: 'anotherpass1' })).status).toBe(400);
@@ -448,5 +449,177 @@ describe('racks and cable media', () => {
     expect(d).toMatchObject({ rackPos: 3, rackUnits: 2 });
     expect(d.rackId).toBe(topo.racks[0].id);
     expect(topo.links.some((l: any) => l.medium === 'fiber')).toBe(true);
+  });
+});
+
+/* ------------------------------ security audit regressions ------------------------------ */
+import { LoginThrottle } from '../src/throttle';
+import { ensureAdmin } from '../src/bootstrap';
+import bcryptjs from 'bcryptjs';
+
+describe('security: sessions and brute force', () => {
+  const mkUser = async (email: string, role = 'technician') =>
+    store.users.create(c.pool, { email, name: email, role, passwordHash: await bcryptjs.hash('password123', 4) });
+
+  it('changing your password revokes the other sessions but keeps the current one', async () => {
+    await mkUser('pw@test.io');
+    const old = await c.login('pw@test.io');
+    const r = await c.api.post(`${B}/auth/change-password`).set(c.as(old)).send({ currentPassword: 'password123', newPassword: 'another-password' });
+    expect(r.status).toBe(200);
+    expect(r.body.token).toBeTruthy();
+    expect((await c.api.get(`${B}/auth/me`).set(c.as(old))).status).toBe(401);
+    expect((await c.api.get(`${B}/auth/me`).set(c.as(r.body.token))).status).toBe(200);
+  });
+
+  it('an admin resetting someone else\'s password revokes that user\'s sessions', async () => {
+    const u = await mkUser('victim@test.io');
+    const old = await c.login('victim@test.io');
+    expect((await c.api.patch(`${B}/users/${u.id}`).set(c.as(c.tokens.admin)).send({ password: 'reset-by-admin-1' })).status).toBe(200);
+    expect((await c.api.get(`${B}/auth/me`).set(c.as(old))).status).toBe(401);
+  });
+
+  it('rejects forged, unsigned ("alg":"none") and wrong-secret tokens', async () => {
+    const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
+    const me = (await c.api.get(`${B}/auth/me`).set(c.as(c.tokens.admin))).body.user;
+    const none = `${b64({ alg: 'none', typ: 'JWT' })}.${b64({ sub: me.id, role: 'admin' })}.`;
+    const jwt = (await import('jsonwebtoken')).default;
+    const wrong = jwt.sign({ role: 'admin' }, 'not-the-secret-not-the-secret-123', { subject: me.id });
+    const hs512 = jwt.sign({ role: 'admin' }, 'test-secret-test-secret-test-secret', { subject: me.id, algorithm: 'HS512' });
+    for (const t of [none, wrong, hs512, 'garbage', '']) expect((await c.api.get(`${B}/auth/me`).set({ Authorization: `Bearer ${t}` })).status).toBe(401);
+  });
+
+  it('a token cannot raise the role: it is read from the database, not from the token', async () => {
+    const jwt = (await import('jsonwebtoken')).default;
+    const v = await mkUser('lowly@test.io', 'viewer');
+    const forged = jwt.sign({ role: 'admin', pv: 0 }, 'test-secret-test-secret-test-secret', { subject: v.id, algorithm: 'HS256' });
+    expect((await c.api.get(`${B}/users`).set(c.as(forged))).status).toBe(403);
+  });
+
+  it('locks an account after too many failures, whatever the IP, and a success clears the counter', async () => {
+    await mkUser('lock@test.io');
+    for (let i = 0; i < 10; i++) expect((await c.api.post(`${B}/auth/login`).send({ email: 'lock@test.io', password: 'wrong-wrong' })).status).toBe(401);
+    const locked = await c.api.post(`${B}/auth/login`).send({ email: 'Lock@Test.io', password: 'password123' });
+    expect(locked.status).toBe(429);
+    expect(Number(locked.headers['retry-after'])).toBeGreaterThan(0);
+    // other accounts are unaffected
+    expect((await c.api.post(`${B}/auth/login`).send({ email: 'viewer@test.io', password: 'newpassword1' })).status).toBe(200);
+  });
+
+  it('LoginThrottle expires, resets on success and stays bounded', () => {
+    let t = 0;
+    const th = new LoginThrottle(3, 1000, 5, () => t);
+    for (let i = 0; i < 3; i++) th.fail('a');
+    expect(th.retryAfter('a')).toBeGreaterThan(0);
+    t = 1001; expect(th.retryAfter('a')).toBe(0);
+    th.fail('b'); th.fail('b'); th.ok('b'); th.fail('b'); th.fail('b'); expect(th.retryAfter('b')).toBe(0);
+    for (let i = 0; i < 50; i++) th.fail(`k${i}`);
+    expect((th as any).hits.size).toBeLessThanOrEqual(5);
+  });
+
+  it('API answers are never cacheable', async () => {
+    const r = await c.api.get(`${B}/clients`).set(c.as(c.tokens.admin));
+    expect(r.headers['cache-control']).toBe('no-store');
+    expect(r.headers['x-powered-by']).toBeUndefined();
+    expect(r.headers['x-content-type-options']).toBe('nosniff');
+  });
+
+  it('a malformed id is a 400, not a database error', async () => {
+    const r = await c.api.get(`${B}/clients/not-a-uuid/topology`).set(c.as(c.tokens.admin));
+    expect([400, 404]).toContain(r.status);
+    expect(JSON.stringify(r.body)).not.toMatch(/uuid|syntax|pg|select/i);
+  });
+
+  it('does not create a production admin from the sample placeholder password', async () => {
+    const empty = { query: async () => ({ rows: [{ count: '0' }] }) };
+    const cfgProd = { ...c.cfg, nodeEnv: 'production', adminEmail: 'a@b.io', adminPassword: 'change-me-admin-password' };
+    // users.count is the first call: stub just enough to reach the guard
+    const spy = vi.spyOn(store.users, 'count').mockResolvedValue(0);
+    const create = vi.spyOn(store.users, 'create');
+    expect(await ensureAdmin(empty as any, cfgProd)).toBe(false);
+    expect(await ensureAdmin(empty as any, { ...cfgProd, adminPassword: 'short' })).toBe(false);
+    expect(create).not.toHaveBeenCalled();
+    spy.mockRestore(); create.mockRestore();
+  });
+});
+
+describe('security: cross-client isolation (IDOR)', () => {
+  it('a technician of client A cannot read or change anything of client B', async () => {
+    const A = (await c.api.post(`${B}/clients`).set(c.as(c.tokens.admin)).send({ name: 'Iso A' })).body.client.id;
+    const Bc = (await c.api.post(`${B}/clients`).set(c.as(c.tokens.admin)).send({ name: 'Iso B' })).body.client.id;
+    const user = await store.users.create(c.pool, { email: 'iso@test.io', name: 'iso', role: 'technician', passwordHash: await bcryptjs.hash('password123', 4) });
+    await store.members.set(c.pool, A, user.id, 'technician');
+    const tok = await c.login('iso@test.io');
+    const dev = async (client: string, name: string) => (await c.api.post(`${B}/devices`).set(c.as(c.tokens.admin)).send({ clientId: client, name, type: 'switch' })).body.device.id as string;
+    const a1 = await dev(A, 'A1'), b1 = await dev(Bc, 'B1'), b2 = await dev(Bc, 'B2');
+    const link = (await c.api.post(`${B}/links`).set(c.as(c.tokens.admin)).send({ sourceId: b1, sourcePort: 'Gi1/0/1', destId: b2, destPort: 'Gi1/0/1', mode: 'access' })).body.link.id;
+    const rackB = (await c.api.post(`${B}/racks`).set(c.as(c.tokens.admin)).send({ clientId: Bc, name: 'RB' })).body.rack.id;
+    const rev = (await c.api.post(`${B}/clients/${Bc}/revisions`).set(c.as(c.tokens.admin)).send({ note: 'x' })).body.revision.id;
+    const h = c.as(tok);
+
+    const attempts: [string, Promise<{ status: number }>][] = [
+      ['GET topology', c.api.get(`${B}/clients/${Bc}/topology`).set(h)],
+      ['GET export', c.api.get(`${B}/clients/${Bc}/export`).set(h)],
+      ['GET revisions', c.api.get(`${B}/clients/${Bc}/revisions`).set(h)],
+      ['POST import', c.api.post(`${B}/clients/${Bc}/import`).set(h).send({})],
+      ['GET devices', c.api.get(`${B}/devices?clientId=${Bc}`).set(h)],
+      ['PUT device', c.api.put(`${B}/devices/${b1}`).set(h).send({ name: 'pwned' })],
+      ['DELETE device', c.api.delete(`${B}/devices/${b1}`).set(h)],
+      ['GET credentials', c.api.get(`${B}/devices/${b1}/credentials`).set(h)],
+      ['POST device in B', c.api.post(`${B}/devices`).set(h).send({ clientId: Bc, name: 'x', type: 'switch' })],
+      ['GET links by client', c.api.get(`${B}/links?clientId=${Bc}`).set(h)],
+      ['GET links by device', c.api.get(`${B}/links?deviceId=${b1}`).set(h)],
+      ['PUT link', c.api.put(`${B}/links/${link}`).set(h).send({ mode: 'trunk' })],
+      ['DELETE link', c.api.delete(`${B}/links/${link}`).set(h)],
+      ['POST link between B devices', c.api.post(`${B}/links`).set(h).send({ sourceId: b1, sourcePort: 'Gi1/0/9', destId: b2, destPort: 'Gi1/0/9', mode: 'access' })],
+      ['POST link A->B', c.api.post(`${B}/links`).set(h).send({ sourceId: a1, sourcePort: 'Gi1/0/9', destId: b2, destPort: 'Gi1/0/9', mode: 'access' })],
+      ['POST rack in B', c.api.post(`${B}/racks`).set(h).send({ clientId: Bc, name: 'evil' })],
+      ['PUT rack', c.api.put(`${B}/racks/${rackB}`).set(h).send({ name: 'evil' })],
+      ['DELETE rack', c.api.delete(`${B}/racks/${rackB}`).set(h)],
+      ['restore revision', c.api.post(`${B}/revisions/${rev}/restore`).set(h)],
+      ['validate', c.api.post(`${B}/validate`).set(h).send({ clientId: Bc })],
+      ['export csv', c.api.get(`${B}/export/csv?clientId=${Bc}`).set(h)],
+      ['export pdf', c.api.get(`${B}/export/pdf?clientId=${Bc}`).set(h)],
+      ['export config', c.api.get(`${B}/export/config?clientId=${Bc}&vendor=cisco`).set(h)],
+      ['sites of B', c.api.get(`${B}/sites?clientId=${Bc}`).set(h)],
+    ];
+    // A->B links are refused with 400 (devices of different clients), everything else is hidden (404) or forbidden (403).
+    for (const [name, p] of attempts) expect([400, 403, 404], name).toContain((await p).status);
+    // admin-only surfaces
+    for (const p of [c.api.get(`${B}/users`), c.api.get(`${B}/admin/settings`), c.api.get(`${B}/clients/${A}/members`), c.api.post(`${B}/clients`).send({ name: 'x' })])
+      expect((await p.set(h)).status).toBe(403);
+    // nothing of B was altered
+    const still = (await c.api.get(`${B}/clients/${Bc}/topology`).set(c.as(c.tokens.admin))).body;
+    expect(still.devices.map((d: any) => d.name).sort()).toEqual(['B1', 'B2']);
+    expect(still.links).toHaveLength(1);
+    expect(still.racks.map((r: any) => r.name)).toEqual(['RB']);
+    // no auth at all
+    for (const p of [c.api.get(`${B}/clients`), c.api.get(`${B}/devices`), c.api.get(`${B}/library`), c.api.get(`${B}/admin/settings`)]) expect((await p).status).toBe(401);
+  });
+
+  it('SQL injection strings are data, never code', async () => {
+    const evil = "'; DROP TABLE users; --";
+    expect((await c.api.post(`${B}/auth/login`).send({ email: `${evil}@x.io`, password: evil })).status).toBe(400);
+    const cl = (await c.api.post(`${B}/clients`).set(c.as(c.tokens.admin)).send({ name: evil })).body.client;
+    expect(cl.name).toBe(evil);
+    expect((await c.api.get(`${B}/devices?clientId=${encodeURIComponent(evil)}`).set(c.as(c.tokens.admin))).status).toBeLessThan(500);
+    expect((await c.pool.query('SELECT count(*)::int AS n FROM users')).rows[0].n).toBeGreaterThan(3);
+  });
+
+  it('device names starting with = + - @ are neutralised in CSV exports (formula injection)', async () => {
+    const cid = (await c.api.post(`${B}/clients`).set(c.as(c.tokens.admin)).send({ name: 'CSV' })).body.client.id;
+    const d1 = (await c.api.post(`${B}/devices`).set(c.as(c.tokens.admin)).send({ clientId: cid, name: '=HYPERLINK("http://evil","x")', type: 'switch' })).body.device.id;
+    const d2 = (await c.api.post(`${B}/devices`).set(c.as(c.tokens.admin)).send({ clientId: cid, name: '@SUM(1)', type: 'switch' })).body.device.id;
+    await c.api.post(`${B}/links`).set(c.as(c.tokens.admin)).send({ sourceId: d1, sourcePort: 'Gi1/0/1', destId: d2, destPort: '-1+1', mode: 'access' });
+    const csv = (await c.api.get(`${B}/export/csv?clientId=${cid}`).set(c.as(c.tokens.admin))).text;
+    for (const line of csv.split('\r\n').slice(1).filter(Boolean)) for (const cell of line.match(/("([^"]|"")*"|[^,]*)(,|$)/g) ?? []) expect(cell.replace(/^"|[,"]+$/g, '')).not.toMatch(/^[=+\-@]/);
+  });
+
+  it('oversized or malformed bodies are refused cleanly', async () => {
+    const big = await c.api.post(`${B}/clients/${clientId}/import`).set(c.as(c.tokens.admin)).set('Content-Type', 'application/json').send(JSON.stringify({ pad: 'x'.repeat(6 * 1024 * 1024) }));
+    expect(big.status).toBe(413);
+    const bad = await c.api.post(`${B}/auth/login`).set('Content-Type', 'application/json').send('{"email":');
+    expect(bad.status).toBe(400);
+    const many = await c.api.post(`${B}/clients/${clientId}/import`).set(c.as(c.tokens.admin)).send({ format: 'shmnlt', version: 1, client: { name: 'x' }, sites: Array.from({ length: 501 }, (_, i) => ({ id: `${i}`, name: 's' })), devices: [], links: [] });
+    expect(many.status).toBe(400);
   });
 });
