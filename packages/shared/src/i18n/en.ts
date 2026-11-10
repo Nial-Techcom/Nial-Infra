@@ -14,6 +14,7 @@ export const en = {
   },
   auth: {
     signIn: 'Sign in', email: 'Email', password: 'Password', serverUrl: 'Server URL', server: 'Server',
+    insecureServer: 'Warning: this address uses http:// on the Internet. Your password and session would travel unencrypted. Use https://.',
     invalidCredentials: 'Invalid email or password', signingIn: 'Signing in…', changePassword: 'Change password',
     currentPassword: 'Current password', newPassword: 'New password (8+ characters)', passwordChanged: 'Password updated',
     welcome: 'Welcome, {{name}}', connectionFailed: 'Cannot reach the server. Check the URL and your network.',

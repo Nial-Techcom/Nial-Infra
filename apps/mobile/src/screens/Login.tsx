@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
-import { ApiError, translate, type AuthConfig } from '@netforge/shared';
+import { ApiError, isInsecureRemoteUrl, translate, type AuthConfig } from '@netforge/shared';
 import { api, useSession, useT } from '../store';
 import { useTheme } from '../theme';
 import { Button, Field } from '../ui';
@@ -64,6 +64,7 @@ export function Login() {
         <Text style={{ color: c.ink, fontSize: 28, fontWeight: '700' }}>NetForge</Text>
         <Text style={{ color: c.mute, marginBottom: 24 }}>{mode === 'register' ? t('account.createAccount') : mode === 'forgot' ? t('account.forgotTitle') : t('app.tagline')}</Text>
         <Field label={t('auth.serverUrl')} hint={t('mobile.server')} value={server} onChangeText={setServer} keyboardType="url" />
+        {isInsecureRemoteUrl(url) ? <Text accessibilityRole="alert" style={{ color: c.warn ?? c.crit, marginBottom: 12 }}>{t('auth.insecureServer')}</Text> : null}
         {mode === 'register' && <Field label={t('account.fullName')} value={f.name} onChangeText={(v) => set('name', v)} autoCapitalize="words" autoComplete="name" />}
         <Field label={t('auth.email')} value={f.email} onChangeText={(v) => set('email', v)} keyboardType="email-address" autoComplete="email" />
         {mode !== 'forgot' && <Field label={t('auth.password')} hint={mode === 'register' ? t('account.passwordHint') : undefined} value={f.password} onChangeText={(v) => set('password', v)} secureTextEntry autoComplete="password" onSubmitEditing={mode === 'login' ? submit : undefined} />}

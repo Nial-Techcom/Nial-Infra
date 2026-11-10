@@ -72,7 +72,7 @@ export function createApi(opts: ApiOptions) {
     auth: {
       login: (email: string, password: string) => json<{ token: string; user: User }>('POST', '/auth/login', { email, password }),
       me: () => json<{ user: User }>('GET', '/auth/me'),
-      changePassword: (currentPassword: string, newPassword: string) => json<{ success: true }>('POST', '/auth/change-password', { currentPassword, newPassword }),
+      changePassword: (currentPassword: string, newPassword: string) => json<{ success: true; token: string }>('POST', '/auth/change-password', { currentPassword, newPassword }),
       config: () => json<AuthConfig>('GET', '/auth/config'),
       register: (u: { email: string; name: string; password: string; inviteToken?: string }) => json<{ token: string; user: User }>('POST', '/auth/register', u),
       forgotPassword: (email: string) => json<{ success: true }>('POST', '/auth/forgot-password', { email }),
