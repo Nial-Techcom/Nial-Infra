@@ -15,8 +15,12 @@ declare global {
   }
 }
 
-export function signToken(user: User, cfg: Config): string {
-  return jwt.sign({ role: user.role }, cfg.jwtSecret, { algorithm: 'HS256', subject: user.id, expiresIn: '12h' });
+/**
+ * `pv` ("password version") is the time of the user's last password change (0 = never). A token is only valid while
+ * it still matches, so any password change or reset cuts every older session at once, with no timing window.
+ */
+export function signToken(user: User, cfg: Config, passwordVersion = 0): string {
+  return jwt.sign({ role: user.role, pv: passwordVersion }, cfg.jwtSecret, { algorithm: 'HS256', subject: user.id, expiresIn: '12h' });
 }
 
 /**
@@ -36,8 +40,7 @@ export function authenticate(pool: Pool, cfg: Config) {
       }
       const found = payload.sub ? await users.getAuth(pool, payload.sub) : null;
       if (!found) throw new HttpError(401, 'Invalid or expired token');
-      // A password reset revokes every token issued before it (compared in whole seconds, the JWT precision).
-      if ((payload.iat ?? 0) < Math.floor(found.passwordChangedAt / 1000)) throw new HttpError(401, 'Invalid or expired token');
+      if ((typeof payload.pv === 'number' ? payload.pv : 0) !== found.passwordChangedAt) throw new HttpError(401, 'Invalid or expired token');
       req.user = found.user;
       next();
     } catch (e) {

@@ -90,6 +90,8 @@ Détails des schémas : `packages/shared/src/schemas.ts`. Toutes les routes sauf
 
 ## Sécurité
 
+Voir [SECURITY.md](SECURITY.md) pour l’audit et les correctifs.
+
 Mots de passe hachés (bcrypt), JWT (révoqués après un reset de mot de passe), droits vérifiés **par client** côté serveur, jetons d'invitation/reset aléatoires stockés hachés (usage unique, 7 j / 1 h), mot de passe SMTP chiffré, liens d'e-mail construits depuis l'adresse publique configurée (jamais depuis l'en-tête Host), limitation de débit sur le login, `helmet`, CORS en liste blanche, identifiants des équipements chiffrés (AES-256-GCM) et jamais exportés dans les `.shmnlt`. Le mot de passe d'un équipement n'est renvoyé que par `GET /devices/:id/credentials` (admin/technicien).
 
 ## Contact & licence

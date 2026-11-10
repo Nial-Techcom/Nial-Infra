@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
+import { isInsecureRemoteUrl,
   alertMessage, canPlace, connectionsOf, firstFreePos, usedUnits, MEDIUM_COLORS, MODE_COLORS, buildCablingMatrix, buildShmnlt, cablingMatrixCsv, csvCell, formatVlanList, generateDeviceConfig,
   parseIpCidr, parseShmnlt, parseVlanList, prefixToMask, translate, validateTopology,
 } from './index';
@@ -147,5 +147,15 @@ describe('rack helpers', () => {
     expect(MEDIUM_COLORS.ethernet).not.toBe(MEDIUM_COLORS.fiber);
     expect(Object.values(MODE_COLORS)).not.toContain(MEDIUM_COLORS.fiber);
     expect(Object.values(MODE_COLORS)).not.toContain(MEDIUM_COLORS.ethernet);
+  });
+});
+
+describe('isInsecureRemoteUrl', () => {
+  it('flags clear-text http to public hosts only', () => {
+    expect(isInsecureRemoteUrl('http://netforge.example.com')).toBe(true);
+    expect(isInsecureRemoteUrl('http://8.8.8.8:3000')).toBe(true);
+    expect(isInsecureRemoteUrl('http://172.32.0.1')).toBe(true);
+    for (const ok of ['https://netforge.example.com', 'http://localhost:5000', 'http://192.168.1.10:3000', 'http://10.0.0.5', 'http://172.20.1.1', 'http://netforge.local', 'http://srv', 'http://127.0.0.1', 'not a url'])
+      expect(isInsecureRemoteUrl(ok), ok).toBe(false);
   });
 });
