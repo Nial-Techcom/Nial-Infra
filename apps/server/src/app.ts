@@ -1,5 +1,6 @@
 import cors from 'cors';
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import type { Pool } from 'pg';
 import type { Config } from './config';
@@ -21,6 +22,10 @@ export function createApp(pool: Pool, cfg: Config) {
     }),
   );
   app.use(express.json({ limit: '5mb' }));
+  // Generous global ceiling per IP (the login/account routes have much stricter ones of their own).
+  app.use('/api', rateLimit({ windowMs: 60_000, limit: cfg.apiRateLimit, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many requests' } }));
+  // Responses carry tokens, credentials and private network data: never let a browser or proxy cache them.
+  app.use('/api', (_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   app.use('/api/v1', buildRouter(pool, cfg));
   app.use((_req, _res, next) => next(new HttpError(404, 'Not found')));
   app.use(errorMiddleware);

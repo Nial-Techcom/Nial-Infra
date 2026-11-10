@@ -1,4 +1,4 @@
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/shared/package.json packages/shared/
@@ -9,7 +9,7 @@ COPY packages/shared packages/shared
 COPY apps/server apps/server
 RUN npm run build -w @netforge/shared && npm run build -w @netforge/server
 
-FROM node:20-alpine
+FROM node:22-alpine
 ENV NODE_ENV=production
 WORKDIR /app
 COPY package.json package-lock.json ./

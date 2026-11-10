@@ -7,7 +7,7 @@ import * as store from './store';
 /** Usage: npm run create-admin -w @netforge/server -- admin@example.com "Strong password" ["Display name"] */
 async function main() {
   const [email, password, name = 'Administrator'] = process.argv.slice(2);
-  if (!email || !password || password.length < 8) throw new Error('Usage: create-admin <email> <password (8+ chars)> [name]');
+  if (!email || !password || password.length < 10) throw new Error('Usage: create-admin <email> <password (10+ chars)> [name]');
   const cfg = loadConfig();
   const pool = createPool(cfg.databaseUrl);
   await migrate(pool);

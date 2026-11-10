@@ -22,6 +22,23 @@ function validServerUrl(u) {
 
 let win = null;
 
+// Only our own window (the bundled UI, or the dev server) may talk to the main process.
+const trustedSender = (e) => {
+  const u = e.senderFrame?.url ?? '';
+  return u.startsWith('file://') || (!!DEV_URL && u.startsWith(DEV_URL));
+};
+const guard = (handler) => (e, ...args) => {
+  if (!trustedSender(e)) throw new Error('Untrusted sender');
+  return handler(e, ...args);
+};
+
+// Defence in depth: the UI needs no permission (camera, geolocation…), no <webview>, no new windows.
+app.on('web-contents-created', (_e, contents) => {
+  contents.on('will-attach-webview', (ev) => ev.preventDefault());
+  contents.session.setPermissionRequestHandler((_wc, _perm, cb) => cb(false));
+  contents.session.setPermissionCheckHandler(() => false);
+});
+
 function createWindow() {
   const bounds = readSettings().bounds ?? { width: 1360, height: 860 };
   win = new BrowserWindow({
@@ -70,29 +87,29 @@ function buildMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
-ipcMain.handle('nf:get-server-url', () => readSettings().serverUrl ?? null);
-ipcMain.handle('nf:set-server-url', (_e, url) => {
+ipcMain.handle('nf:get-server-url', guard(() => readSettings().serverUrl ?? null));
+ipcMain.handle('nf:set-server-url', guard((_e, url) => {
   if (typeof url !== 'string' || !validServerUrl(url)) throw new Error('Invalid server URL');
   writeSettings({ serverUrl: url.replace(/\/+$/, '') });
-});
+}));
 
-ipcMain.handle('nf:save-file', async (_e, { name, data, mime }) => {
+ipcMain.handle('nf:save-file', guard(async (_e, { name, data, mime }) => {
   const safe = String(name).replace(/[\\/:*?"<>|]+/g, '_');
   const ext = path.extname(safe).slice(1);
   const r = await dialog.showSaveDialog(win, { defaultPath: safe, filters: ext ? [{ name: mime || ext, extensions: [ext] }] : [] });
   if (r.canceled || !r.filePath) return false;
   fs.writeFileSync(r.filePath, typeof data === 'string' ? data : Buffer.from(data));
   return true;
-});
+}));
 
-ipcMain.handle('nf:open-file', async (_e, { extensions }) => {
+ipcMain.handle('nf:open-file', guard(async (_e, { extensions }) => {
   const exts = Array.isArray(extensions) ? extensions.filter((x) => /^[a-z0-9]+$/i.test(x)) : [];
   const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: exts.length ? [{ name: 'NetForge', extensions: exts }] : [] });
   if (r.canceled || !r.filePaths[0]) return null;
   const file = r.filePaths[0];
   if (fs.statSync(file).size > 20 * 1024 * 1024) throw new Error('File too large');
   return { name: path.basename(file), text: fs.readFileSync(file, 'utf8') };
-});
+}));
 
 const lock = app.requestSingleInstanceLock();
 if (!lock) app.quit();

@@ -2,20 +2,35 @@
   "expo": {
     "name": "NetForge",
     "slug": "netforge",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "default",
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#141A22",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.netforge.mobile",
-      "buildNumber": "1",
-      "infoPlist": { "NSAppTransportSecurity": { "NSAllowsArbitraryLoads": true } }
+      "buildNumber": "2",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
     },
-    "android": { "package": "com.netforge.mobile", "versionCode": 1 },
+    "android": {
+      "package": "com.netforge.mobile",
+      "versionCode": 2,
+      "allowBackup": false
+    },
     "plugins": [
       "expo-secure-store",
-      ["expo-build-properties", { "android": { "usesCleartextTraffic": true } }]
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
     ]
   }
 }

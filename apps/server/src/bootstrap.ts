@@ -10,6 +10,11 @@ export async function ensureAdmin(pool: Pool, cfg: Config): Promise<boolean> {
     console.warn('No user exists. Set ADMIN_EMAIL and ADMIN_PASSWORD (or run "npm run create-admin") to create the first admin.');
     return false;
   }
+  // The sample .env ships a placeholder password: refuse to turn it into a real admin account on a production server.
+  if (cfg.nodeEnv === 'production' && (cfg.adminPassword.length < 10 || /change-?me/i.test(cfg.adminPassword))) {
+    console.error('ADMIN_PASSWORD is a placeholder or shorter than 10 characters: no admin created. Set a strong ADMIN_PASSWORD in .env (or run create-admin) and restart.');
+    return false;
+  }
   await store.users.create(pool, { email: cfg.adminEmail, name: 'Administrator', role: 'admin', passwordHash: await bcrypt.hash(cfg.adminPassword, cfg.bcryptRounds) });
   console.log(`First admin created: ${cfg.adminEmail}`);
   return true;
