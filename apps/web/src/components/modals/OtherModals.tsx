@@ -185,7 +185,7 @@ export function PasswordModal() {
   const [next, setNext] = useState('');
   const go = async (e: React.FormEvent) => {
     e.preventDefault();
-    try { await api.auth.changePassword(cur, next); useUi.getState().toast(t('auth.passwordChanged')); close(); } catch (err) { toastErr(err, t); }
+    try { const r = await api.auth.changePassword(cur, next); useAuth.getState().setSession(r.token, useAuth.getState().user!); useUi.getState().toast(t('auth.passwordChanged')); close(); } catch (err) { toastErr(err, t); }
   };
   return (
     <Modal title={t('auth.changePassword')} onClose={close} width="max-w-sm">

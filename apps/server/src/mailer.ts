@@ -17,6 +17,8 @@ export async function sendMail(pool: Pool, cfg: Config, m: { to: string; subject
   const t = mailerHooks.createTransport({
     host: st.smtp.host, port: st.smtp.port, secure: st.smtp.secure,
     auth: st.smtp.user ? { user: st.smtp.user, pass: st.smtp.passwordEnc ? decrypt(st.smtp.passwordEnc, cfg.encryptionKey) : '' } : undefined,
+    // Port 587 must upgrade to TLS (STARTTLS): without this a network attacker could strip it and read the SMTP password.
+    requireTLS: !st.smtp.secure && st.smtp.port === 587,
     connectionTimeout: 10_000, greetingTimeout: 10_000, socketTimeout: 15_000,
   });
   await t.sendMail({ from: st.smtp.from, to: m.to, subject: m.subject, text: m.text, html: m.html });
@@ -26,7 +28,8 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 const wrap = (body: string) => `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#111">${body}<hr style="border:0;border-top:1px solid #ddd;margin:24px 0"><p style="color:#888;font-size:12px">NetForge</p></div>`;
 const button = (href: string, label: string) => `<p><a href="${esc(href)}" style="background:#2563eb;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block">${esc(label)}</a></p><p style="font-size:12px;color:#666;word-break:break-all">${esc(href)}</p>`;
 
-export function inviteMail(clientName: string, role: string, link: string) {
+export function inviteMail(rawClientName: string, role: string, link: string) {
+  const clientName = rawClientName.replace(/[\r\n\u2028\u2029]+/g, ' '); // never let a name inject mail headers
   const roleFr = role === 'technician' ? 'technicien' : 'lecteur';
   return {
     subject: `NetForge – invitation : ${clientName}`,

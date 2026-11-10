@@ -1,6 +1,6 @@
 {
   "name": "@netforge/desktop",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "NetForge desktop app (Electron shell around the web UI)",
   "main": "main.js",
@@ -18,8 +18,8 @@
     "typecheck": "node --check main.js && node --check preload.js"
   },
   "devDependencies": {
-    "electron": "^33.2.0",
-    "electron-builder": "^25.1.8"
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0"
   },
   "build": {
     "appId": "com.netforge.desktop",

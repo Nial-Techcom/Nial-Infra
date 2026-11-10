@@ -16,6 +16,7 @@ export const fr: Translation = {
   },
   auth: {
     signIn: 'Se connecter', email: 'E-mail', password: 'Mot de passe', serverUrl: 'URL du serveur', server: 'Serveur',
+    insecureServer: 'Attention : cette adresse utilise http:// sur Internet. Ton mot de passe et ta session circuleraient en clair. Utilise https://.',
     invalidCredentials: 'E-mail ou mot de passe invalide', signingIn: 'Connexion…', changePassword: 'Changer le mot de passe',
     currentPassword: 'Mot de passe actuel', newPassword: 'Nouveau mot de passe (8 caractères min.)', passwordChanged: 'Mot de passe mis à jour',
     welcome: 'Bienvenue, {{name}}', connectionFailed: 'Serveur injoignable. Vérifiez l’URL et votre réseau.',

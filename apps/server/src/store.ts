@@ -11,6 +11,8 @@ const iso = (d: Date | string) => (d instanceof Date ? d.toISOString() : new Dat
 export const mapUser = (r: Row): User => ({ id: r.id, email: r.email, name: r.name, role: r.role, createdAt: iso(r.created_at) });
 export const mapClient = (r: Row): Client => ({ id: r.id, name: r.name, createdAt: iso(r.created_at), updatedAt: iso(r.updated_at) });
 export const mapRack = (r: Row): Rack => ({ id: r.id, clientId: r.client_id, siteId: r.site_id, name: r.name, units: r.units });
+/** Time of the last password change in ms (0 = never): the token "password version". */
+export const passwordVersion = (r: Row): number => (r.password_changed_at ? new Date(r.password_changed_at).getTime() : 0);
 export const mapSite = (r: Row): Site => ({ id: r.id, clientId: r.client_id, name: r.name });
 export const mapDevice = (r: Row, revealUsername = true): Device => ({
   id: r.id, clientId: r.client_id, siteId: r.site_id, name: r.name, type: r.type, model: r.model, serial: r.serial, role: r.role,
@@ -46,7 +48,7 @@ export const users = {
     return mapUser((await db.query('INSERT INTO users (email,name,password_hash,role) VALUES ($1,$2,$3,$4) RETURNING *', [u.email.toLowerCase(), u.name, u.passwordHash, u.role])).rows[0]);
   },
   async update(db: Db, id: string, u: { name?: string; passwordHash?: string; role?: string }) {
-    const r = (await db.query('UPDATE users SET name=COALESCE($2,name), password_hash=COALESCE($3,password_hash), role=COALESCE($4,role) WHERE id=$1 RETURNING *', [id, u.name ?? null, u.passwordHash ?? null, u.role ?? null])).rows[0];
+    const r = (await db.query('UPDATE users SET name=COALESCE($2,name), password_hash=COALESCE($3,password_hash), role=COALESCE($4,role), password_changed_at=CASE WHEN $3::text IS NULL THEN password_changed_at ELSE now() END WHERE id=$1 RETURNING *', [id, u.name ?? null, u.passwordHash ?? null, u.role ?? null])).rows[0];
     if (!r) throw notFound('User');
     return mapUser(r);
   },
@@ -56,7 +58,7 @@ export const users = {
   },
   async getAuth(db: Db, id: string) {
     const r = (await db.query('SELECT * FROM users WHERE id=$1', [id])).rows[0];
-    return r ? { user: mapUser(r), passwordChangedAt: r.password_changed_at ? new Date(r.password_changed_at).getTime() : 0 } : null;
+    return r ? { user: mapUser(r), passwordChangedAt: passwordVersion(r) } : null;
   },
   async adminCount(db: Db) { return Number((await db.query("SELECT count(*) FROM users WHERE role='admin'")).rows[0].count); },
 };
