@@ -4,6 +4,11 @@ on:
     branches: [server]
     tags: ['server-v*']
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Version à publier (ex. 1.1.1) : construit puis crée la release avec les fichiers. Vide = construire seulement.'
+        required: false
+        default: ''
 permissions:
   contents: write
   packages: write
@@ -43,7 +48,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
   bundle:
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') || inputs.release_tag != ''
     needs: images
     runs-on: ubuntu-latest
     steps:
@@ -52,4 +57,6 @@ jobs:
         run: tar czf netforge-server-bundle.tar.gz docker-compose.yml .env.example docs/TUTORIAL.md README.md LICENSE
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ inputs.release_tag != '' && format('server-v{0}', inputs.release_tag) || github.ref_name }}
+          target_commitish: ${{ github.sha }}
           files: netforge-server-bundle.tar.gz
