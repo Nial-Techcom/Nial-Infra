@@ -4,6 +4,11 @@ on:
     branches: [android]
     tags: ['android-v*']
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Version à publier (ex. 1.1.1) : construit puis crée la release avec les fichiers. Vide = construire seulement.'
+        required: false
+        default: ''
 permissions:
   contents: write
 jobs:
@@ -27,12 +32,25 @@ jobs:
           java-version: 17
       - name: Generate native Android project
         working-directory: apps/mobile
-        run: npx expo prebuild --platform android --no-install --clean
+        shell: bash
+        run: |
+          set -o pipefail
+          npx expo prebuild --platform android --no-install --clean 2>&1 | tee ../../prebuild.log
       - name: Build release APK
         working-directory: apps/mobile/android
         run: |
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
+          set -o pipefail
+          ./gradlew assembleRelease --no-daemon 2>&1 | tee ../../../gradle.log
+      - name: Show why the build failed
+        if: failure()
+        shell: bash
+        run: |
+          for f in prebuild.log gradle.log; do
+            [ -f "$f" ] || continue
+            msg=$(grep -nE 'FAILURE|What went wrong|error:|Error:|Caused by|Could not' -A4 "$f" | head -40 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+            echo "::error title=$f::$msg"
+          done
       - name: Collect APK
         run: cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk NetForge-android.apk
       - uses: actions/upload-artifact@v4
@@ -40,7 +58,9 @@ jobs:
           name: NetForge-android-apk
           path: NetForge-android.apk
       - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || inputs.release_tag != ''
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ inputs.release_tag != '' && format('android-v{0}', inputs.release_tag) || github.ref_name }}
+          target_commitish: ${{ github.sha }}
           files: NetForge-android.apk
