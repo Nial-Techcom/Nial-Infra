@@ -7,11 +7,13 @@ import { NetForgeCanvas } from './components/canvas/NetForgeCanvas';
 import { ModalHost } from './components/modals/ModalHost';
 import { AlertsPanel } from './components/panels/AlertsPanel';
 import { Sidebar } from './components/sidebar/Sidebar';
+import { ConnectionGate } from './components/ConnectionGate';
 import { ConfirmHost, ToastHost } from './components/ui';
 import { api } from './lib/api';
 import { desktop } from './lib/platform';
 import { exportCsv, exportPdf, exportShmnlt, importShmnlt } from './lib/exports';
 import { useAuth } from './store/auth';
+import { startConnectionWatch } from './store/connection';
 import { useTopology } from './store/topology';
 import { useUi } from './store/ui';
 
@@ -45,6 +47,9 @@ export function App() {
   const invite = user && token ? urlParams().invite : null;
 
   useEffect(() => { document.documentElement.dataset.theme = theme; }, [theme]);
+
+  // No offline mode: keep checking that the server answers (blocks the UI while it does not).
+  useEffect(() => startConnectionWatch(), []);
 
   // Validate the stored session once, then load the clients.
   useEffect(() => {
@@ -90,6 +95,7 @@ export function App() {
       ) : (
         <AuthScreens />
       )}
+      <ConnectionGate />
       <ConfirmHost />
       <ToastHost />
     </>
