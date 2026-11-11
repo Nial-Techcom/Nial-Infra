@@ -18,7 +18,7 @@
     "typecheck": "node --check main.js && node --check preload.js"
   },
   "devDependencies": {
-    "electron": "^45.2.3",
+    "electron": "45.2.3",
     "electron-builder": "^26.18.0"
   },
   "build": {
