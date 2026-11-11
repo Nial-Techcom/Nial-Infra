@@ -7,7 +7,13 @@ export interface Config {
   corsOrigins: string[];
   bcryptRounds: number;
   loginRateLimit: number;
+  /** failed logins tolerated per account per 15 min */
+  accountLockLimit: number;
+  /** requests per minute and IP on the whole API */
+  apiRateLimit: number;
   trustProxy: boolean;
+  /** Public address used in e-mailed links when the admin panel has none (PUBLIC_URL). Never taken from the request. */
+  publicUrl: string;
   adminEmail?: string;
   adminPassword?: string;
 }
@@ -43,6 +49,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     corsOrigins: (env.CORS_ORIGINS ?? env.FRONTEND_URL ?? 'http://localhost:3000').split(',').map((s) => s.trim()).filter(Boolean),
     bcryptRounds: Number(env.BCRYPT_ROUNDS ?? 12),
     loginRateLimit: Number(env.LOGIN_RATE_LIMIT ?? 20),
+    accountLockLimit: Number(env.ACCOUNT_LOCK_LIMIT ?? 10),
+    apiRateLimit: Number(env.API_RATE_LIMIT ?? 1000),
+    publicUrl: (env.PUBLIC_URL ?? '').trim().replace(/\/+$/, ''),
     trustProxy: env.TRUST_PROXY === '1' || env.TRUST_PROXY === 'true',
     adminEmail: env.ADMIN_EMAIL || undefined,
     adminPassword: env.ADMIN_PASSWORD || undefined,

@@ -14,6 +14,7 @@ export const en = {
   },
   auth: {
     signIn: 'Sign in', email: 'Email', password: 'Password', serverUrl: 'Server URL', server: 'Server',
+    insecureServer: 'Warning: this address uses http:// on the Internet. Your password and session would travel unencrypted. Use https://.',
     invalidCredentials: 'Invalid email or password', signingIn: 'Signing in…', changePassword: 'Change password',
     currentPassword: 'Current password', newPassword: 'New password (8+ characters)', passwordChanged: 'Password updated',
     welcome: 'Welcome, {{name}}', connectionFailed: 'Cannot reach the server. Check the URL and your network.',
@@ -43,7 +44,7 @@ export const en = {
       title: 'Cable configuration', sourcePort: 'Source port', destPort: 'Destination port', mode: 'Mode',
       access: 'Access', trunk: 'Trunk', nativeVlan: 'Native VLAN (Untagged)', destNativeVlan: 'Native VLAN (destination end)',
       taggedVlans: 'Tagged VLANs', taggedHint: 'e.g. 10,20,30-35', accessVlan: 'Access VLAN', from: 'From', to: 'To',
-      sameAsSource: 'same as source',
+      sameAsSource: 'same as source', medium: 'Cable type', ethernet: 'Ethernet (black)', fiber: 'Fibre (orange)',
     },
   },
   alerts: {
@@ -77,7 +78,7 @@ export const en = {
   },
   users: {
     title: 'Users', add: 'Add user', role: 'Role', email: 'Email', name: 'Name', password: 'Password',
-    deleteSelf: 'You cannot delete your own account.',
+    deleteSelf: 'You cannot delete your own account.', confirmPassword: 'Confirm password', passwordMismatch: 'The two passwords differ.',
   },
   canvas: {
     empty: 'Drag a device from the library to start', connectHint: 'Drag from a device handle to another device to create a cable',
@@ -90,6 +91,38 @@ export const en = {
     server: 'Server URL (e.g. https://netforge.example.com)', empty: 'Nothing here yet', pullToRefresh: 'Pull down to refresh',
     shareFailed: 'Could not share the file', settings: 'Settings', deleteDevice: 'Delete device', deleteCable: 'Delete cable',
     portInUse: 'in use', sameDevice: 'Pick two different devices', tapDevice: 'Tap a device to open it', imported: 'Import done',
+  },
+  account: {
+    createAccount: 'Create an account', register: 'Create my account', haveAccount: 'Already have an account? Sign in', noAccount: 'No account yet? Create one',
+    forgot: 'Forgot password?', forgotTitle: 'Reset your password', forgotHelp: 'Enter your email. If an account exists, we send you a link to choose a new password.',
+    sendLink: 'Send the link', linkSent: 'If an account exists for this address, an email has been sent. Check your inbox (and spam).',
+    emailDisabled: 'Email is not set up on this server. Ask an administrator to reset your password.', resetTitle: 'Choose a new password',
+    resetDone: 'Password updated. You can sign in.', resetInvalid: 'This link is invalid or has expired. Request a new one.', backToSignIn: 'Back to sign in',
+    registrationClosed: 'Account creation is disabled on this server.', fullName: 'Full name', passwordHint: '8 characters minimum',
+    noClientTitle: 'No client yet', noClientBody: 'Your account has no access to any client. Ask an administrator or a colleague to invite you by email, then open the link you receive.',
+    inviteTitle: 'Invitation', inviteFor: 'You are invited to join "{{client}}" as {{role}}.', inviteWrongUser: 'This invitation was sent to {{email}}. Sign in with that address.',
+    inviteAccept: 'Join the client', inviteAccepted: 'You joined the client.', inviteInvalid: 'This invitation is invalid, already used or expired.', inviteHintMobile: 'Paste the invitation link or code from your email',
+  },
+  admin: {
+    title: 'Administration', general: 'General', publicUrl: 'Public address of NetForge', publicUrlHint: 'Used in the links sent by email, e.g. https://netforge.example.com',
+    allowRegistration: 'Allow anyone to create an account (they still see no client without an invitation)', smtp: 'Email server (SMTP)',
+    smtpHelp: 'Needed to send invitations and password-reset links.', host: 'Server', port: 'Port', secure: 'Implicit TLS (port 465)',
+    smtpUser: 'Username', smtpPassword: 'Password', smtpPasswordKept: 'A password is stored. Leave empty to keep it.', from: 'Sender address',
+    fromHint: 'e.g. NetForge <netforge@example.com>', testTo: 'Send a test to', test: 'Send a test email', testSent: 'Test email sent', saved: 'Settings saved',
+    library: 'Equipment catalog', libraryHelp: 'Models added here appear in the device library for every client.', libraryAdd: 'Add a model',
+    libraryEmpty: 'No custom model yet.', label: 'Name in the library', units: 'Height (U)', users: 'Users',
+  },
+  members: {
+    title: 'Access to this client', invite: 'Invite by email', email: 'Email address', role: 'Role', pending: 'Pending invitations', revoke: 'Cancel invitation',
+    copyLink: 'Copy link', sent: 'Invitation sent to {{email}}', notSent: 'Email not sent (SMTP not configured or failing). Copy the link and send it yourself.',
+    remove: 'Remove access', empty: 'Nobody else has access.', expires: 'expires {{date}}', admins: 'Administrators always have access.',
+  },
+  rack: {
+    viewSchema: 'Schema', viewRack: 'Racks', racks: 'Racks', addRack: 'Add a rack', rackName: 'Rack name', units: 'Height (U)', unplaced: 'Not in a rack',
+    place: 'Place in rack', removeFromRack: 'Remove from rack', used: '{{used}}/{{total}} U used', position: 'Position (U, from the bottom)', height: 'Height (U)',
+    rackOf: 'Rack', notRacked: 'Not racked', crossRack: 'Other rack', sameRack: 'Same rack', plugged: 'Plugged into', noRack: 'No rack in this site yet.',
+    full: 'No room left in this rack.', overlap: 'That position is taken.', deleteRack: 'Delete rack', renameRack: 'Rename rack', connections: 'Cables of this device',
+    dragHint: 'Drag a device from the list into a rack, or click a free slot.', cablesOut: 'Cables leaving this rack', none: 'No cable leaves this rack.',
   },
   errors: {
     network: 'Network error', unauthorized: 'Session expired, please sign in again', forbidden: 'You do not have permission to do this',

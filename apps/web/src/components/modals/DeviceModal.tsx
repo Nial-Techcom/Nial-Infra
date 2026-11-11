@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DEVICE_ROLES, DEVICE_TYPES, MGMT_PROTOCOLS, isValidVlan, parseIpCidr, type DeviceRole, type DeviceType, type MgmtProtocol } from '@netforge/shared';
 import { api, errorText } from '../../lib/api';
-import { canEdit, useAuth } from '../../store/auth';
+import { useCanEdit } from '../../store/auth';
 import { useTopology } from '../../store/topology';
 import { useUi } from '../../store/ui';
 import { Field, Modal, Tabs } from '../ui';
@@ -13,13 +13,14 @@ type Tab = 'identity' | 'management' | 'vlan';
 export function DeviceModal({ id }: { id: string }) {
   const { t } = useTranslation();
   const device = useTopology((s) => s.devices.find((d) => d.id === id));
-  const { clients, sites, links, devices } = useTopology();
-  const edit = canEdit(useAuth((s) => s.user));
+  const { clients, sites, racks, links, devices } = useTopology();
+  const edit = useCanEdit();
   const close = useUi((s) => s.close);
   const [tab, setTab] = useState<Tab>('identity');
   const [f, setF] = useState(() => ({
     name: device?.name ?? '', siteId: device?.siteId ?? '', type: (device?.type ?? 'switch') as DeviceType, model: device?.model ?? '', serial: device?.serial ?? '',
     role: (device?.role ?? '') as DeviceRole | '', portCount: String(device?.portCount ?? 0), portPrefix: device?.portPrefix ?? '',
+    rackId: device?.rackId ?? '', rackPos: device?.rackPos ? String(device.rackPos) : '', rackUnits: String(device?.rackUnits ?? 1),
     mgmtIp: device?.mgmtIp ?? '', mgmtGateway: device?.mgmtGateway ?? '', mgmtPort: device?.mgmtPort ?? '', mgmtProtocols: (device?.mgmtProtocols ?? []) as MgmtProtocol[],
     mgmtUsername: device?.credentialsUsername ?? '', mgmtPassword: '', mgmtVlan: device?.mgmtVlan ? String(device.mgmtVlan) : '',
   }));
@@ -51,6 +52,7 @@ export function DeviceModal({ id }: { id: string }) {
     const r = await useTopology.getState().updateDevice(id, {
       name: f.name.trim(), siteId: f.siteId || null, type: f.type, model: f.model.trim() || null, serial: f.serial.trim() || null, role: f.role || null,
       portCount: Number(f.portCount), portPrefix: f.portPrefix.trim(),
+      rackId: f.rackId || null, rackPos: f.rackId && f.rackPos ? Number(f.rackPos) : null, rackUnits: Number(f.rackUnits) || 1,
       mgmtIp: f.mgmtIp.trim() || null, mgmtGateway: f.mgmtGateway.trim() || null, mgmtPort: f.mgmtPort.trim() || null, mgmtProtocols: f.mgmtProtocols,
       mgmtVlan: f.mgmtVlan ? Number(f.mgmtVlan) : null, mgmtUsername: f.mgmtUsername.trim() || null,
       ...(f.mgmtPassword ? { mgmtPassword: f.mgmtPassword } : {}),
@@ -105,6 +107,15 @@ export function DeviceModal({ id }: { id: string }) {
               <Field label={t('modals.device.portPrefix')}><input className="nf-input mono" value={f.portPrefix} onChange={(e) => set('portPrefix', e.target.value)} /></Field>
             </div>
             <p className="text-xs text-mute sm:col-span-2">{t('modals.device.portsHint')}</p>
+            <Field label={t('rack.rackOf')}>
+              <select className="nf-input" value={f.rackId} onChange={(e) => set('rackId', e.target.value)}>
+                <option value="">{t('rack.notRacked')}</option>{racks.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+              </select>
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label={t('rack.position')}><input className="nf-input mono" inputMode="numeric" disabled={!f.rackId} placeholder="auto" value={f.rackPos} onChange={(e) => set('rackPos', e.target.value)} /></Field>
+              <Field label={t('rack.height')}><input className="nf-input mono" inputMode="numeric" value={f.rackUnits} onChange={(e) => set('rackUnits', e.target.value)} /></Field>
+            </div>
             {mine.length > 0 && (
               <div className="sm:col-span-2">
                 <div className="mb-1 text-xs font-medium text-mute">{t('modals.device.connections')} ({mine.length})</div>

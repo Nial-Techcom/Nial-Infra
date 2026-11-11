@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  alertMessage, buildCablingMatrix, buildShmnlt, cablingMatrixCsv, csvCell, formatVlanList, generateDeviceConfig,
+import { isInsecureRemoteUrl,
+  alertMessage, canPlace, connectionsOf, firstFreePos, usedUnits, MEDIUM_COLORS, MODE_COLORS, buildCablingMatrix, buildShmnlt, cablingMatrixCsv, csvCell, formatVlanList, generateDeviceConfig,
   parseIpCidr, parseShmnlt, parseVlanList, prefixToMask, translate, validateTopology,
 } from './index';
 
@@ -109,5 +109,53 @@ describe('csv + shmnlt', () => {
     expect(() => parseShmnlt('nope')).toThrow();
     const bad = { ...file, links: [{ sourceId: 'a', sourcePort: '1', destId: 'zz', destPort: '2', mode: 'access' }] };
     expect(() => parseShmnlt(JSON.stringify(bad))).toThrow(/unknown device/);
+  });
+});
+
+describe('rack helpers', () => {
+  const rack = { id: 'r1', units: 10 };
+  const dev = (id: string, rackId: string | null, rackPos: number | null, rackUnits = 1): any => ({ id, rackId, rackPos, rackUnits });
+  it('refuses overlaps and out-of-range positions', () => {
+    const ds = [dev('a', 'r1', 3, 2)]; // occupies U3-U4
+    expect(canPlace(rack, ds, 'b', 1, 2)).toBe(true);
+    expect(canPlace(rack, ds, 'b', 2, 2)).toBe(false); // U2-U3 overlaps
+    expect(canPlace(rack, ds, 'b', 5, 1)).toBe(true);
+    expect(canPlace(rack, ds, 'b', 10, 2)).toBe(false); // above the top
+    expect(canPlace(rack, ds, 'b', 0, 1)).toBe(false);
+    expect(canPlace(rack, ds, 'a', 3, 2)).toBe(true); // a device does not collide with itself
+  });
+  it('finds the first free slot and counts used units', () => {
+    const ds = [dev('a', 'r1', 1, 2), dev('c', 'r1', 3, 1), dev('x', 'other', 4, 5)];
+    expect(firstFreePos(rack, ds, 'n', 2)).toBe(4);
+    expect(usedUnits(rack, ds)).toBe(3);
+    expect(firstFreePos({ id: 'r1', units: 3 }, ds, 'n', 1)).toBeNull();
+  });
+  it('tells which cables leave the rack', () => {
+    const now = '';
+    const d = (id: string, rackId: string | null): any => ({ id, name: id, rackId, rackPos: 1, rackUnits: 1 });
+    const devices = [d('sw1', 'A'), d('sw2', 'A'), d('sw3', 'B'), d('pc', null)];
+    const l = (id: string, s: string, t: string): any => ({ id, sourceId: s, sourcePort: 'p' + id, destId: t, destPort: 'q' + id, mode: 'access', medium: 'fiber', createdAt: now, updatedAt: now });
+    const links = [l('1', 'sw1', 'sw2'), l('2', 'sw1', 'sw3'), l('3', 'pc', 'sw1')];
+    const racks: any = [{ id: 'A', name: 'Rack A' }, { id: 'B', name: 'Rack B' }];
+    const c = connectionsOf(devices[0], devices, links, racks);
+    expect(c.map((x) => [x.remote.id, x.crossRack])).toEqual([['sw2', false], ['sw3', true], ['pc', true]]);
+    expect(c[1].remoteRack?.name).toBe('Rack B');
+    expect(c[2].remoteRack).toBeNull();
+    expect(c[0].localPort).toBe('p1');
+  });
+  it('keeps cable colours distinct from the VLAN mode colours', () => {
+    expect(MEDIUM_COLORS.ethernet).not.toBe(MEDIUM_COLORS.fiber);
+    expect(Object.values(MODE_COLORS)).not.toContain(MEDIUM_COLORS.fiber);
+    expect(Object.values(MODE_COLORS)).not.toContain(MEDIUM_COLORS.ethernet);
+  });
+});
+
+describe('isInsecureRemoteUrl', () => {
+  it('flags clear-text http to public hosts only', () => {
+    expect(isInsecureRemoteUrl('http://netforge.example.com')).toBe(true);
+    expect(isInsecureRemoteUrl('http://8.8.8.8:3000')).toBe(true);
+    expect(isInsecureRemoteUrl('http://172.32.0.1')).toBe(true);
+    for (const ok of ['https://netforge.example.com', 'http://localhost:5000', 'http://192.168.1.10:3000', 'http://10.0.0.5', 'http://172.20.1.1', 'http://netforge.local', 'http://srv', 'http://127.0.0.1', 'not a url'])
+      expect(isInsecureRemoteUrl(ok), ok).toBe(false);
   });
 });

@@ -1,5 +1,7 @@
 # Installer le serveur NetForge
 
+> Tu as un conteneur LXC Proxmox tout neuf ? Suis plutôt **[docs/INSTALL-LXC.md](docs/INSTALL-LXC.md)** : de la création du conteneur jusqu'au premier écran, avec un script qui fait le gros du travail.
+
 Le serveur est le **centre de tout** : le site web, l'app Windows/macOS et l'app Android/iPhone lisent et écrivent tous dans lui. On l'installe **une seule fois**, puis on y connecte les apps (étape 8).
 
 Chaque étape explique pourquoi on la fait. Vérifie le ✅ avant de passer à la suivante.
@@ -57,7 +59,8 @@ nano .env
 Remplis chaque ligne. Pour les secrets, génère-les au hasard :
 
 ```bash
-openssl rand -base64 32     # lance-le 3 fois : mot de passe base, JWT_SECRET, ENCRYPTION_KEY
+openssl rand -hex 24        # pour POSTGRES_PASSWORD (lettres et chiffres seulement : il est placé dans une URL)
+openssl rand -base64 32     # lance-le 2 fois : JWT_SECRET puis ENCRYPTION_KEY
 ```
 
 | Variable | Rôle | Attention |
@@ -97,7 +100,19 @@ Dans le site : menu en haut à droite → **Utilisateurs** → ajoute les autres
 - **Technicien** : modifie les schémas, voit les mots de passe d'équipements
 - **Lecteur** : regarde et exporte seulement
 
+(Ces rôles s'appliquent aussi **par client** quand tu invites quelqu'un à rejoindre un client.)
+
 *Pourquoi plusieurs rôles ?* Pour que quelqu'un puisse consulter le réseau sans pouvoir le casser.
+
+### Inscription, invitations et e-mails
+
+Les nouveaux comptes (bouton *Pas encore de compte ?*) **ne voient aucun client** tant qu'un admin ne les a pas invités par e-mail. Pour que les e-mails (invitations, « mot de passe oublié ») partent, configure le SMTP : menu en haut à droite → **Administration** :
+
+1. **Adresse publique** : `https://netforge.tondomaine.fr` (ou `http://IP:3000`). *Pourquoi ?* Les liens des e-mails sont construits avec cette valeur, jamais avec l'adresse de la requête reçue (sinon quelqu'un pourrait faire envoyer des liens piégés). Tu peux aussi la fixer avec `PUBLIC_URL` dans `.env`.
+2. **Serveur SMTP** : celui de ton fournisseur (OVH, Gmail avec mot de passe d'application, Brevo, Mailjet…). Port 587 (STARTTLS) ou 465 (TLS direct, coche la case).
+3. **Envoyer un e-mail de test** à ta propre adresse. Si ça échoue, le message d'erreur du serveur s'affiche (mauvais mot de passe, port bloqué…).
+
+Sans SMTP, tout marche quand même : en invitant quelqu'un, NetForge affiche le lien à lui transmettre toi-même. Seul « mot de passe oublié » nécessite l'e-mail (sinon, l'admin réinitialise le mot de passe depuis *Utilisateurs*).
 
 Si tu as perdu l'accès admin :
 ```bash
@@ -167,6 +182,8 @@ git pull
 docker compose up -d --build
 ```
 Les données restent (stockées dans le volume `postgres_data`). Les migrations de base se font automatiquement au démarrage.
+
+👉 Tuto complet pas à pas (sauvegarde, vérifications, retour en arrière) : [docs/UPDATE.md](docs/UPDATE.md).
 
 ## 11. Check-list sécurité
 

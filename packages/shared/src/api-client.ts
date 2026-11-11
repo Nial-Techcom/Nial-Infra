@@ -1,4 +1,6 @@
-import type { Alert, Client, Device, Link, Revision, Role, Site, User, Vendor } from './types';
+import type {
+  AdminSettings, Alert, AuthConfig, Client, Device, Invitation, InvitePreview, Link, LibraryItem, Member, MemberRole, Rack, Revision, Role, Site, User, Vendor,
+} from './types';
 import type { ShmnltFile } from './shmnlt';
 
 export class ApiError extends Error {
@@ -70,7 +72,37 @@ export function createApi(opts: ApiOptions) {
     auth: {
       login: (email: string, password: string) => json<{ token: string; user: User }>('POST', '/auth/login', { email, password }),
       me: () => json<{ user: User }>('GET', '/auth/me'),
-      changePassword: (currentPassword: string, newPassword: string) => json<{ success: true }>('POST', '/auth/change-password', { currentPassword, newPassword }),
+      changePassword: (currentPassword: string, newPassword: string) => json<{ success: true; token: string }>('POST', '/auth/change-password', { currentPassword, newPassword }),
+      config: () => json<AuthConfig>('GET', '/auth/config'),
+      register: (u: { email: string; name: string; password: string; inviteToken?: string }) => json<{ token: string; user: User }>('POST', '/auth/register', u),
+      forgotPassword: (email: string) => json<{ success: true }>('POST', '/auth/forgot-password', { email }),
+      resetPassword: (token: string, newPassword: string) => json<{ success: true }>('POST', '/auth/reset-password', { token, newPassword }),
+    },
+    invitations: {
+      preview: (token: string) => json<InvitePreview>('GET', '/invitations/preview', undefined, { token }),
+      accept: (token: string) => json<{ clientId: string }>('POST', '/invitations/accept', { token }),
+    },
+    admin: {
+      settings: () => json<AdminSettings>('GET', '/admin/settings'),
+      updateSettings: (s: {
+        publicUrl?: string; allowRegistration?: boolean;
+        smtp?: { host: string; port: number; secure: boolean; user: string; password?: string; from: string };
+      }) => json<AdminSettings>('PUT', '/admin/settings', s),
+      testSmtp: (to: string) => json<{ success: true }>('POST', '/admin/settings/smtp-test', { to }),
+    },
+    members: {
+      list: (clientId: string) => json<{ members: Member[]; invitations: Invitation[] }>('GET', `/clients/${clientId}/members`),
+      invite: (clientId: string, email: string, role: MemberRole) =>
+        json<{ invitation: Invitation; emailSent: boolean; link: string }>('POST', `/clients/${clientId}/invitations`, { email, role }),
+      revokeInvitation: (id: string) => json<{ success: true }>('DELETE', `/invitations/${id}`),
+      setRole: (clientId: string, userId: string, role: MemberRole) => json<{ success: true }>('PATCH', `/clients/${clientId}/members/${userId}`, { role }),
+      remove: (clientId: string, userId: string) => json<{ success: true }>('DELETE', `/clients/${clientId}/members/${userId}`),
+    },
+    library: {
+      list: () => json<{ items: LibraryItem[] }>('GET', '/library'),
+      create: (i: Omit<LibraryItem, 'id'>) => json<{ item: LibraryItem }>('POST', '/library', i),
+      update: (id: string, i: Omit<LibraryItem, 'id'>) => json<{ item: LibraryItem }>('PUT', `/library/${id}`, i),
+      remove: (id: string) => json<{ success: true }>('DELETE', `/library/${id}`),
     },
     users: {
       list: () => json<{ users: User[] }>('GET', '/users'),
@@ -83,7 +115,7 @@ export function createApi(opts: ApiOptions) {
       create: (name: string) => json<{ client: Client }>('POST', '/clients', { name }),
       rename: (id: string, name: string) => json<{ client: Client }>('PATCH', `/clients/${id}`, { name }),
       remove: (id: string) => json<{ success: true }>('DELETE', `/clients/${id}`),
-      topology: (id: string) => json<{ client: Client; sites: Site[]; devices: Device[]; links: Link[] }>('GET', `/clients/${id}/topology`),
+      topology: (id: string) => json<{ client: Client; sites: Site[]; racks: Rack[]; devices: Device[]; links: Link[] }>('GET', `/clients/${id}/topology`),
       exportShmnlt: (id: string) => json<ShmnltFile>('GET', `/clients/${id}/export`),
       importShmnlt: (id: string, file: ShmnltFile) => json<{ devices: number; links: number }>('POST', `/clients/${id}/import`, file),
     },
@@ -92,6 +124,11 @@ export function createApi(opts: ApiOptions) {
       create: (clientId: string, name: string) => json<{ site: Site }>('POST', '/sites', { clientId, name }),
       rename: (id: string, name: string) => json<{ site: Site }>('PATCH', `/sites/${id}`, { name }),
       remove: (id: string) => json<{ success: true }>('DELETE', `/sites/${id}`),
+    },
+    racks: {
+      create: (r: { clientId: string; name: string; units?: number; siteId?: string | null }) => json<{ rack: Rack }>('POST', '/racks', r),
+      update: (id: string, r: { name?: string; units?: number; siteId?: string | null }) => json<{ rack: Rack }>('PUT', `/racks/${id}`, r),
+      remove: (id: string) => json<{ success: true }>('DELETE', `/racks/${id}`),
     },
     devices: {
       list: (clientId?: string) => json<{ devices: Device[] }>('GET', '/devices', undefined, { clientId }),

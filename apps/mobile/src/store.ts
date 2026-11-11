@@ -1,6 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 import { create } from 'zustand';
-import { ApiError, createApi, translate, type Client, type Device, type Link, type Locale, type Site, type User } from '@netforge/shared';
+import { ApiError, createApi, translate, type Client, type Device, type Link, type Locale, type Rack, type Site, type User } from '@netforge/shared';
 
 const KEY = 'netforge.session';
 
@@ -60,6 +60,7 @@ interface TopologyState {
   clients: Client[];
   clientId: string | null;
   sites: Site[];
+  racks: Rack[];
   devices: Device[];
   links: Link[];
   loading: boolean;
@@ -71,24 +72,30 @@ interface TopologyState {
 }
 
 export const useTopology = create<TopologyState>((set, get) => ({
-  clients: [], clientId: null, sites: [], devices: [], links: [], loading: false, error: null,
-  reset: () => set({ clients: [], clientId: null, sites: [], devices: [], links: [], error: null }),
+  clients: [], clientId: null, sites: [], racks: [], devices: [], links: [], loading: false, error: null,
+  reset: () => set({ clients: [], clientId: null, sites: [], racks: [], devices: [], links: [], error: null }),
   loadClients: async () => {
     set({ loading: true, error: null });
     try { set({ clients: (await api.clients.list()).clients }); } catch (e) { set({ error: errorText(e, useSession.getState().locale) }); }
     set({ loading: false });
   },
-  open: async (id) => { set({ clientId: id, sites: [], devices: [], links: [] }); await get().reload(); },
+  open: async (id) => { set({ clientId: id, sites: [], racks: [], devices: [], links: [] }); await get().reload(); },
   reload: async () => {
     const id = get().clientId;
     if (!id) return;
     set({ loading: true, error: null });
     try {
       const t = await api.clients.topology(id);
-      if (get().clientId === id) set({ sites: t.sites, devices: t.devices, links: t.links });
+      if (get().clientId === id) set({ sites: t.sites, racks: t.racks ?? [], devices: t.devices, links: t.links });
     } catch (e) { set({ error: errorText(e, useSession.getState().locale) }); }
     set({ loading: false });
   },
 }));
 
-export const canEdit = (u: User | null) => u?.role === 'admin' || u?.role === 'technician';
+export const isAdmin = (u: User | null) => u?.role === 'admin';
+/** Write access in the open client: global admin, or technician member of that client. */
+export function useCanEdit() {
+  const u = useSession((s) => s.user);
+  const role = useTopology((s) => s.clients.find((c) => c.id === s.clientId)?.myRole);
+  return u?.role === 'admin' || role === 'technician' || role === 'admin';
+}

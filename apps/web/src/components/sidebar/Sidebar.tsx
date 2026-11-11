@@ -1,25 +1,25 @@
-import { Cable, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Cable, Pencil, Plus, Trash2, Users } from 'lucide-react';
 import { useReactFlow } from 'reactflow';
 import { useTranslation } from 'react-i18next';
 import { DEVICE_COLORS, DEVICE_LIBRARY, DEVICE_TYPES, type DevicePreset } from '@netforge/shared';
 import { canvasCenter, createFromPreset } from '../../lib/devices';
-import { canEdit, isAdmin, useAuth } from '../../store/auth';
+import type { LibraryItem } from '@netforge/shared';
+import { useCanEdit, useIsAdmin } from '../../store/auth';
 import { useTopology } from '../../store/topology';
 import { useUi } from '../../store/ui';
 
 export function Sidebar() {
   const { t } = useTranslation();
   const rf = useReactFlow();
-  const user = useAuth((s) => s.user);
-  const edit = canEdit(user);
-  const admin = isAdmin(user);
-  const { clients, clientId, sites, devices, activeSiteId } = useTopology();
+  const edit = useCanEdit();
+  const admin = useIsAdmin();
+  const { clients, clientId, sites, devices, activeSiteId, library } = useTopology();
   const ui = useUi.getState;
   let stagger = 0;
 
   const askName = (title: string, label: string, initial: string, onSubmit: (v: string) => Promise<void>) => ui().open({ kind: 'name', title, label, initial, onSubmit });
   const confirmDelete = (name: string, fn: () => Promise<void>) => ui().ask({ title: t('common.delete'), message: t('common.deleteConfirm', { name }), danger: true, confirmLabel: t('common.delete'), onConfirm: fn });
-  const addAtCenter = (p: DevicePreset) => { void createFromPreset(p, canvasCenter(rf, stagger++)); };
+  const addAtCenter = (p: Pick<DevicePreset, 'type' | 'model' | 'portCount' | 'portPrefix'> & { role?: DevicePreset['role'] | null; rackUnits?: number }) => { void createFromPreset(p, canvasCenter(rf, stagger++)); };
 
   return (
     <aside className="flex h-full w-72 shrink-0 flex-col overflow-y-auto border-r border-line bg-panel" aria-label={t('sidebar.clients')}>
@@ -38,6 +38,7 @@ export function Sidebar() {
                   <button className={`min-w-0 flex-1 truncate px-2 py-1.5 text-left ${active ? 'font-semibold' : ''}`} onClick={() => void useTopology.getState().selectClient(c.id)}>{c.name}</button>
                   {admin && active && (
                     <span className="flex pr-1">
+                      <button className="nf-btn nf-btn-ghost !p-1" title={t('members.title')} aria-label={t('members.title')} onClick={() => ui().open({ kind: 'members' })}><Users size={13} /></button>
                       <button className="nf-btn nf-btn-ghost !p-1" title={t('sidebar.renameClient')} aria-label={t('sidebar.renameClient')} onClick={() => askName(t('sidebar.renameClient'), t('sidebar.clientName'), c.name, (v) => useTopology.getState().renameClient(c.id, v))}><Pencil size={13} /></button>
                       <button className="nf-btn nf-btn-ghost nf-btn-danger !p-1" title={t('common.delete')} aria-label={t('common.delete')} onClick={() => confirmDelete(c.name, () => useTopology.getState().deleteClient(c.id))}><Trash2 size={13} /></button>
                     </span>
@@ -81,9 +82,18 @@ export function Sidebar() {
                   <span className="truncate">{p.label}</span><span className="mono text-[11px] text-mute">{p.portCount}p</span>
                 </button>
               ))}
+              {library.filter((i) => i.type === type).map((i: LibraryItem) => (
+                <button key={i.id} disabled={!edit || !clientId} draggable={edit && !!clientId}
+                  onDragStart={(e) => { e.dataTransfer.setData('application/netforge-preset', `lib:${i.id}`); e.dataTransfer.effectAllowed = 'copy'; }}
+                  onClick={() => addAtCenter(i)}
+                  className="flex cursor-grab items-center justify-between rounded border border-dashed border-line bg-bg px-2 py-1.5 text-left text-[13px] hover:border-mute active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50">
+                  <span className="truncate">{i.label}</span><span className="mono text-[11px] text-mute">{i.portCount}p</span>
+                </button>
+              ))}
             </div>
           </div>
         ))}
+        {admin && <button className="nf-btn mt-1 w-full" onClick={() => ui().open({ kind: 'admin' })}><Plus size={14} />{t('admin.libraryAdd')}</button>}
         <button className="nf-btn mt-1 w-full" disabled={!edit || !clientId} onClick={() => ui().open({ kind: 'custom-device' })}><Cable size={14} />{t('sidebar.customDevice')}</button>
       </section>
     </aside>
