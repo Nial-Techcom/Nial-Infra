@@ -124,6 +124,10 @@ export const en = {
     full: 'No room left in this rack.', overlap: 'That position is taken.', deleteRack: 'Delete rack', renameRack: 'Rename rack', connections: 'Cables of this device',
     dragHint: 'Drag a device from the list into a rack, or click a free slot.', cablesOut: 'Cables leaving this rack', none: 'No cable leaves this rack.',
   },
+  conn: {
+    title: 'Server unreachable', body: 'NetForge needs a connection to your server and does not work offline. Nothing is stored on this device; it will resume by itself as soon as the server answers.',
+    server: 'Server', retry: 'Retry now', changeServer: 'Change server', checking: 'Trying to reconnect…', signOut: 'Sign out',
+  },
   errors: {
     network: 'Network error', unauthorized: 'Session expired, please sign in again', forbidden: 'You do not have permission to do this',
     generic: 'Something went wrong', notFound: 'Not found',
