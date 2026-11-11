@@ -1,5 +1,25 @@
 # Mettre à jour le serveur NetForge
 
+## Le plus simple : `update.sh` (automatique)
+
+Le script `scripts/update.sh` fait **tout ce qui est décrit plus bas** à ta place : sauvegarde, `git pull`, reconstruction, vérification. S'il y a un problème, il **revient tout seul à l'ancienne version** et restaure la base.
+
+```bash
+cd ~/NetForge
+./scripts/update.sh --check   # dit s'il y a une mise à jour, ne change rien
+./scripts/update.sh           # met à jour maintenant
+sudo ./scripts/update.sh --auto 4   # met à jour toutes les nuits à 4h17
+```
+
+- *Pourquoi une sauvegarde à chaque fois ?* La base est copiée dans `/var/backups/netforge/` (les 7 dernières sont gardées) **avant** de toucher à quoi que ce soit : c'est ce qui permet le retour arrière.
+- *Pourquoi il peut refuser ?* Si tu as modifié un fichier du dépôt à la main, ou si l'historique distant a été réécrit, il s'arrête sans rien changer.
+- Journal des mises à jour automatiques : `/var/log/netforge-update.log`. Pour arrêter : `sudo ./scripts/update.sh --no-auto`.
+- Une mise à jour automatique redémarre le site quelques minutes : choisis une heure creuse. Elle installe tout ce qui est poussé sur la branche `server` ; si tu préfères relire avant, utilise seulement `--check` ou lance-la à la main.
+
+Les étapes manuelles ci-dessous restent utiles pour comprendre, ou si le script échoue.
+
+---
+
 Ce tuto explique **comment** mettre à jour, et surtout **pourquoi** chaque étape existe. Compte 5 minutes. Il marche pour une install Docker classique et pour le LXC (c'est le même Docker dedans).
 
 > Les commandes se tapent dans le dossier où tu as installé NetForge (`cd ~/NetForge`), dans la console du serveur (ou du LXC).

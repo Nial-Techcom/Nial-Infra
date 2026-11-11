@@ -1,5 +1,8 @@
 # Changelog
 
+## Prochainement
+- `scripts/update.sh` : mise à jour automatique du serveur (sauvegarde, retour arrière automatique, programmation nocturne).
+
 ## 1.1.0 — 2026-11-10 — version de sécurité
 
 ### Sécurité (voir SECURITY.md pour le détail)
