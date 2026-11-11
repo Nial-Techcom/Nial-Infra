@@ -1,9 +1,10 @@
 # Changelog
 
-## Prochainement
-- `scripts/update.sh` : mise à jour automatique du serveur (sauvegarde, retour arrière automatique, programmation nocturne).
-
 ## 1.1.0 — 2026-11-10 — version de sécurité
+
+### Ajouts de dernière minute
+- Les applications (web, PC, mobile) ne fonctionnent **pas hors ligne** : si le serveur ne répond pas, un écran bloquant « Serveur injoignable » s'affiche et l'app reprend toute seule dès qu'il revient. Aucune donnée n'est conservée sur l'appareil.
+- `scripts/update.sh` : mise à jour automatique du serveur (sauvegarde, retour arrière automatique, programmation nocturne).
 
 ### Sécurité (voir SECURITY.md pour le détail)
 - nodemailer 6 → 10.5 (20+ CVE), Electron 33 → 45, electron-builder 25 → 26, Node 20 → 22 LTS dans les images Docker.

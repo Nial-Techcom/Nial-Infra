@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, BackHandler, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { api, useSession, useTopology } from './src/store';
+import { ConnectionGate, useConnectionWatch } from './src/connection';
 import { useTheme } from './src/theme';
 import { Clients } from './src/screens/Clients';
 import { DeviceScreen } from './src/screens/DeviceScreen';
@@ -22,6 +23,7 @@ export default function App() {
   const pop = useCallback(() => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s)), []);
 
   useEffect(() => { void boot(); }, [boot]);
+  useConnectionWatch();
   // Validate a stored session on start; a 401 logs out through the API client.
   useEffect(() => { if (token) api.auth.me().then((r) => useSession.setState({ user: r.user })).catch(() => undefined); else setStack([{ name: 'clients' }]); }, [token]);
   useEffect(() => {
@@ -44,6 +46,7 @@ export default function App() {
             {route.name === 'link' && <LinkScreen key={route.id ?? 'new'} id={route.id} onBack={pop} />}
           </>
         )}
+        <ConnectionGate />
       </SafeAreaView>
     </SafeAreaProvider>
   );

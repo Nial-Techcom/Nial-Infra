@@ -126,6 +126,10 @@ export const fr: Translation = {
     full: 'Plus de place dans cette baie.', overlap: 'Cette position est déjà prise.', deleteRack: 'Supprimer la baie', renameRack: 'Renommer la baie', connections: 'Câbles de cet équipement',
     dragHint: 'Glisse un équipement de la liste dans une baie, ou clique sur un emplacement libre.', cablesOut: 'Câbles qui sortent de cette baie', none: 'Aucun câble ne sort de cette baie.',
   },
+  conn: {
+    title: 'Serveur injoignable', body: 'NetForge a besoin d’une connexion à ton serveur et ne fonctionne pas hors ligne. Rien n’est stocké sur cet appareil ; ça reprend tout seul dès que le serveur répond.',
+    server: 'Serveur', retry: 'Réessayer maintenant', changeServer: 'Changer de serveur', checking: 'Tentative de reconnexion…', signOut: 'Se déconnecter',
+  },
   errors: {
     network: 'Erreur réseau', unauthorized: 'Session expirée, veuillez vous reconnecter', forbidden: 'Vous n’avez pas la permission',
     generic: 'Une erreur est survenue', notFound: 'Introuvable',
