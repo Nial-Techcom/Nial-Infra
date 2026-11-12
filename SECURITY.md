@@ -4,7 +4,7 @@
 
 Ouvre un *Security advisory* privé sur GitHub (onglet **Security → Report a vulnerability**) plutôt qu'une issue publique. Merci de ne pas publier la faille avant qu'elle soit corrigée.
 
-## Audit de sécurité — version 1.1.0 (10 novembre 2026)
+## Audit de sécurité — version 1.1.0 (10 novembre 2026, 2ᵉ passe le 12 novembre)
 
 Audit complet : dépendances (`npm audit`), revue du code serveur / web / desktop / mobile / Docker, et tests d'attaque automatisés (`apps/server/test/api.test.ts`, section *security*).
 
@@ -26,6 +26,10 @@ Audit complet : dépendances (`npm audit`), revue du code serveur / web / deskto
 | 12 | Basse | Desktop | Le processus principal acceptait des messages IPC de n'importe quelle page ; permissions Chromium non restreintes | Vérification de l'émetteur de chaque message IPC, **toutes les permissions refusées**, `<webview>` bloqué | — |
 | 13 | Basse | Mobile / Desktop | Connexion `http://` à un serveur sur Internet sans avertissement (mot de passe en clair) | **Alerte** à la saisie de l'adresse ; sauvegarde Android désactivée (`allowBackup: false`) | `isInsecureRemoteUrl` |
 | 14 | Basse | Journal | Aucune trace de la consultation des mots de passe d'équipements | Ligne `[audit]` (qui, quel équipement, quand) dans les journaux | — |
+| 16 | **Haute** | Configuration | Les valeurs d'exemple du `.env.example` (`JWT_SECRET=generate-a-random-…`, mot de passe PostgreSQL `change-me-…`) étaient **acceptées en production** : un serveur démarré sans les changer signait ses sessions avec une clé publique | En production, le serveur **refuse de démarrer** avec un secret d'exemple, trop court, trop répétitif (`aaaa…`), une clé de chiffrement quasi nulle ou le mot de passe de base d'exemple. `update.sh` refuse aussi de tourner si le `.env` contient encore `change-me` / `generate-` | `production secrets` (6 cas) |
+| 17 | **Haute** | Dépendance (zod 3) | CVE « consommation mémoire sur grandes collections » | **zod 4.6.7** (typecheck, 87 tests, builds web et mobile vérifiés) | suite complète |
+| 18 | Moyenne | `update.sh` | Fichier de verrou prévisible dans `/tmp` (attaque par lien symbolique en root) ; cron root lançant un script modifiable par d'autres ; dépôt `http://` accepté ; port du `.env` non validé ; sauvegardes pas en 700 | Verrou dans `/var/lock` (liens refusés), `--auto` refuse un script non root/modifiable, `origin` doit être en https/ssh, port numérique, dossier de sauvegarde 700, journal 600 | essais scriptés |
+| 19 | Basse | Docker | Conteneurs avec privilèges par défaut | `no-new-privileges` partout, `cap_drop: ALL` pour le serveur | — |
 | 15 | Basse | E-mails | Nom de client pouvant contenir des retours à la ligne dans l'objet | Retours à la ligne supprimés | — |
 
 ### Vérifié sans faille (tests de non-régression ajoutés)
@@ -44,9 +48,10 @@ Audit complet : dépendances (`npm audit`), revue du code serveur / web / deskto
 | Sujet | Pourquoi on l'accepte | Mesure |
 |---|---|---|
 | Outils de build **Expo SDK 52** (`tar`, `xmldom`, `postcss`, `image-size`… signalés par `npm audit`) | Ils ne tournent que sur la machine de compilation (GitHub Actions) sur **notre propre** projet, jamais dans l'app livrée ni sur le serveur. Les corriger demande le saut Expo 52 → 58 (React Native majeur), risqué pour la stabilité | À planifier dans une version dédiée ; les APK/IPA ne contiennent pas ces paquets |
-| `zod` 3.x (CVE « collections surdimensionnées ») | Le correctif n'existe qu'en zod 4 (API incompatible). Toutes nos listes ont un `.max()` et le corps des requêtes est limité à 5 Mo | Limites en place, test dédié |
 | `vite` / `vitest` / `esbuild` (serveur de **développement**) | Non embarqués dans la production | N'expose pas le serveur de dev sur Internet |
 | La création de compte révèle qu'une adresse est déjà prise (409) | Inhérent à l'inscription sans vérification e-mail ; limité par le plafond de tentatives | Décocher « création de compte libre » dans Administration |
+| Actions GitHub tierces (`softprops`, `docker/*`) référencées par version et non par empreinte | Éditeurs reconnus ; l'épinglage par SHA demande un accès GitHub que je n'avais pas | À faire avec Dependabot |
+| Mise à jour automatique = confiance dans la branche `server` du dépôt | C'est le principe de l'auto-update ; protège ta branche (Settings → Branches) et active l'authentification 2FA GitHub | `update.sh --check` pour relire avant d'appliquer |
 | `http://` autorisé sur réseau local | Nécessaire pour un serveur maison sans HTTPS | Alerte pour toute adresse publique ; HTTPS conseillé (INSTALLATION.md §7) |
 
 ## Check-list d'un serveur sain
