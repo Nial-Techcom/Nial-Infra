@@ -1,7 +1,7 @@
 // Exposes a tiny, explicit API to the web UI. The renderer never gets Node or the raw ipcRenderer.
 const { contextBridge, ipcRenderer } = require('electron');
 
-contextBridge.exposeInMainWorld('netforgeDesktop', {
+contextBridge.exposeInMainWorld('infraTechDesktop', {
   isDesktop: true,
   getServerUrl: () => ipcRenderer.invoke('nf:get-server-url'),
   setServerUrl: (url) => ipcRenderer.invoke('nf:set-server-url', url),

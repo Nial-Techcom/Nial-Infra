@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Link } from '@netforge/shared';
+import type { Link } from '@infra-tech/shared';
 
 export type Modal =
   | { kind: 'device'; id: string }

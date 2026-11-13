@@ -1,18 +1,18 @@
 {
-  "name": "@netforge/mobile",
+  "name": "@infra-tech/mobile",
   "version": "1.1.0",
   "private": true,
   "main": "index.js",
-  "description": "NetForge mobile app (React Native / Expo) for iOS and Android",
+  "description": "Infra-Tech mobile app (React Native / Expo) for iOS and Android",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "typecheck": "tsc --noEmit",
-    "bundle-check": "expo export --platform android --output-dir /tmp/netforge-mobile-export"
+    "bundle-check": "expo export --platform android --output-dir /tmp/infra-tech-mobile-export"
   },
   "dependencies": {
-    "@netforge/shared": "*",
+    "@infra-tech/shared": "*",
     "expo": "~52.0.0",
     "expo-build-properties": "^0.13.3",
     "expo-document-picker": "~13.0.1",

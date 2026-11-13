@@ -3,7 +3,7 @@ import type { Device, Link, Rack, Site } from './types';
 import { DEVICE_ROLES, DEVICE_TYPES, LINK_MEDIA, MGMT_PROTOCOLS } from './types';
 
 /**
- * `.shmnlt` is NetForge's portable JSON topology format (one client).
+ * `.shmnlt` is Infra-Tech's portable JSON topology format (one client).
  * Credentials are never exported.
  */
 const vlan = z.number().int().min(1).max(4094);
