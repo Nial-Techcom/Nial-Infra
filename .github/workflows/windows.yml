@@ -27,7 +27,7 @@ jobs:
       - name: Build shared package
         run: npm run build:shared
       - name: Build web UI and stage it for Electron
-        run: npm run build -w @netforge/desktop
+        run: npm run build -w @infra-tech/desktop
       - name: Build .exe (NSIS) and .msi
         working-directory: apps/desktop
         run: npx electron-builder --win --x64 --publish never
@@ -35,7 +35,7 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
       - uses: actions/upload-artifact@v4
         with:
-          name: NetForge-windows
+          name: Infra-Tech-windows
           path: |
             apps/desktop/release/*.exe
             apps/desktop/release/*.msi

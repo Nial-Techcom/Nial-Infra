@@ -20,7 +20,7 @@ export default async function setup() {
   await pg.initialise();
   await pg.start();
   await pg.createDatabase('netforge_test');
-  process.env.TEST_DATABASE_URL = `postgresql://netforge:netforge@localhost:${port}/netforge_test`;
+  process.env.TEST_DATABASE_URL = `postgresql://netforge:infra-tech@localhost:${port}/netforge_test`;
   return async () => {
     await pg.stop();
     rmSync(dir, { recursive: true, force: true });
