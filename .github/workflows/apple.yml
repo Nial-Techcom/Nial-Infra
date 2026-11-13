@@ -35,19 +35,19 @@ jobs:
       - name: Build unsigned app
         working-directory: apps/mobile
         run: |
-          xcodebuild -workspace ios/NetForge.xcworkspace -scheme NetForge \
+          xcodebuild -workspace ios/Infra-Tech.xcworkspace -scheme Infra-Tech \
             -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
             -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
       - name: Package unsigned IPA (for SideStore / LiveContainer)
         working-directory: apps/mobile
         run: |
           mkdir Payload
-          cp -R build/Build/Products/Release-iphoneos/NetForge.app Payload/
-          zip -qr ../../NetForge-ios-unsigned.ipa Payload
+          cp -R build/Build/Products/Release-iphoneos/Infra-Tech.app Payload/
+          zip -qr ../../Infra-Tech-ios-unsigned.ipa Payload
       - uses: actions/upload-artifact@v4
         with:
-          name: NetForge-ios-ipa
-          path: NetForge-ios-unsigned.ipa
+          name: Infra-Tech-ios-ipa
+          path: Infra-Tech-ios-unsigned.ipa
   macos:
     runs-on: macos-latest
     steps:
@@ -63,7 +63,7 @@ jobs:
       - name: Build shared package
         run: npm run build:shared
       - name: Build web UI and stage it for Electron
-        run: npm run build -w @netforge/desktop
+        run: npm run build -w @infra-tech/desktop
       - name: Build .dmg and .zip (arm64 + x64)
         working-directory: apps/desktop
         run: npx electron-builder --mac --arm64 --x64 --publish never
@@ -71,7 +71,7 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
       - uses: actions/upload-artifact@v4
         with:
-          name: NetForge-macos
+          name: Infra-Tech-macos
           path: |
             apps/desktop/release/*.dmg
             apps/desktop/release/*.zip
