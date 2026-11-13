@@ -41,6 +41,14 @@ if [ "$MODE" = auto ]; then
   [[ "$HOUR" =~ ^([0-9]|1[0-9]|2[0-3])$ ]] || die "Heure invalide : $HOUR (0 à 23)."
   command -v cron >/dev/null 2>&1 || command -v crond >/dev/null 2>&1 \
     || { apt-get update -qq && apt-get install -y -qq cron >/dev/null; systemctl enable --now cron >/dev/null 2>&1 || true; }
+  # Le cron tourne en root : le script ne doit pas être modifiable par d'autres utilisateurs.
+  for f in "$ROOT/scripts/update.sh" "$ROOT/scripts"; do
+    perm="$(stat -c %a "$f")"
+    if [ "$(stat -c %U "$f")" != root ] || [ $(( 0${perm: -2:1} & 2 )) -ne 0 ] || [ $(( 0${perm: -1} & 2 )) -ne 0 ]; then
+      die "$f doit appartenir à root et ne pas être modifiable par un autre utilisateur (chown -R root:root $ROOT && chmod -R go-w $ROOT)."
+    fi
+  done
+  touch "$LOG_FILE"; chmod 600 "$LOG_FILE"
   printf '# Généré par scripts/update.sh --auto\n17 %s * * * root %s >> %s 2>&1\n' \
     "$HOUR" "$ROOT/scripts/update.sh" "$LOG_FILE" > "$CRON_FILE"
   chmod 644 "$CRON_FILE"
@@ -58,13 +66,25 @@ command -v git >/dev/null 2>&1 || die "git introuvable."
 [ -d .git ] || die "$ROOT n'est pas un dépôt git."
 
 # un seul exemplaire à la fois (cron + lancement manuel)
-exec 9>"/tmp/netforge-update.lock"
+LOCK_FILE="${LOCK_FILE:-/var/lock/netforge-update.lock}"
+[ -w "$(dirname "$LOCK_FILE")" ] || LOCK_FILE="$BACKUP_DIR/.update.lock"
+mkdir -p "$(dirname "$LOCK_FILE")"
+[ ! -L "$LOCK_FILE" ] || die "$LOCK_FILE est un lien symbolique : refusé."
+exec 9>"$LOCK_FILE"
 flock -n 9 || die "Une mise à jour est déjà en cours."
 
+git() { command git -c safe.directory="$ROOT" "$@"; }
+REMOTE_URL="$(git remote get-url origin 2>/dev/null || true)"
+case "$REMOTE_URL" in https://*|ssh://*|git@*) ;; *) die "Le dépôt 'origin' doit être en https:// ou ssh (trouvé : ${REMOTE_URL:-rien}).";; esac
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 [ "$BRANCH" != HEAD ] || die "Dépôt en 'detached HEAD' : fais git checkout server d'abord."
 PORT="$(grep -E '^WEB_PORT=' .env | tail -1 | cut -d= -f2 | tr -d '\r"' || true)"; PORT="${PORT:-3000}"
+[[ "$PORT" =~ ^[0-9]{1,5}$ ]] || die "WEB_PORT invalide dans .env : $PORT"
 HEALTH="http://localhost:${PORT}/api/v1/health"
+
+if grep -qE '^(JWT_SECRET|POSTGRES_PASSWORD|ADMIN_PASSWORD)=.*(change-me|generate-)' .env; then
+  die ".env contient encore des valeurs d'exemple (change-me / generate-) : remplace-les avant de mettre à jour."
+fi
 
 OLD="$(git rev-parse HEAD)"
 git fetch -q origin "$BRANCH" || die "Impossible de joindre GitHub (réseau ?)."
@@ -91,7 +111,7 @@ git merge-base --is-ancestor "$OLD" "$NEW" || [ "$MODE" = force ] \
 # --- 1. sauvegarde --------------------------------------------------------
 log "Mise à jour ${OLD:0:7} -> ${NEW:0:7} (branche $BRANCH)"
 umask 077
-mkdir -p "$BACKUP_DIR"
+mkdir -p "$BACKUP_DIR"; chmod 700 "$BACKUP_DIR"
 STAMP="$(date +%F_%H%M%S)"
 DUMP="$BACKUP_DIR/netforge-$STAMP.sql.gz"
 log "1/4 Sauvegarde de la base -> $DUMP"
