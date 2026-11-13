@@ -13,6 +13,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
 
   server:
@@ -34,6 +36,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    cap_drop: [ALL]            # le serveur Node n'a besoin d'aucun privilège Linux
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
 
   web:
@@ -45,6 +50,8 @@ services:
       - "${WEB_PORT:-3000}:80"
     depends_on:
       - server
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
 
 volumes:
