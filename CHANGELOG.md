@@ -12,7 +12,8 @@
 - En production, refus de créer l'admin avec le mot de passe d'exemple.
 - nginx : CSP stricte et en-têtes de sécurité, `X-Forwarded-For` non falsifiable ; API en `no-store`, plafond global de requêtes.
 - SMTP : TLS obligatoire sur le port 587 ; Electron : IPC vérifié, permissions refusées ; alerte sur `http://` public ; journal d'audit des mots de passe consultés.
-- 13 nouveaux tests de sécurité (IDOR sur 23 routes, jetons falsifiés, injection SQL, CSV, limites).
+- 2ᵉ passe : refus des secrets d'exemple en production, zod 4, durcissement de `update.sh` et de Docker.
+- 19 nouveaux tests de sécurité (IDOR sur 23 routes, jetons falsifiés, injection SQL, CSV, limites).
 
 ### Nouveautés (depuis 1.0.0)
 - Mot de passe oublié, création de compte, invitations par e-mail à un client, rôles par client.
