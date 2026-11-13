@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "NetForge",
-    "slug": "netforge",
+    "name": "Infra-Tech",
+    "slug": "infra-tech",
     "version": "1.1.0",
     "orientation": "default",
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#141A22",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.netforge.mobile",
+      "bundleIdentifier": "com.infratech.mobile",
       "buildNumber": "2",
       "infoPlist": {
         "NSAppTransportSecurity": {
@@ -17,7 +17,7 @@
       }
     },
     "android": {
-      "package": "com.netforge.mobile",
+      "package": "com.infratech.mobile",
       "versionCode": 2,
       "allowBackup": false
     },

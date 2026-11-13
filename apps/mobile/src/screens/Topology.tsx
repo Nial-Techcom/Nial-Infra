@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Alert, FlatList, RefreshControl, Text, TextInput, View } from 'react-native';
 import {
   DEVICE_COLORS, DEVICE_LIBRARY, alertMessage, buildShmnlt, cablingMatrixCsv, generateClientConfig, parseShmnlt, summarizeAlerts, validateTopology, VENDORS, type Vendor,
-} from '@netforge/shared';
+} from '@infra-tech/shared';
 import { api, useCanEdit, errorText, useSession, useT, useTopology } from '../store';
 import { pickText, shareText } from '../share';
 import { useTheme } from '../theme';
@@ -27,7 +27,7 @@ export function Topology({ onBack, onDevice, onLink }: { onBack: () => void; onD
   const counts = summarizeAlerts(alerts);
   const nameOf = (id: string) => devices.find((d) => d.id === id)?.name ?? '?';
   const fail = (e: unknown) => Alert.alert(t('common.error'), errorText(e, locale));
-  const safe = (client?.name ?? 'netforge').replace(/[^A-Za-z0-9_-]+/g, '_');
+  const safe = (client?.name ?? 'infra-tech').replace(/[^A-Za-z0-9_-]+/g, '_');
 
   async function addDevice(key: string) {
     const p = DEVICE_LIBRARY.find((x) => x.key === key);

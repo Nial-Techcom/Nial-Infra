@@ -152,10 +152,10 @@ describe('rack helpers', () => {
 
 describe('isInsecureRemoteUrl', () => {
   it('flags clear-text http to public hosts only', () => {
-    expect(isInsecureRemoteUrl('http://netforge.example.com')).toBe(true);
+    expect(isInsecureRemoteUrl('http://infra-tech.example.com')).toBe(true);
     expect(isInsecureRemoteUrl('http://8.8.8.8:3000')).toBe(true);
     expect(isInsecureRemoteUrl('http://172.32.0.1')).toBe(true);
-    for (const ok of ['https://netforge.example.com', 'http://localhost:5000', 'http://192.168.1.10:3000', 'http://10.0.0.5', 'http://172.20.1.1', 'http://netforge.local', 'http://srv', 'http://127.0.0.1', 'not a url'])
+    for (const ok of ['https://infra-tech.example.com', 'http://localhost:5000', 'http://192.168.1.10:3000', 'http://10.0.0.5', 'http://172.20.1.1', 'http://infra-tech.local', 'http://srv', 'http://127.0.0.1', 'not a url'])
       expect(isInsecureRemoteUrl(ok), ok).toBe(false);
   });
 });

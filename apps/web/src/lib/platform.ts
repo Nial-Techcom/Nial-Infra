@@ -13,11 +13,11 @@ export interface DesktopBridge {
 
 declare global {
   interface Window {
-    netforgeDesktop?: DesktopBridge;
+    infraTechDesktop?: DesktopBridge;
   }
 }
 
-export const desktop = typeof window !== 'undefined' ? window.netforgeDesktop : undefined;
+export const desktop = typeof window !== 'undefined' ? window.infraTechDesktop : undefined;
 export const isDesktop = !!desktop;
 
 let serverUrl: string | null = null;
@@ -69,5 +69,5 @@ export async function openTextFile(extensions: string[]): Promise<{ name: string
 }
 
 export function safeName(s: string) {
-  return s.replace(/[^A-Za-z0-9_.-]+/g, '_').slice(0, 60) || 'netforge';
+  return s.replace(/[^A-Za-z0-9_.-]+/g, '_').slice(0, 60) || 'infra-tech';
 }

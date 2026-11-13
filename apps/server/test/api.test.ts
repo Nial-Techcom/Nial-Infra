@@ -262,14 +262,14 @@ describe('accounts, invitations and password reset', () => {
   });
 
   it('keeps the SMTP password encrypted and never returns it', async () => {
-    const r = await c.api.put(`${B}/admin/settings`).set(c.as(c.tokens.admin)).send({ publicUrl: 'https://nf.example.com/', smtp: { host: 'smtp.test', port: 587, secure: false, user: 'u', password: 'smtp-secret', from: 'NetForge <no-reply@test.io>' } });
+    const r = await c.api.put(`${B}/admin/settings`).set(c.as(c.tokens.admin)).send({ publicUrl: 'https://nf.example.com/', smtp: { host: 'smtp.test', port: 587, secure: false, user: 'u', password: 'smtp-secret', from: 'Infra-Tech <no-reply@test.io>' } });
     expect(r.body.smtp).toMatchObject({ host: 'smtp.test', hasPassword: true });
     expect(r.body.publicUrl).toBe('https://nf.example.com');
     expect(JSON.stringify(r.body)).not.toContain('smtp-secret');
     const raw = (await c.pool.query("SELECT value FROM app_settings WHERE key='smtp'")).rows[0].value;
     expect(JSON.stringify(raw)).not.toContain('smtp-secret');
     // omitting the password keeps it
-    const r2 = await c.api.put(`${B}/admin/settings`).set(c.as(c.tokens.admin)).send({ smtp: { host: 'smtp.test', port: 465, secure: true, user: 'u', from: 'NetForge <no-reply@test.io>' } });
+    const r2 = await c.api.put(`${B}/admin/settings`).set(c.as(c.tokens.admin)).send({ smtp: { host: 'smtp.test', port: 465, secure: true, user: 'u', from: 'Infra-Tech <no-reply@test.io>' } });
     expect(r2.body.smtp).toMatchObject({ port: 465, hasPassword: true });
     expect((await c.api.get(`${B}/auth/config`)).body.emailEnabled).toBe(true);
     expect((await c.api.put(`${B}/admin/settings`).set(c.as(c.tokens.tech)).send({ allowRegistration: true })).status).toBe(403);

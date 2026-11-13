@@ -3,7 +3,7 @@ import { ReactFlowProvider } from 'reactflow';
 import { AuthScreens, InviteAccept, NoClient, urlParams } from './components/AuthScreens';
 import { RackView } from './components/canvas/RackView';
 import { Header } from './components/layout/Header';
-import { NetForgeCanvas } from './components/canvas/NetForgeCanvas';
+import { InfraTechCanvas } from './components/canvas/InfraTechCanvas';
 import { ModalHost } from './components/modals/ModalHost';
 import { AlertsPanel } from './components/panels/AlertsPanel';
 import { Sidebar } from './components/sidebar/Sidebar';
@@ -29,7 +29,7 @@ function Workspace() {
         <div className={`${sidebarOpen ? 'block' : 'hidden'} absolute inset-y-0 left-0 z-30 lg:static lg:block`}>
           <Sidebar />
         </div>
-        <main className="min-w-0 flex-1">{view === 'rack' ? <RackView /> : <NetForgeCanvas />}</main>
+        <main className="min-w-0 flex-1">{view === 'rack' ? <RackView /> : <InfraTechCanvas />}</main>
         {alertsOpen && <div className="absolute inset-y-0 right-0 z-30 xl:static"><AlertsPanel /></div>}
       </div>
     </div>

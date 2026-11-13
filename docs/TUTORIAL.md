@@ -1,8 +1,8 @@
-# Tutoriel NetForge — comment ça marche
+# Tutoriel Infra-Tech — comment ça marche
 
 Ce tutoriel explique **ce que fait chaque étape et pourquoi**. Fais-les dans l'ordre et vérifie le résultat avant de passer à la suivante.
 
-![NetForge web avec le réseau de démo](img/web-demo.png)
+![Infra-Tech web avec le réseau de démo](img/web-demo.png)
 
 ## 1. Comprendre l'architecture (2 minutes)
 
@@ -93,7 +93,7 @@ Elles se recalculent à chaque modification, sans rien cliquer. Clique une alert
 - **.shmnlt** : fichier JSON portable d'un client (sans les mots de passe), pour sauvegarder ou transférer un schéma. L'import le recrée sur n'importe quel serveur.
 
 ### Historique
-Le bouton horloge enregistre une **version** (avec une note) et permet de **restaurer**. Avant de restaurer, NetForge sauvegarde automatiquement l'état actuel : tu ne perds rien.
+Le bouton horloge enregistre une **version** (avec une note) et permet de **restaurer**. Avant de restaurer, Infra-Tech sauvegarde automatiquement l'état actuel : tu ne perds rien.
 
 ## 5. Les rôles
 
@@ -108,14 +108,14 @@ Les droits sont vérifiés **côté serveur** : cacher un bouton ne suffit pas, 
 ### Les comptes : créer un compte, invitation, mot de passe oublié
 
 - **Créer un compte** : sur l'écran de connexion, *Pas encore de compte ?*. Un nouveau compte **ne voit aucun client** : il tombe sur « Aucun client pour l'instant ». *Pourquoi ?* Pour qu'un inconnu qui s'inscrit ne voie jamais les réseaux de tes clients.
-- **Donner accès à un client** : l'admin sélectionne le client, clique sur l'icône « personnes » à côté de son nom, saisit l'e-mail et le rôle (technicien ou lecteur) → **Inviter**. La personne reçoit un lien (valable 7 jours, utilisable une seule fois) ; elle crée son compte avec cette adresse (ou se connecte) et le client apparaît. Sans SMTP configuré, NetForge affiche le lien : copie-le et envoie-le toi-même. Sur mobile, colle le lien dans *Rejoindre avec une invitation*.
+- **Donner accès à un client** : l'admin sélectionne le client, clique sur l'icône « personnes » à côté de son nom, saisit l'e-mail et le rôle (technicien ou lecteur) → **Inviter**. La personne reçoit un lien (valable 7 jours, utilisable une seule fois) ; elle crée son compte avec cette adresse (ou se connecte) et le client apparaît. Sans SMTP configuré, Infra-Tech affiche le lien : copie-le et envoie-le toi-même. Sur mobile, colle le lien dans *Rejoindre avec une invitation*.
 - **Mot de passe oublié** : sur l'écran de connexion, *Mot de passe oublié ?* → un lien valable 1 heure est envoyé. Il ne marche qu'une fois, et déconnecte les anciennes sessions. Pour des raisons de sécurité, la réponse est la même que l'adresse existe ou non.
 - **Rôle par client** : un même utilisateur peut être technicien chez ACME et lecteur chez Globex.
 
 ### Le panneau Administration (admin)
 
 Menu en haut à droite → **Administration** :
-- **Adresse publique** : l'adresse écrite dans les liens des e-mails (ex. `https://netforge.mondomaine.fr`).
+- **Adresse publique** : l'adresse écrite dans les liens des e-mails (ex. `https://infra-tech.mondomaine.fr`).
 - **Création de comptes libre** : coche/décoche. Décochée, seules les personnes invitées peuvent s'inscrire.
 - **Serveur e-mail (SMTP)** : serveur, port (587 = STARTTLS, 465 = TLS direct), identifiant, mot de passe, expéditeur. Le mot de passe est **chiffré** en base et n'est jamais réaffiché. Le bouton *Envoyer un e-mail de test* vérifie que tout marche avant d'envoyer de vraies invitations.
 - **Catalogue d'équipements** : ajoute tes propres modèles (nom, type, ports, hauteur en U). Ils apparaissent dans la bibliothèque (bordure en pointillés) pour tous les clients.
@@ -139,9 +139,9 @@ Le type se choisit dans la fenêtre du câble. Le mode (access/trunk) reste lisi
 ## 6. L'app desktop
 
 ```bash
-npm run build -w @netforge/desktop
-npm run start -w @netforge/desktop        # lancer
-npm run dist -w @netforge/desktop         # fabriquer l'installeur (dossier apps/desktop/release)
+npm run build -w @infra-tech/desktop
+npm run start -w @infra-tech/desktop        # lancer
+npm run dist -w @infra-tech/desktop         # fabriquer l'installeur (dossier apps/desktop/release)
 ```
 Au premier lancement, indique l'**URL du serveur** (ex. `http://192.168.1.50:3000`) dans l'écran de connexion. *Pourquoi ?* L'app est une coquille locale : elle a besoin de savoir où est la base. Les exports ouvrent la vraie boîte « Enregistrer sous » du système.
 
@@ -164,11 +164,11 @@ Onglets : **Schéma** (touche un équipement ou un câble pour l'ouvrir), **Équ
 | Mobile : réseau en erreur | `localhost` utilisé, ou autre Wi-Fi | Utilise l'IP du PC, même réseau |
 | Le serveur refuse de démarrer | Variable manquante | Le message liste ce qui manque (`JWT_SECRET`, `ENCRYPTION_KEY`…) |
 | Mot de passe d'équipement illisible | `ENCRYPTION_KEY` changée | Remets l'ancienne clé |
-| Aucun compte | Base vide sans `ADMIN_EMAIL` | `npm run create-admin -w @netforge/server -- mail "motdepasse"` |
+| Aucun compte | Base vide sans `ADMIN_EMAIL` | `npm run create-admin -w @infra-tech/server -- mail "motdepasse"` |
 | Session expirée | Jeton JWT périmé | Reconnecte-toi |
 
 ## 9. Pour aller plus loin
 
 - Ajouter une règle de validation : `packages/shared/src/validation.ts` (puis les textes dans `i18n/en.ts` et `fr.ts`). Elle apparaît automatiquement dans les trois applis.
 - Ajouter un équipement à la bibliothèque : `packages/shared/src/library.ts`.
-- Lancer les tests : `npm test -w @netforge/shared` et `npm test -w @netforge/server`.
+- Lancer les tests : `npm test -w @infra-tech/shared` et `npm test -w @infra-tech/server`.

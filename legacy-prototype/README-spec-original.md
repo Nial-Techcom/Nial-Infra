@@ -7,28 +7,28 @@
  | | \ \ | | | | | | \ \ | |____  | |__| || |\  | | |__| || |____  | | \ \
  |_|  \_\|_| |_| |_|  \_\|______| |_____/ |_| \_| |_____/ |______| |_|  \_\
 ================================================================================
-                  🌐 NETFORGE - INFRASTRUCTURE TOPOLOGY DESIGNER
+                  🌐 INFRATECH - INFRASTRUCTURE TOPOLOGY DESIGNER
 ================================================================================
 -->
 
 <div align="center">
 
-# 🛜 NetForge
+# 🛜 Infra-Tech
 
 ### Infrastructure Topology Designer
 
 **Design your network infrastructure with VLANs, Trunks, Tagging, and device management - all in one visual canvas.**
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/your-org/netforge/releases)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/your-org/infra-tech/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 [![Made with React](https://img.shields.io/badge/Made%20with-React-61DAFB.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC.svg)](https://www.typescriptlang.org/)
 
 **[Website](https://nial-tech.com)** •
-**[Documentation](https://docs.netforge.io)** •
-**[Report Bug](https://github.com/Flunch4456/NetForge/issues)** •
-**[Request Feature](https://github.com/Flunch4456/NetForge/pulls)** •
+**[Documentation](https://docs.infra-tech.io)** •
+**[Report Bug](https://github.com/Flunch4456/Infra-Tech/issues)** •
+**[Request Feature](https://github.com/Flunch4456/Infra-Tech/pulls)** •
 **[Contact](mailto:contact@nial-tech.com)**
 
 </div>
@@ -47,7 +47,7 @@
 
 ## 🎯 Overview
 
-**NetForge** is a full-stack web application for designing complete network infrastructure schemas. It bridges the gap between logical diagrams and physical cabling plans by integrating **VLAN configuration, port mapping, Tagging (Tagged/Untagged), and device management metadata** directly into the visual canvas.
+**Infra-Tech** is a full-stack web application for designing complete network infrastructure schemas. It bridges the gap between logical diagrams and physical cabling plans by integrating **VLAN configuration, port mapping, Tagging (Tagged/Untagged), and device management metadata** directly into the visual canvas.
 
 ### Primary Use Case
 **Managed Service Providers (MSPs)** and **enterprise IT teams** managing multiple clients and sites.
@@ -170,8 +170,8 @@ The backend continuously validates the schema and displays alerts:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-org/netforge.git
-cd netforge
+git clone https://github.com/your-org/infra-tech.git
+cd infra-tech
 
 # 2. Copy environment variables
 cp .env.example .env
@@ -265,7 +265,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🎯 Présentation
 
-**NetForge** est une application web full-stack permettant de concevoir des schémas d'infrastructure réseau complets. Elle fait le lien entre le schéma logique et le plan de câblage physique en intégrant **la configuration VLAN, le mapping des ports, le Tagging (Tagged/Untagged) et les métadonnées de gestion** directement sur le canvas visuel.
+**Infra-Tech** est une application web full-stack permettant de concevoir des schémas d'infrastructure réseau complets. Elle fait le lien entre le schéma logique et le plan de câblage physique en intégrant **la configuration VLAN, le mapping des ports, le Tagging (Tagged/Untagged) et les métadonnées de gestion** directement sur le canvas visuel.
 
 ### Cas d'usage principal
 **Sociétés d'infogérance (MSP)** et **équipes IT internes** gérant plusieurs clients et sites.
@@ -388,8 +388,8 @@ Le backend valide en continu le schéma et affiche des alertes :
 
 ```bash
 # 1. Cloner le dépôt
-git clone https://github.com/your-org/netforge.git
-cd netforge
+git clone https://github.com/your-org/infra-tech.git
+cd infra-tech
 
 # 2. Copier les variables d'environnement
 cp .env.example .env
@@ -642,7 +642,7 @@ interface Alert {
 // public/locales/en/common.json
 {
   "app": {
-    "title": "NetForge - Infrastructure Designer",
+    "title": "Infra-Tech - Infrastructure Designer",
     "description": "Design your network infrastructure with VLANs, Trunks, and Tagging"
   },
   "sidebar": {
@@ -776,7 +776,7 @@ const rules: ValidationRule[] = [
 ## 📁 Folder Structure
 
 ```
-netforge/
+infra-tech/
 ├── frontend/
 │   ├── public/
 │   │   └── locales/
@@ -787,7 +787,7 @@ netforge/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── canvas/
-│   │   │   │   ├── NetForgeCanvas.tsx
+│   │   │   │   ├── InfraTechCanvas.tsx
 │   │   │   │   ├── DeviceNode.tsx
 │   │   │   │   ├── CableEdge.tsx
 │   │   │   │   └── DeviceTooltip.tsx
@@ -978,7 +978,7 @@ volumes:
 
 **Made with ❤️ for MSPs and network architects worldwide.**
 
-**[⬆ Back to Top](#-netforge)**
+**[⬆ Back to Top](#-infra-tech)**
 
 </div>
 ```

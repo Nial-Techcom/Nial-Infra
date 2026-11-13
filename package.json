@@ -1,8 +1,8 @@
 {
-  "name": "netforge",
+  "name": "infra-tech",
   "private": true,
   "version": "1.1.0",
-  "description": "NetForge - Infrastructure Topology Designer (server, web, desktop, mobile)",
+  "description": "Infra-Tech - Infrastructure Topology Designer (server, web, desktop, mobile)",
   "workspaces": [
     "packages/*",
     "apps/server",
@@ -11,12 +11,12 @@
     "apps/mobile"
   ],
   "scripts": {
-    "build:shared": "npm run build -w @netforge/shared",
-    "dev:server": "npm run dev -w @netforge/server",
-    "dev:web": "npm run dev -w @netforge/web",
-    "dev:desktop": "npm run dev -w @netforge/desktop",
-    "build": "npm run build -w @netforge/shared && npm run build -w @netforge/server && npm run build -w @netforge/web && npm run build -w @netforge/desktop",
-    "test": "npm run test -w @netforge/shared && npm run test -w @netforge/server",
+    "build:shared": "npm run build -w @infra-tech/shared",
+    "dev:server": "npm run dev -w @infra-tech/server",
+    "dev:web": "npm run dev -w @infra-tech/web",
+    "dev:desktop": "npm run dev -w @infra-tech/desktop",
+    "build": "npm run build -w @infra-tech/shared && npm run build -w @infra-tech/server && npm run build -w @infra-tech/web && npm run build -w @infra-tech/desktop",
+    "test": "npm run test -w @infra-tech/shared && npm run test -w @infra-tech/server",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "seed:demo": "node scripts/seed-demo.mjs"
   },

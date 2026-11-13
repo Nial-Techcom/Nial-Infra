@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DEVICE_ROLES, DEVICE_TYPES, type AdminSettings, type DeviceRole, type DeviceType, type LibraryItem } from '@netforge/shared';
+import { DEVICE_ROLES, DEVICE_TYPES, type AdminSettings, type DeviceRole, type DeviceType, type LibraryItem } from '@infra-tech/shared';
 import { api, errorText } from '../../lib/api';
 import { useTopology } from '../../store/topology';
 import { useUi } from '../../store/ui';
@@ -39,7 +39,7 @@ function General() {
     <div className="space-y-4">
       <section className="space-y-3">
         <h3 className="text-sm font-semibold">{t('admin.general')}</h3>
-        <Field label={t('admin.publicUrl')} hint={t('admin.publicUrlHint')}><input className="nf-input mono" inputMode="url" placeholder="https://netforge.example.com" value={s.publicUrl} onChange={(e) => setS({ ...s, publicUrl: e.target.value })} /></Field>
+        <Field label={t('admin.publicUrl')} hint={t('admin.publicUrlHint')}><input className="nf-input mono" inputMode="url" placeholder="https://infra-tech.example.com" value={s.publicUrl} onChange={(e) => setS({ ...s, publicUrl: e.target.value })} /></Field>
         <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1" checked={s.allowRegistration} onChange={(e) => setS({ ...s, allowRegistration: e.target.checked })} />{t('admin.allowRegistration')}</label>
       </section>
       <section className="space-y-3 border-t border-line pt-4">
