@@ -1,4 +1,4 @@
-import type { Role, User } from '@netforge/shared';
+import type { Role, User } from '@infra-tech/shared';
 import { create } from 'zustand';
 
 const KEY = 'nf.session';

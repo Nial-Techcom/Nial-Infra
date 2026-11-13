@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   DEVICE_TYPES, ROLES, VENDORS, generateClientConfig, generateDeviceConfig, type Revision, type Role, type User, type Vendor, type DeviceType,
-} from '@netforge/shared';
+} from '@infra-tech/shared';
 import { api, errorText } from '../../lib/api';
 import { createFromPreset } from '../../lib/devices';
 import { safeName, saveFile } from '../../lib/platform';
@@ -71,7 +71,7 @@ export function ConfigModal({ deviceId }: { deviceId?: string }) {
     const d = devices.find((x) => x.id === scope);
     return d ? generateDeviceConfig(vendor, d, devices, links) : '';
   }, [vendor, scope, devices, links]);
-  const clientName = clients.find((c) => c.id === clientId)?.name ?? 'netforge';
+  const clientName = clients.find((c) => c.id === clientId)?.name ?? 'infra-tech';
   return (
     <Modal title={t('exports.config')} onClose={close} width="max-w-3xl"
       footer={<>

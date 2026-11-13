@@ -4,7 +4,7 @@ const path = require('node:path');
 const src = path.join(__dirname, '..', '..', 'web', 'dist');
 const dst = path.join(__dirname, '..', 'renderer');
 if (!fs.existsSync(path.join(src, 'index.html'))) {
-  console.error('Web build not found. Run "npm run build -w @netforge/web" first.');
+  console.error('Web build not found. Run "npm run build -w @infra-tech/web" first.');
   process.exit(1);
 }
 fs.rmSync(dst, { recursive: true, force: true });

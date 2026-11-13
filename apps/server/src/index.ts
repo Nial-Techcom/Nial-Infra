@@ -10,7 +10,7 @@ async function main() {
   const applied = await migrate(pool);
   if (applied.length) console.log('Migrations applied:', applied.join(', '));
   await ensureAdmin(pool, cfg);
-  const server = createApp(pool, cfg).listen(cfg.port, () => console.log(`NetForge API listening on :${cfg.port}`));
+  const server = createApp(pool, cfg).listen(cfg.port, () => console.log(`Infra-Tech API listening on :${cfg.port}`));
   const stop = () => server.close(() => pool.end().then(() => process.exit(0)));
   process.on('SIGTERM', stop);
   process.on('SIGINT', stop);
