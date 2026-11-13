@@ -18,7 +18,13 @@ export interface Config {
   adminPassword?: string;
 }
 
-const PLACEHOLDERS = ['your_super_secret_jwt_key', 'your_base64_32_byte_key_here', 'change-me'];
+// Sample values shipped in .env.example / old docs: public, so never acceptable as real secrets.
+const PLACEHOLDERS = ['your_super_secret_jwt_key', 'your_base64_32_byte_key_here', 'change-me', 'generate-', 'changeme', 'example'];
+
+/** A "random" secret made of very few distinct characters (aaaa…, 1234…) is not random. */
+function lowEntropy(s: string): boolean {
+  return new Set(s).size < 10;
+}
 
 /** Reads and validates environment variables. Fails fast with a clear message. */
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -31,12 +37,16 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
 
   const jwtSecret = env.JWT_SECRET ?? '';
   if (jwtSecret.length < 16) problems.push('JWT_SECRET must be at least 16 characters');
-  if (prod && (jwtSecret.length < 32 || PLACEHOLDERS.some((p) => jwtSecret.includes(p)))) {
+  if (prod && (jwtSecret.length < 32 || lowEntropy(jwtSecret) || PLACEHOLDERS.some((p) => jwtSecret.toLowerCase().includes(p)))) {
     problems.push('JWT_SECRET must be a random string of 32+ characters in production');
   }
 
   const key = Buffer.from(env.ENCRYPTION_KEY ?? '', 'base64');
   if (key.length !== 32) problems.push('ENCRYPTION_KEY must be 32 bytes encoded in base64 (openssl rand -base64 32)');
+  else if (prod && new Set(key).size < 8) problems.push('ENCRYPTION_KEY looks like a placeholder: generate one with openssl rand -base64 32');
+  if (prod && PLACEHOLDERS.some((p) => databaseUrl.toLowerCase().includes(p))) {
+    problems.push('The database password is still the sample value: set a real POSTGRES_PASSWORD (openssl rand -hex 24)');
+  }
 
   if (problems.length) throw new Error('Invalid configuration:\n - ' + problems.join('\n - '));
 

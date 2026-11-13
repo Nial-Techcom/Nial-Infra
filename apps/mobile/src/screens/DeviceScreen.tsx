@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
-import { DEVICE_ROLES, MGMT_PROTOCOLS, isValidVlan, parseIpCidr, type DeviceRole, type MgmtProtocol } from '@netforge/shared';
+import { DEVICE_ROLES, MGMT_PROTOCOLS, isValidVlan, parseIpCidr, type DeviceRole, type MgmtProtocol } from '@infra-tech/shared';
 import { api, useCanEdit, errorText, useSession, useT, useTopology } from '../store';
 import { useTheme } from '../theme';
 import { Button, Card, Chip, Field, Header, Muted } from '../ui';

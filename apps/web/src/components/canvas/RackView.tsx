@@ -1,7 +1,7 @@
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DEVICE_COLORS, canPlace, connectionsOf, usedUnits, type Device, type Rack } from '@netforge/shared';
+import { DEVICE_COLORS, canPlace, connectionsOf, usedUnits, type Device, type Rack } from '@infra-tech/shared';
 import { useCanEdit, useIsAdmin } from '../../store/auth';
 import { useTopology } from '../../store/topology';
 import { useUi } from '../../store/ui';
@@ -51,7 +51,7 @@ export function RackView() {
         <ul className="space-y-1">
           {unplaced.map((d) => (
             <li key={d.id}>
-              <button draggable={edit} onDragStart={(e) => { e.dataTransfer.setData('application/netforge-device', d.id); e.dataTransfer.effectAllowed = 'move'; }}
+              <button draggable={edit} onDragStart={(e) => { e.dataTransfer.setData('application/infra-tech-device', d.id); e.dataTransfer.effectAllowed = 'move'; }}
                 onClick={() => setSelected(selected === d.id ? null : d.id)}
                 className={`flex w-full items-center justify-between rounded border bg-bg px-2 py-1.5 text-left text-[13px] ${selected === d.id ? 'border-access' : 'border-line hover:border-mute'}`}>
                 <span className="flex min-w-0 items-center gap-1.5"><span className="h-2 w-2 shrink-0 rounded-sm" style={{ background: DEVICE_COLORS[d.type] }} /><span className="truncate">{d.name}</span></span>
@@ -99,7 +99,7 @@ export function RackView() {
                         className={`flex items-center border-b border-line/50 text-[10px] text-mute ${ok ? 'cursor-pointer hover:bg-access/20' : ''}`}
                         onClick={() => { if (selected && edit) void place(selected, rack, u); }}
                         onDragOver={(e) => { if (edit) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; } }}
-                        onDrop={(e) => { e.preventDefault(); const id = e.dataTransfer.getData('application/netforge-device'); if (id) void place(id, rack, u); }}>
+                        onDrop={(e) => { e.preventDefault(); const id = e.dataTransfer.getData('application/infra-tech-device'); if (id) void place(id, rack, u); }}>
                         <span className="mono w-6 select-none text-right pr-1">{u}</span>
                       </div>
                     );
@@ -110,7 +110,7 @@ export function RackView() {
                     const h = d.rackUnits * U_H;
                     return (
                       <button key={d.id} draggable={edit}
-                        onDragStart={(e) => { e.dataTransfer.setData('application/netforge-device', d.id); e.dataTransfer.effectAllowed = 'move'; }}
+                        onDragStart={(e) => { e.dataTransfer.setData('application/infra-tech-device', d.id); e.dataTransfer.effectAllowed = 'move'; }}
                         onClick={(e) => { e.stopPropagation(); setSelected(selected === d.id ? null : d.id); }}
                         onDoubleClick={() => useUi.getState().open({ kind: 'device', id: d.id })}
                         title={`${d.name} · U${d.rackPos}${d.rackUnits > 1 ? `–${d.rackPos! + d.rackUnits - 1}` : ''}`}

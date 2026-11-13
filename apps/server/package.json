@@ -1,8 +1,8 @@
 {
-  "name": "@netforge/server",
+  "name": "@infra-tech/server",
   "version": "1.1.0",
   "private": true,
-  "description": "NetForge REST API (Express + PostgreSQL)",
+  "description": "Infra-Tech REST API (Express + PostgreSQL)",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -13,7 +13,7 @@
     "create-admin": "tsx src/cli-create-admin.ts"
   },
   "dependencies": {
-    "@netforge/shared": "*",
+    "@infra-tech/shared": "*",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -24,7 +24,7 @@
     "nodemailer": "^10.5.0",
     "pdfkit": "^0.15.0",
     "pg": "^8.13.1",
-    "zod": "^3.23.8"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

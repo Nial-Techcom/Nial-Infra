@@ -1,6 +1,6 @@
 export const en = {
   app: {
-    title: 'NetForge - Infrastructure Designer',
+    title: 'Infra-Tech - Infrastructure Designer',
     description: 'Design your network infrastructure with VLANs, Trunks, and Tagging',
     tagline: 'Infrastructure Topology Designer',
   },
@@ -88,7 +88,7 @@ export const en = {
   },
   mobile: {
     diagram: 'Diagram', cables: 'Cables', addCable: 'Add cable', addDevice: 'Add device', pickDevice: 'Pick a device', pickPort: 'Pick a port',
-    server: 'Server URL (e.g. https://netforge.example.com)', empty: 'Nothing here yet', pullToRefresh: 'Pull down to refresh',
+    server: 'Server URL (e.g. https://infra-tech.example.com)', empty: 'Nothing here yet', pullToRefresh: 'Pull down to refresh',
     shareFailed: 'Could not share the file', settings: 'Settings', deleteDevice: 'Delete device', deleteCable: 'Delete cable',
     portInUse: 'in use', sameDevice: 'Pick two different devices', tapDevice: 'Tap a device to open it', imported: 'Import done',
   },
@@ -104,11 +104,11 @@ export const en = {
     inviteAccept: 'Join the client', inviteAccepted: 'You joined the client.', inviteInvalid: 'This invitation is invalid, already used or expired.', inviteHintMobile: 'Paste the invitation link or code from your email',
   },
   admin: {
-    title: 'Administration', general: 'General', publicUrl: 'Public address of NetForge', publicUrlHint: 'Used in the links sent by email, e.g. https://netforge.example.com',
+    title: 'Administration', general: 'General', publicUrl: 'Public address of Infra-Tech', publicUrlHint: 'Used in the links sent by email, e.g. https://infra-tech.example.com',
     allowRegistration: 'Allow anyone to create an account (they still see no client without an invitation)', smtp: 'Email server (SMTP)',
     smtpHelp: 'Needed to send invitations and password-reset links.', host: 'Server', port: 'Port', secure: 'Implicit TLS (port 465)',
     smtpUser: 'Username', smtpPassword: 'Password', smtpPasswordKept: 'A password is stored. Leave empty to keep it.', from: 'Sender address',
-    fromHint: 'e.g. NetForge <netforge@example.com>', testTo: 'Send a test to', test: 'Send a test email', testSent: 'Test email sent', saved: 'Settings saved',
+    fromHint: 'e.g. Infra-Tech <infra-tech@example.com>', testTo: 'Send a test to', test: 'Send a test email', testSent: 'Test email sent', saved: 'Settings saved',
     library: 'Equipment catalog', libraryHelp: 'Models added here appear in the device library for every client.', libraryAdd: 'Add a model',
     libraryEmpty: 'No custom model yet.', label: 'Name in the library', units: 'Height (U)', users: 'Users',
   },
@@ -123,6 +123,10 @@ export const en = {
     rackOf: 'Rack', notRacked: 'Not racked', crossRack: 'Other rack', sameRack: 'Same rack', plugged: 'Plugged into', noRack: 'No rack in this site yet.',
     full: 'No room left in this rack.', overlap: 'That position is taken.', deleteRack: 'Delete rack', renameRack: 'Rename rack', connections: 'Cables of this device',
     dragHint: 'Drag a device from the list into a rack, or click a free slot.', cablesOut: 'Cables leaving this rack', none: 'No cable leaves this rack.',
+  },
+  conn: {
+    title: 'Server unreachable', body: 'Infra-Tech needs a connection to your server and does not work offline. Nothing is stored on this device; it will resume by itself as soon as the server answers.',
+    server: 'Server', retry: 'Retry now', changeServer: 'Change server', checking: 'Trying to reconnect…', signOut: 'Sign out',
   },
   errors: {
     network: 'Network error', unauthorized: 'Session expired, please sign in again', forbidden: 'You do not have permission to do this',

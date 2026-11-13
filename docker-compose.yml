@@ -1,4 +1,4 @@
-# NetForge: PostgreSQL + API + web UI (nginx). Web, desktop and mobile apps all talk to the same API.
+# Infra-Tech: PostgreSQL + API + web UI (nginx). Web, desktop and mobile apps all talk to the same API.
 services:
   postgres:
     image: postgres:16
@@ -13,10 +13,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
 
   server:
-    image: ghcr.io/flunch4456/netforge-server:latest
+    image: ghcr.io/flunch4456/infra-tech-server:latest
     build:
       context: .
       dockerfile: apps/server/Dockerfile
@@ -34,10 +36,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    cap_drop: [ALL]            # le serveur Node n'a besoin d'aucun privilège Linux
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
 
   web:
-    image: ghcr.io/flunch4456/netforge-web:latest
+    image: ghcr.io/flunch4456/infra-tech-web:latest
     build:
       context: .
       dockerfile: apps/web/Dockerfile
@@ -45,6 +50,8 @@ services:
       - "${WEB_PORT:-3000}:80"
     depends_on:
       - server
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
 
 volumes:

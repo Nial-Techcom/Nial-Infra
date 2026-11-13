@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import Svg, { G, Line, Rect, Text as SvgText } from 'react-native-svg';
-import { DEVICE_COLORS, MEDIUM_COLORS, formatVlanList } from '@netforge/shared';
+import { DEVICE_COLORS, MEDIUM_COLORS, formatVlanList } from '@infra-tech/shared';
 import { useT, useTopology } from '../store';
 import { useTheme } from '../theme';
 import { Button, Muted } from '../ui';

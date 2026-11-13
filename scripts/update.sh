@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# NetForge — mise à jour automatique du serveur.
+# Infra-Tech — mise à jour automatique du serveur.
 #
 #   ./scripts/update.sh              met à jour si une nouvelle version existe
 #   ./scripts/update.sh --check      dit seulement s'il y a une mise à jour (ne touche à rien)
@@ -14,11 +14,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-BACKUP_DIR="${BACKUP_DIR:-/var/backups/netforge}"   # sauvegardes avant mise à jour
+BACKUP_DIR="${BACKUP_DIR:-/var/backups/infra-tech}"   # sauvegardes avant mise à jour
 KEEP="${KEEP_BACKUPS:-7}"                           # nombre de sauvegardes conservées
 WAIT_SECONDS="${WAIT_SECONDS:-240}"                 # délai max pour que le serveur redémarre
-LOG_FILE="${LOG_FILE:-/var/log/netforge-update.log}"
-CRON_FILE=/etc/cron.d/netforge-update
+LOG_FILE="${LOG_FILE:-/var/log/infra-tech-update.log}"
+CRON_FILE=/etc/cron.d/infra-tech-update
 
 MODE=update
 case "${1:-}" in
@@ -41,6 +41,14 @@ if [ "$MODE" = auto ]; then
   [[ "$HOUR" =~ ^([0-9]|1[0-9]|2[0-3])$ ]] || die "Heure invalide : $HOUR (0 à 23)."
   command -v cron >/dev/null 2>&1 || command -v crond >/dev/null 2>&1 \
     || { apt-get update -qq && apt-get install -y -qq cron >/dev/null; systemctl enable --now cron >/dev/null 2>&1 || true; }
+  # Le cron tourne en root : le script ne doit pas être modifiable par d'autres utilisateurs.
+  for f in "$ROOT/scripts/update.sh" "$ROOT/scripts"; do
+    perm="$(stat -c %a "$f")"
+    if [ "$(stat -c %U "$f")" != root ] || [ $(( 0${perm: -2:1} & 2 )) -ne 0 ] || [ $(( 0${perm: -1} & 2 )) -ne 0 ]; then
+      die "$f doit appartenir à root et ne pas être modifiable par un autre utilisateur (chown -R root:root $ROOT && chmod -R go-w $ROOT)."
+    fi
+  done
+  touch "$LOG_FILE"; chmod 600 "$LOG_FILE"
   printf '# Généré par scripts/update.sh --auto\n17 %s * * * root %s >> %s 2>&1\n' \
     "$HOUR" "$ROOT/scripts/update.sh" "$LOG_FILE" > "$CRON_FILE"
   chmod 644 "$CRON_FILE"
@@ -54,17 +62,29 @@ fi
 # --- vérifications --------------------------------------------------------
 command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1 || die "Docker Compose introuvable."
 command -v git >/dev/null 2>&1 || die "git introuvable."
-[ -f .env ] || die ".env introuvable dans $ROOT (NetForge est-il installé ici ?)."
+[ -f .env ] || die ".env introuvable dans $ROOT (Infra-Tech est-il installé ici ?)."
 [ -d .git ] || die "$ROOT n'est pas un dépôt git."
 
 # un seul exemplaire à la fois (cron + lancement manuel)
-exec 9>"/tmp/netforge-update.lock"
+LOCK_FILE="${LOCK_FILE:-/var/lock/infra-tech-update.lock}"
+[ -w "$(dirname "$LOCK_FILE")" ] || LOCK_FILE="$BACKUP_DIR/.update.lock"
+mkdir -p "$(dirname "$LOCK_FILE")"
+[ ! -L "$LOCK_FILE" ] || die "$LOCK_FILE est un lien symbolique : refusé."
+exec 9>"$LOCK_FILE"
 flock -n 9 || die "Une mise à jour est déjà en cours."
 
+git() { command git -c safe.directory="$ROOT" "$@"; }
+REMOTE_URL="$(git remote get-url origin 2>/dev/null || true)"
+case "$REMOTE_URL" in https://*|ssh://*|git@*) ;; *) die "Le dépôt 'origin' doit être en https:// ou ssh (trouvé : ${REMOTE_URL:-rien}).";; esac
 BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 [ "$BRANCH" != HEAD ] || die "Dépôt en 'detached HEAD' : fais git checkout server d'abord."
 PORT="$(grep -E '^WEB_PORT=' .env | tail -1 | cut -d= -f2 | tr -d '\r"' || true)"; PORT="${PORT:-3000}"
+[[ "$PORT" =~ ^[0-9]{1,5}$ ]] || die "WEB_PORT invalide dans .env : $PORT"
 HEALTH="http://localhost:${PORT}/api/v1/health"
+
+if grep -qE '^(JWT_SECRET|POSTGRES_PASSWORD|ADMIN_PASSWORD)=.*(change-me|generate-)' .env; then
+  die ".env contient encore des valeurs d'exemple (change-me / generate-) : remplace-les avant de mettre à jour."
+fi
 
 OLD="$(git rev-parse HEAD)"
 git fetch -q origin "$BRANCH" || die "Impossible de joindre GitHub (réseau ?)."
@@ -91,9 +111,9 @@ git merge-base --is-ancestor "$OLD" "$NEW" || [ "$MODE" = force ] \
 # --- 1. sauvegarde --------------------------------------------------------
 log "Mise à jour ${OLD:0:7} -> ${NEW:0:7} (branche $BRANCH)"
 umask 077
-mkdir -p "$BACKUP_DIR"
+mkdir -p "$BACKUP_DIR"; chmod 700 "$BACKUP_DIR"
 STAMP="$(date +%F_%H%M%S)"
-DUMP="$BACKUP_DIR/netforge-$STAMP.sql.gz"
+DUMP="$BACKUP_DIR/infra-tech-$STAMP.sql.gz"
 log "1/4 Sauvegarde de la base -> $DUMP"
 docker compose up -d postgres >/dev/null
 docker compose exec -T postgres pg_dump -U netforge netforge | gzip > "$DUMP.part"
@@ -102,7 +122,7 @@ gzip -t "$DUMP.part" || { rm -f "$DUMP.part"; die "Sauvegarde corrompue : mise �
 mv "$DUMP.part" "$DUMP"
 cp .env "$BACKUP_DIR/env-$STAMP.bak"
 # ne garde que les N plus récentes
-ls -1t "$BACKUP_DIR"/netforge-*.sql.gz 2>/dev/null | tail -n +"$((KEEP + 1))" | xargs -r rm -f
+ls -1t "$BACKUP_DIR"/infra-tech-*.sql.gz 2>/dev/null | tail -n +"$((KEEP + 1))" | xargs -r rm -f
 ls -1t "$BACKUP_DIR"/env-*.bak 2>/dev/null | tail -n +"$((KEEP + 1))" | xargs -r rm -f
 
 wait_healthy() {
@@ -121,7 +141,7 @@ git merge --ff-only -q "origin/$BRANCH" 2>/dev/null || git reset -q --hard "orig
 # --- 3. reconstruction ----------------------------------------------------
 log "3/4 Reconstruction et redémarrage (quelques minutes)"
 if docker compose up -d --build >/dev/null 2>&1 && wait_healthy; then
-  log "4/4 NetForge répond : mise à jour réussie (${NEW:0:7})."
+  log "4/4 Infra-Tech répond : mise à jour réussie (${NEW:0:7})."
   docker image prune -f >/dev/null 2>&1 || true
   exit 0
 fi
