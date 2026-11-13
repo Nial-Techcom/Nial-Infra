@@ -1,5 +1,5 @@
 import type { Request } from 'express';
-import type { Role } from '@netforge/shared';
+import type { Role } from '@infra-tech/shared';
 import type { Db } from './db';
 import { HttpError } from './errors';
 import * as store from './store';

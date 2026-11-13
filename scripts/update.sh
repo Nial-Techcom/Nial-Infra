@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# NetForge — mise à jour automatique du serveur.
+# Infra-Tech — mise à jour automatique du serveur.
 #
 #   ./scripts/update.sh              met à jour si une nouvelle version existe
 #   ./scripts/update.sh --check      dit seulement s'il y a une mise à jour (ne touche à rien)
@@ -14,11 +14,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-BACKUP_DIR="${BACKUP_DIR:-/var/backups/netforge}"   # sauvegardes avant mise à jour
+BACKUP_DIR="${BACKUP_DIR:-/var/backups/infra-tech}"   # sauvegardes avant mise à jour
 KEEP="${KEEP_BACKUPS:-7}"                           # nombre de sauvegardes conservées
 WAIT_SECONDS="${WAIT_SECONDS:-240}"                 # délai max pour que le serveur redémarre
-LOG_FILE="${LOG_FILE:-/var/log/netforge-update.log}"
-CRON_FILE=/etc/cron.d/netforge-update
+LOG_FILE="${LOG_FILE:-/var/log/infra-tech-update.log}"
+CRON_FILE=/etc/cron.d/infra-tech-update
 
 MODE=update
 case "${1:-}" in
@@ -62,11 +62,11 @@ fi
 # --- vérifications --------------------------------------------------------
 command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1 || die "Docker Compose introuvable."
 command -v git >/dev/null 2>&1 || die "git introuvable."
-[ -f .env ] || die ".env introuvable dans $ROOT (NetForge est-il installé ici ?)."
+[ -f .env ] || die ".env introuvable dans $ROOT (Infra-Tech est-il installé ici ?)."
 [ -d .git ] || die "$ROOT n'est pas un dépôt git."
 
 # un seul exemplaire à la fois (cron + lancement manuel)
-LOCK_FILE="${LOCK_FILE:-/var/lock/netforge-update.lock}"
+LOCK_FILE="${LOCK_FILE:-/var/lock/infra-tech-update.lock}"
 [ -w "$(dirname "$LOCK_FILE")" ] || LOCK_FILE="$BACKUP_DIR/.update.lock"
 mkdir -p "$(dirname "$LOCK_FILE")"
 [ ! -L "$LOCK_FILE" ] || die "$LOCK_FILE est un lien symbolique : refusé."
@@ -113,7 +113,7 @@ log "Mise à jour ${OLD:0:7} -> ${NEW:0:7} (branche $BRANCH)"
 umask 077
 mkdir -p "$BACKUP_DIR"; chmod 700 "$BACKUP_DIR"
 STAMP="$(date +%F_%H%M%S)"
-DUMP="$BACKUP_DIR/netforge-$STAMP.sql.gz"
+DUMP="$BACKUP_DIR/infra-tech-$STAMP.sql.gz"
 log "1/4 Sauvegarde de la base -> $DUMP"
 docker compose up -d postgres >/dev/null
 docker compose exec -T postgres pg_dump -U netforge netforge | gzip > "$DUMP.part"
@@ -122,7 +122,7 @@ gzip -t "$DUMP.part" || { rm -f "$DUMP.part"; die "Sauvegarde corrompue : mise �
 mv "$DUMP.part" "$DUMP"
 cp .env "$BACKUP_DIR/env-$STAMP.bak"
 # ne garde que les N plus récentes
-ls -1t "$BACKUP_DIR"/netforge-*.sql.gz 2>/dev/null | tail -n +"$((KEEP + 1))" | xargs -r rm -f
+ls -1t "$BACKUP_DIR"/infra-tech-*.sql.gz 2>/dev/null | tail -n +"$((KEEP + 1))" | xargs -r rm -f
 ls -1t "$BACKUP_DIR"/env-*.bak 2>/dev/null | tail -n +"$((KEEP + 1))" | xargs -r rm -f
 
 wait_healthy() {
@@ -141,7 +141,7 @@ git merge --ff-only -q "origin/$BRANCH" 2>/dev/null || git reset -q --hard "orig
 # --- 3. reconstruction ----------------------------------------------------
 log "3/4 Reconstruction et redémarrage (quelques minutes)"
 if docker compose up -d --build >/dev/null 2>&1 && wait_healthy; then
-  log "4/4 NetForge répond : mise à jour réussie (${NEW:0:7})."
+  log "4/4 Infra-Tech répond : mise à jour réussie (${NEW:0:7})."
   docker image prune -f >/dev/null 2>&1 || true
   exit 0
 fi

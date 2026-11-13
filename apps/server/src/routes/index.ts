@@ -8,7 +8,7 @@ import {
   siteUpdateSchema, userCreateSchema, userUpdateSchema, validateSchema, validateTopology, VENDORS, type Vendor,
   forgotPasswordSchema, inviteAcceptSchema, inviteCreateSchema, libraryItemSchema, memberUpdateSchema, rackSchema, rackUpdateSchema,
   registerSchema, resetPasswordSchema, settingsUpdateSchema, smtpTestSchema, type AdminSettings, type MemberRole,
-} from '@netforge/shared';
+} from '@infra-tech/shared';
 import { clientOf, requireClient } from '../access';
 import { encrypt } from '../crypto';
 import { baseUrl, inviteMail, resetMail, sendMail, smtpReady } from '../mailer';
@@ -20,9 +20,9 @@ import { ah, HttpError } from '../errors';
 import { writeCablingPdf } from '../pdf';
 import * as store from '../store';
 
-const DUMMY_HASH = bcrypt.hashSync('netforge-timing-equalizer', 4);
+const DUMMY_HASH = bcrypt.hashSync('infra-tech-timing-equalizer', 4);
 const param = (req: Request, name: string) => String(req.params[name]);
-const safeFile = (s: string) => s.replace(/[^A-Za-z0-9_.-]+/g, '_').slice(0, 60) || 'netforge';
+const safeFile = (s: string) => s.replace(/[^A-Za-z0-9_.-]+/g, '_').slice(0, 60) || 'infra-tech';
 const q = (req: Request, name: string) => (req.query[name] ? String(req.query[name]) : undefined);
 
 export function buildRouter(pool: Pool, cfg: Config): Router {
@@ -176,7 +176,7 @@ export function buildRouter(pool: Pool, cfg: Config): Router {
   r.post('/admin/settings/smtp-test', auth, adminOnly, ah(async (req, res) => {
     const { to } = smtpTestSchema.parse(req.body);
     try {
-      await sendMail(pool, cfg, { to, subject: 'NetForge – test SMTP', text: 'SMTP is working. / Le SMTP fonctionne.', html: '<p>SMTP is working. / Le SMTP fonctionne.</p>' });
+      await sendMail(pool, cfg, { to, subject: 'Infra-Tech – test SMTP', text: 'SMTP is working. / Le SMTP fonctionne.', html: '<p>SMTP is working. / Le SMTP fonctionne.</p>' });
     } catch (e) {
       throw new HttpError(400, `SMTP error: ${(e as Error).message}`.slice(0, 300));
     }

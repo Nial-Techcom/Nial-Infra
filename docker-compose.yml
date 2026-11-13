@@ -1,4 +1,4 @@
-# NetForge: PostgreSQL + API + web UI (nginx). Web, desktop and mobile apps all talk to the same API.
+# Infra-Tech: PostgreSQL + API + web UI (nginx). Web, desktop and mobile apps all talk to the same API.
 services:
   postgres:
     image: postgres:16
@@ -18,7 +18,7 @@ services:
     restart: unless-stopped
 
   server:
-    image: ghcr.io/flunch4456/netforge-server:latest
+    image: ghcr.io/flunch4456/infra-tech-server:latest
     build:
       context: .
       dockerfile: apps/server/Dockerfile
@@ -42,7 +42,7 @@ services:
     restart: unless-stopped
 
   web:
-    image: ghcr.io/flunch4456/netforge-web:latest
+    image: ghcr.io/flunch4456/infra-tech-web:latest
     build:
       context: .
       dockerfile: apps/web/Dockerfile
