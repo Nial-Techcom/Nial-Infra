@@ -623,3 +623,22 @@ describe('security: cross-client isolation (IDOR)', () => {
     expect(many.status).toBe(400);
   });
 });
+
+import { loadConfig } from '../src/config';
+
+describe('production secrets', () => {
+  const good = {
+    NODE_ENV: 'production', DATABASE_URL: 'postgresql://netforge:9f8e7d6c5b4a39281706@postgres:5432/netforge',
+    JWT_SECRET: 'k3J9x2Qm7vB1nR5tY8wZ4cD6fG0hL2pS', ENCRYPTION_KEY: Buffer.from('0123456789abcdefghijklmnopqrstuv').toString('base64'),
+  } as NodeJS.ProcessEnv;
+  it('accepts real secrets', () => { expect(() => loadConfig(good)).not.toThrow(); });
+  it.each([
+    ['the .env.example JWT secret', { JWT_SECRET: 'generate-a-random-string-of-32-characters-or-more' }],
+    ['a repeated-character JWT secret', { JWT_SECRET: 'a'.repeat(40) }],
+    ['a short JWT secret', { JWT_SECRET: 'k3J9x2Qm7vB1' }],
+    ['an all-zero encryption key', { ENCRYPTION_KEY: Buffer.alloc(32).toString('base64') }],
+    ['the sample database password', { DATABASE_URL: 'postgresql://netforge:change-me-db-password@postgres:5432/netforge' }],
+  ])('refuses %s in production', (_n, over) => {
+    expect(() => loadConfig({ ...good, ...over } as NodeJS.ProcessEnv)).toThrow(/Invalid configuration/);
+  });
+});
