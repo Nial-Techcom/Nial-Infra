@@ -10,10 +10,12 @@ on:
         required: false
         default: ''
 permissions:
-  contents: write
-  packages: write
+  contents: read
 jobs:
   images:
+    permissions:
+      contents: read
+      packages: write
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -48,6 +50,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
   bundle:
+    permissions:
+      contents: write
     if: startsWith(github.ref, 'refs/tags/') || inputs.release_tag != ''
     needs: images
     runs-on: ubuntu-latest
