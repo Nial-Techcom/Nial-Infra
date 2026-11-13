@@ -1,19 +1,19 @@
 {
-  "name": "@netforge/desktop",
+  "name": "@infra-tech/desktop",
   "version": "1.1.0",
   "private": true,
-  "description": "NetForge desktop app (Electron shell around the web UI)",
+  "description": "Infra-Tech desktop app (Electron shell around the web UI)",
   "main": "main.js",
   "author": {
-    "name": "NetForge",
+    "name": "Infra-Tech",
     "email": "contact@nial-tech.com"
   },
   "license": "MIT",
   "scripts": {
-    "dev": "NETFORGE_DEV_URL=http://localhost:3000 electron .",
+    "dev": "INFRATECH_DEV_URL=http://localhost:3000 electron .",
     "start": "electron .",
     "prepare-renderer": "node scripts/copy-web.js",
-    "build": "npm run build -w @netforge/web && node scripts/copy-web.js",
+    "build": "npm run build -w @infra-tech/web && node scripts/copy-web.js",
     "dist": "npm run build && electron-builder",
     "typecheck": "node --check main.js && node --check preload.js"
   },
@@ -22,12 +22,12 @@
     "electron-builder": "^26.18.0"
   },
   "build": {
-    "appId": "com.netforge.desktop",
-    "productName": "NetForge",
+    "appId": "com.infratech.desktop",
+    "productName": "Infra-Tech",
     "directories": {
       "output": "release"
     },
-    "artifactName": "NetForge-${version}-${os}-${arch}.${ext}",
+    "artifactName": "Infra-Tech-${version}-${os}-${arch}.${ext}",
     "files": [
       "main.js",
       "preload.js",
@@ -57,8 +57,8 @@
         "deb"
       ],
       "category": "Network",
-      "maintainer": "NetForge <contact@nial-tech.com>"
+      "maintainer": "Infra-Tech <contact@nial-tech.com>"
     }
   },
-  "homepage": "https://github.com/Flunch4456/NetForge"
+  "homepage": "https://github.com/Flunch4456/Infra-Tech"
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# NetForge server installer for a clean Debian/Ubuntu machine (made for a Proxmox LXC).
+# Infra-Tech server installer for a clean Debian/Ubuntu machine (made for a Proxmox LXC).
 # Run it as root from inside the cloned repository:   ./scripts/install-lxc.sh
 # Options: --env-only   only create the .env file (no Docker, no start)
 set -euo pipefail
@@ -28,8 +28,8 @@ say "3/4 Configuration (.env)"
 if [ -f .env ]; then
   echo ".env existe déjà : je ne le touche pas."
 else
-  read -r -p "E-mail de l'administrateur [admin@netforge.local] : " ADMIN_EMAIL
-  ADMIN_EMAIL=${ADMIN_EMAIL:-admin@netforge.local}
+  read -r -p "E-mail de l'administrateur [admin@infra-tech.local] : " ADMIN_EMAIL
+  ADMIN_EMAIL=${ADMIN_EMAIL:-admin@infra-tech.local}
   read -r -s -p "Mot de passe admin (8+ caractères, vide = en générer un) : " ADMIN_PASSWORD; echo
   GENERATED=0
   if [ -z "$ADMIN_PASSWORD" ]; then ADMIN_PASSWORD=$(openssl rand -hex 8); GENERATED=1; fi
@@ -53,7 +53,7 @@ ENV
 fi
 [ "$ENV_ONLY" = 1 ] && exit 0
 
-say "4/4 Démarrage de NetForge (3 à 8 minutes la première fois)"
+say "4/4 Démarrage de Infra-Tech (3 à 8 minutes la première fois)"
 docker compose up -d --build
 
 PORT=$(grep -E '^WEB_PORT=' .env | cut -d= -f2); PORT=${PORT:-3000}
@@ -61,7 +61,7 @@ printf "Attente du serveur"
 for _ in $(seq 1 60); do
   if curl -fs "http://localhost:${PORT}/api/v1/health" >/dev/null 2>&1; then
     IP=$(hostname -I | awk '{print $1}')
-    printf '\n\n\033[1;32mNetForge fonctionne.\033[0m Ouvre http://%s:%s\n' "$IP" "$PORT"
+    printf '\n\n\033[1;32mInfra-Tech fonctionne.\033[0m Ouvre http://%s:%s\n' "$IP" "$PORT"
     exit 0
   fi
   printf '.'; sleep 3

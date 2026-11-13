@@ -157,4 +157,4 @@ export function createApi(opts: ApiOptions) {
   };
 }
 
-export type NetForgeApi = ReturnType<typeof createApi>;
+export type InfraTechApi = ReturnType<typeof createApi>;

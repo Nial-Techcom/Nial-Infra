@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { summarizeAlerts, validateTopology } from '@netforge/shared';
+import { summarizeAlerts, validateTopology } from '@infra-tech/shared';
 import { useTopology } from '../store/topology';
 
 /** Real-time validation: recomputed on every change with the same engine the server uses. */

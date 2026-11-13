@@ -1,9 +1,9 @@
 import { Cable, Pencil, Plus, Trash2, Users } from 'lucide-react';
 import { useReactFlow } from 'reactflow';
 import { useTranslation } from 'react-i18next';
-import { DEVICE_COLORS, DEVICE_LIBRARY, DEVICE_TYPES, type DevicePreset } from '@netforge/shared';
+import { DEVICE_COLORS, DEVICE_LIBRARY, DEVICE_TYPES, type DevicePreset } from '@infra-tech/shared';
 import { canvasCenter, createFromPreset } from '../../lib/devices';
-import type { LibraryItem } from '@netforge/shared';
+import type { LibraryItem } from '@infra-tech/shared';
 import { useCanEdit, useIsAdmin } from '../../store/auth';
 import { useTopology } from '../../store/topology';
 import { useUi } from '../../store/ui';
@@ -76,7 +76,7 @@ export function Sidebar() {
             <div className="grid grid-cols-1 gap-1">
               {DEVICE_LIBRARY.filter((p) => p.type === type).map((p) => (
                 <button key={p.key} disabled={!edit || !clientId} draggable={edit && !!clientId}
-                  onDragStart={(e) => { e.dataTransfer.setData('application/netforge-preset', p.key); e.dataTransfer.effectAllowed = 'copy'; }}
+                  onDragStart={(e) => { e.dataTransfer.setData('application/infra-tech-preset', p.key); e.dataTransfer.effectAllowed = 'copy'; }}
                   onClick={() => addAtCenter(p)}
                   className="flex cursor-grab items-center justify-between rounded border border-line bg-bg px-2 py-1.5 text-left text-[13px] hover:border-mute active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50">
                   <span className="truncate">{p.label}</span><span className="mono text-[11px] text-mute">{p.portCount}p</span>
@@ -84,7 +84,7 @@ export function Sidebar() {
               ))}
               {library.filter((i) => i.type === type).map((i: LibraryItem) => (
                 <button key={i.id} disabled={!edit || !clientId} draggable={edit && !!clientId}
-                  onDragStart={(e) => { e.dataTransfer.setData('application/netforge-preset', `lib:${i.id}`); e.dataTransfer.effectAllowed = 'copy'; }}
+                  onDragStart={(e) => { e.dataTransfer.setData('application/infra-tech-preset', `lib:${i.id}`); e.dataTransfer.effectAllowed = 'copy'; }}
                   onClick={() => addAtCenter(i)}
                   className="flex cursor-grab items-center justify-between rounded border border-dashed border-line bg-bg px-2 py-1.5 text-left text-[13px] hover:border-mute active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50">
                   <span className="truncate">{i.label}</span><span className="mono text-[11px] text-mute">{i.portCount}p</span>
