@@ -20,9 +20,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: netforge-server
+          - name: infra-tech-server
             dockerfile: apps/server/Dockerfile
-          - name: netforge-web
+          - name: infra-tech-web
             dockerfile: apps/web/Dockerfile
     steps:
       - uses: actions/checkout@v4
@@ -58,9 +58,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Pack deployment bundle
-        run: tar czf netforge-server-bundle.tar.gz docker-compose.yml .env.example docs/TUTORIAL.md README.md LICENSE
+        run: tar czf infra-tech-server-bundle.tar.gz docker-compose.yml .env.example docs/TUTORIAL.md README.md LICENSE
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.release_tag != '' && format('server-v{0}', inputs.release_tag) || github.ref_name }}
           target_commitish: ${{ github.sha }}
-          files: netforge-server-bundle.tar.gz
+          files: infra-tech-server-bundle.tar.gz
