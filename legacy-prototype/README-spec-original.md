@@ -27,8 +27,8 @@
 
 **[Website](https://nial-tech.com)** •
 **[Documentation](https://docs.nial-infra.io)** •
-**[Report Bug](https://github.com/Flunch4456/Nial-Infra/issues)** •
-**[Request Feature](https://github.com/Flunch4456/Nial-Infra/pulls)** •
+**[Report Bug](https://github.com/Nial-Techcom/Nial-Infra/issues)** •
+**[Request Feature](https://github.com/Nial-Techcom/Nial-Infra/pulls)** •
 **[Contact](mailto:contact@nial-tech.com)**
 
 </div>

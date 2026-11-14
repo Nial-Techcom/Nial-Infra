@@ -70,7 +70,7 @@ Le dépôt est privé : Git te demandera ton identifiant GitHub et, **comme mot 
 Pour le créer : GitHub → ta photo → *Settings* → *Developer settings* → *Personal access tokens* → *Tokens (classic)* → *Generate new token*, coche **`repo`**, copie-le.
 
 ```bash
-git clone --branch server https://github.com/Flunch4456/Nial-Infra.git
+git clone --branch server https://github.com/Nial-Techcom/Nial-Infra.git
 cd Nial-Infra
 ```
 ✅ `ls` affiche `docker-compose.yml`, `apps`, `scripts`…
