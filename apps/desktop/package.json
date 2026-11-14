@@ -23,7 +23,7 @@
   },
   "build": {
     "appId": "com.nialinfra.desktop",
-    "productName": "Nial-Infra",
+    "productName": "NialInfra",
     "directories": {
       "output": "release"
     },
@@ -41,7 +41,8 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Nial-Infra"
     },
     "mac": {
       "target": [
