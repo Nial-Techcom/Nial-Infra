@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "Infra-Tech",
-    "slug": "infra-tech",
+    "name": "Nial-Infra",
+    "slug": "nial-infra",
     "version": "1.1.0",
     "orientation": "default",
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#141A22",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.infratech.mobile",
+      "bundleIdentifier": "com.nialinfra.mobile",
       "buildNumber": "2",
       "infoPlist": {
         "NSAppTransportSecurity": {
@@ -17,7 +17,7 @@
       }
     },
     "android": {
-      "package": "com.infratech.mobile",
+      "package": "com.nialinfra.mobile",
       "versionCode": 2,
       "allowBackup": false
     },

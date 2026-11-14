@@ -4,7 +4,7 @@ import { useAuth } from '../store/auth';
 import { useConnection } from '../store/connection';
 
 /**
- * Blocks the whole app while the server cannot be reached. Infra-Tech has no offline mode:
+ * Blocks the whole app while the server cannot be reached. Nial-Infra has no offline mode:
  * nothing is kept on the device, so there is nothing to work on without the server.
  */
 export function ConnectionGate() {

@@ -1,4 +1,4 @@
-import type { Device, DevicePreset, DeviceType, LibraryItem } from '@infra-tech/shared';
+import type { Device, DevicePreset, DeviceType, LibraryItem } from '@nial-infra/shared';
 import type { ReactFlowInstance } from 'reactflow';
 import { useTopology } from '../store/topology';
 

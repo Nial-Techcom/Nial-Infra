@@ -1,8 +1,8 @@
 import * as SecureStore from 'expo-secure-store';
 import { create } from 'zustand';
-import { ApiError, createApi, translate, type Client, type Device, type Link, type Locale, type Rack, type Site, type User } from '@infra-tech/shared';
+import { ApiError, createApi, translate, type Client, type Device, type Link, type Locale, type Rack, type Site, type User } from '@nial-infra/shared';
 
-const KEY = 'infra-tech.session';
+const KEY = 'nial-infra.session';
 
 interface SessionState {
   ready: boolean;
