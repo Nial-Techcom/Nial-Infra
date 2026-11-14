@@ -42,7 +42,7 @@ Les deux doivent afficher une version.
 Le dépôt est privé, donc Git demande un identifiant : utilise ton nom d'utilisateur GitHub et, comme mot de passe, un **jeton** (GitHub → Settings → Developer settings → Personal access tokens, droit `repo`).
 
 ```bash
-git clone --branch server https://github.com/Flunch4456/Nial-Infra.git
+git clone --branch server https://github.com/Nial-Techcom/Nial-Infra.git
 cd Nial-Infra
 ```
 *Pourquoi la branche `server` ?* C'est celle dédiée au serveur ; elle contient le serveur et le site web.
