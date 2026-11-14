@@ -34,10 +34,14 @@ export const useSession = create<SessionState>((set, get) => ({
   setLocale: async (locale) => { set({ locale }); await persist(get()); },
 }));
 
+export const licenseListeners = new Set<() => void>();
+
 export const api = createApi({
   get baseUrl() { return `${useSession.getState().server.replace(/\/+$/, '')}/api/v1`; },
   getToken: () => useSession.getState().token,
   onUnauthorized: () => { void useSession.getState().logout(); },
+  // 402 = trial over / no valid licence: <LicenseGate> re-reads the licence state.
+  onLicenseRequired: () => { licenseListeners.forEach((f) => f()); },
 });
 
 /** Translation hook: re-renders when the language changes. */
