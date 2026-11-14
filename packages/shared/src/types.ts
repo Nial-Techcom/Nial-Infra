@@ -76,7 +76,7 @@ export interface SmtpSettings {
 
 export interface AdminSettings {
   smtp: SmtpSettings;
-  /** Public address of Infra-Tech, used in the links sent by email (e.g. https://infra-tech.example.com) */
+  /** Public address of Nial-Infra, used in the links sent by email (e.g. https://nial-infra.example.com) */
   publicUrl: string;
   allowRegistration: boolean;
 }

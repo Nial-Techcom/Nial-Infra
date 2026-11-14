@@ -1,4 +1,4 @@
-# Installer le serveur Infra-Tech
+# Installer le serveur Nial-Infra
 
 > Tu as un conteneur LXC Proxmox tout neuf ? Suis plutôt **[docs/INSTALL-LXC.md](docs/INSTALL-LXC.md)** : de la création du conteneur jusqu'au premier écran, avec un script qui fait le gros du travail.
 
@@ -37,13 +37,13 @@ Les deux doivent afficher une version.
 
 > **LXC Proxmox** : dans les options du conteneur, active *Nesting* (Options → Features → `nesting=1`, et `keyctl=1`), sinon Docker ne démarre pas.
 
-## 2. Récupérer Infra-Tech
+## 2. Récupérer Nial-Infra
 
 Le dépôt est privé, donc Git demande un identifiant : utilise ton nom d'utilisateur GitHub et, comme mot de passe, un **jeton** (GitHub → Settings → Developer settings → Personal access tokens, droit `repo`).
 
 ```bash
-git clone --branch server https://github.com/Flunch4456/Infra-Tech.git
-cd Infra-Tech
+git clone --branch server https://github.com/Nial-Techcom/Nial-Infra.git
+cd Nial-Infra
 ```
 *Pourquoi la branche `server` ?* C'est celle dédiée au serveur ; elle contient le serveur et le site web.
 
@@ -108,11 +108,11 @@ Dans le site : menu en haut à droite → **Utilisateurs** → ajoute les autres
 
 Les nouveaux comptes (bouton *Pas encore de compte ?*) **ne voient aucun client** tant qu'un admin ne les a pas invités par e-mail. Pour que les e-mails (invitations, « mot de passe oublié ») partent, configure le SMTP : menu en haut à droite → **Administration** :
 
-1. **Adresse publique** : `https://infra-tech.tondomaine.fr` (ou `http://IP:3000`). *Pourquoi ?* Les liens des e-mails sont construits avec cette valeur, jamais avec l'adresse de la requête reçue (sinon quelqu'un pourrait faire envoyer des liens piégés). Tu peux aussi la fixer avec `PUBLIC_URL` dans `.env`.
+1. **Adresse publique** : `https://nial-infra.tondomaine.fr` (ou `http://IP:3000`). *Pourquoi ?* Les liens des e-mails sont construits avec cette valeur, jamais avec l'adresse de la requête reçue (sinon quelqu'un pourrait faire envoyer des liens piégés). Tu peux aussi la fixer avec `PUBLIC_URL` dans `.env`.
 2. **Serveur SMTP** : celui de ton fournisseur (OVH, Gmail avec mot de passe d'application, Brevo, Mailjet…). Port 587 (STARTTLS) ou 465 (TLS direct, coche la case).
 3. **Envoyer un e-mail de test** à ta propre adresse. Si ça échoue, le message d'erreur du serveur s'affiche (mauvais mot de passe, port bloqué…).
 
-Sans SMTP, tout marche quand même : en invitant quelqu'un, Infra-Tech affiche le lien à lui transmettre toi-même. Seul « mot de passe oublié » nécessite l'e-mail (sinon, l'admin réinitialise le mot de passe depuis *Utilisateurs*).
+Sans SMTP, tout marche quand même : en invitant quelqu'un, Nial-Infra affiche le lien à lui transmettre toi-même. Seul « mot de passe oublié » nécessite l'e-mail (sinon, l'admin réinitialise le mot de passe depuis *Utilisateurs*).
 
 Si tu as perdu l'accès admin :
 ```bash
@@ -132,11 +132,11 @@ Un client « Demo … » apparaît, avec 2 alertes volontaires à corriger pour 
 
 Sans HTTPS, les mots de passe circulent en clair. Si tu as un domaine :
 
-1. Crée un enregistrement DNS (ex. `infra-tech.tondomaine.fr`) vers ton IP ou ton tunnel (Cloudflare).
+1. Crée un enregistrement DNS (ex. `nial-infra.tondomaine.fr`) vers ton IP ou ton tunnel (Cloudflare).
 2. Configure ton reverse proxy (Zoraxy, Nginx Proxy Manager, Caddy…) pour envoyer le domaine vers `http://IP-DU-SERVEUR:3000`, avec certificat HTTPS.
 3. Dans `.env`, ajoute le domaine pour le site web :
    ```
-   CORS_ORIGINS=https://infra-tech.tondomaine.fr
+   CORS_ORIGINS=https://nial-infra.tondomaine.fr
    ```
 4. Applique : `docker compose up -d`.
 
@@ -146,7 +146,7 @@ Ne publie que le port du site (`WEB_PORT`) : la base et l'API ne sont **pas** ex
 
 ## 8. Connecter les applications
 
-Toutes utilisent la **même adresse** : celle de l'étape 4 (`http://IP:3000`) ou de l'étape 7 (`https://infra-tech.tondomaine.fr`).
+Toutes utilisent la **même adresse** : celle de l'étape 4 (`http://IP:3000`) ou de l'étape 7 (`https://nial-infra.tondomaine.fr`).
 
 | App | Comment | Où mettre l'adresse |
 |---|---|---|
@@ -164,20 +164,20 @@ Toutes utilisent la **même adresse** : celle de l'étape 4 (`http://IP:3000`) o
 
 À faire régulièrement (cron) :
 ```bash
-docker compose exec -T postgres pg_dump -U netforge netforge | gzip > infra-tech-$(date +%F).sql.gz
+docker compose exec -T postgres sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' | gzip > nial-infra-$(date +%F).sql.gz
 ```
 Garde aussi une copie de **`.env`** (surtout `ENCRYPTION_KEY`) : sans elle, la sauvegarde ne permet pas de relire les mots de passe d'équipements.
 
 Restaurer :
 ```bash
-gunzip -c infra-tech-2026-11-08.sql.gz | docker compose exec -T postgres psql -U netforge netforge
+gunzip -c nial-infra-2026-11-08.sql.gz | docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" "$POSTGRES_DB"'
 ```
 *Pourquoi sauvegarder la base et pas le conteneur ?* Le conteneur se refait en une commande ; les données seules sont irremplaçables.
 
 ## 10. Mettre à jour
 
 ```bash
-cd Infra-Tech
+cd Nial-Infra
 git pull
 docker compose up -d --build
 ```

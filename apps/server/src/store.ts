@@ -1,4 +1,4 @@
-import { canPlace, firstFreePos, type Client, type Device, type DeviceType, type Invitation, type LibraryItem, type Link, type Member, type MemberRole, type Rack, type Revision, type Role, type Site, type User } from '@infra-tech/shared';
+import { canPlace, firstFreePos, type Client, type Device, type DeviceType, type Invitation, type LibraryItem, type Link, type Member, type MemberRole, type Rack, type Revision, type Role, type Site, type User } from '@nial-infra/shared';
 import { createHash, randomBytes } from 'node:crypto';
 import { tx, type Db } from './db';
 import { decrypt, encrypt } from './crypto';

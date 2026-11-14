@@ -1,4 +1,4 @@
-# Sécurité — Infra-Tech
+# Sécurité — Nial-Infra
 
 ## Signaler une faille
 
@@ -56,7 +56,7 @@ Audit complet : dépendances (`npm audit`), revue du code serveur / web / deskto
 
 ## Check-list d'un serveur sain
 
-1. HTTPS devant Infra-Tech (INSTALLATION.md §7) et `PUBLIC_URL` en `https://…`.
+1. HTTPS devant Nial-Infra (INSTALLATION.md §7) et `PUBLIC_URL` en `https://…`.
 2. `JWT_SECRET`, `ENCRYPTION_KEY`, `POSTGRES_PASSWORD`, `ADMIN_PASSWORD` : aléatoires, jamais ceux de l'exemple. **Sauvegarde `ENCRYPTION_KEY`** (sans elle, les mots de passe d'équipements sont perdus).
 3. Ne publie **pas** le port 5432 (PostgreSQL) ni le 5000 (API) : seul le port du site web doit être joignable.
 4. Mets à jour régulièrement : `docs/UPDATE.md`.

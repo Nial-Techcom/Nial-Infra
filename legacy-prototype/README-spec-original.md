@@ -7,28 +7,28 @@
  | | \ \ | | | | | | \ \ | |____  | |__| || |\  | | |__| || |____  | | \ \
  |_|  \_\|_| |_| |_|  \_\|______| |_____/ |_| \_| |_____/ |______| |_|  \_\
 ================================================================================
-                  🌐 INFRATECH - INFRASTRUCTURE TOPOLOGY DESIGNER
+                  🌐 NIAL_INFRA - INFRASTRUCTURE TOPOLOGY DESIGNER
 ================================================================================
 -->
 
 <div align="center">
 
-# 🛜 Infra-Tech
+# 🛜 Nial-Infra
 
 ### Infrastructure Topology Designer
 
 **Design your network infrastructure with VLANs, Trunks, Tagging, and device management - all in one visual canvas.**
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/your-org/infra-tech/releases)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/your-org/nial-infra/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 [![Made with React](https://img.shields.io/badge/Made%20with-React-61DAFB.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC.svg)](https://www.typescriptlang.org/)
 
 **[Website](https://nial-tech.com)** •
-**[Documentation](https://docs.infra-tech.io)** •
-**[Report Bug](https://github.com/Flunch4456/Infra-Tech/issues)** •
-**[Request Feature](https://github.com/Flunch4456/Infra-Tech/pulls)** •
+**[Documentation](https://docs.nial-infra.io)** •
+**[Report Bug](https://github.com/Nial-Techcom/Nial-Infra/issues)** •
+**[Request Feature](https://github.com/Nial-Techcom/Nial-Infra/pulls)** •
 **[Contact](mailto:contact@nial-tech.com)**
 
 </div>
@@ -47,7 +47,7 @@
 
 ## 🎯 Overview
 
-**Infra-Tech** is a full-stack web application for designing complete network infrastructure schemas. It bridges the gap between logical diagrams and physical cabling plans by integrating **VLAN configuration, port mapping, Tagging (Tagged/Untagged), and device management metadata** directly into the visual canvas.
+**Nial-Infra** is a full-stack web application for designing complete network infrastructure schemas. It bridges the gap between logical diagrams and physical cabling plans by integrating **VLAN configuration, port mapping, Tagging (Tagged/Untagged), and device management metadata** directly into the visual canvas.
 
 ### Primary Use Case
 **Managed Service Providers (MSPs)** and **enterprise IT teams** managing multiple clients and sites.
@@ -170,8 +170,8 @@ The backend continuously validates the schema and displays alerts:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-org/infra-tech.git
-cd infra-tech
+git clone https://github.com/your-org/nial-infra.git
+cd nial-infra
 
 # 2. Copy environment variables
 cp .env.example .env
@@ -265,7 +265,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🎯 Présentation
 
-**Infra-Tech** est une application web full-stack permettant de concevoir des schémas d'infrastructure réseau complets. Elle fait le lien entre le schéma logique et le plan de câblage physique en intégrant **la configuration VLAN, le mapping des ports, le Tagging (Tagged/Untagged) et les métadonnées de gestion** directement sur le canvas visuel.
+**Nial-Infra** est une application web full-stack permettant de concevoir des schémas d'infrastructure réseau complets. Elle fait le lien entre le schéma logique et le plan de câblage physique en intégrant **la configuration VLAN, le mapping des ports, le Tagging (Tagged/Untagged) et les métadonnées de gestion** directement sur le canvas visuel.
 
 ### Cas d'usage principal
 **Sociétés d'infogérance (MSP)** et **équipes IT internes** gérant plusieurs clients et sites.
@@ -388,8 +388,8 @@ Le backend valide en continu le schéma et affiche des alertes :
 
 ```bash
 # 1. Cloner le dépôt
-git clone https://github.com/your-org/infra-tech.git
-cd infra-tech
+git clone https://github.com/your-org/nial-infra.git
+cd nial-infra
 
 # 2. Copier les variables d'environnement
 cp .env.example .env
@@ -642,7 +642,7 @@ interface Alert {
 // public/locales/en/common.json
 {
   "app": {
-    "title": "Infra-Tech - Infrastructure Designer",
+    "title": "Nial-Infra - Infrastructure Designer",
     "description": "Design your network infrastructure with VLANs, Trunks, and Tagging"
   },
   "sidebar": {
@@ -776,7 +776,7 @@ const rules: ValidationRule[] = [
 ## 📁 Folder Structure
 
 ```
-infra-tech/
+nial-infra/
 ├── frontend/
 │   ├── public/
 │   │   └── locales/
@@ -787,7 +787,7 @@ infra-tech/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── canvas/
-│   │   │   │   ├── InfraTechCanvas.tsx
+│   │   │   │   ├── NialInfraCanvas.tsx
 │   │   │   │   ├── DeviceNode.tsx
 │   │   │   │   ├── CableEdge.tsx
 │   │   │   │   └── DeviceTooltip.tsx
@@ -860,7 +860,7 @@ infra-tech/
 # ============================================================
 # DATABASE
 # ============================================================
-DATABASE_URL=postgresql://netforge:netforge123@postgres:5432/netforge
+DATABASE_URL=postgresql://nial_infra:nial_infra123@postgres:5432/nial_infra
 
 # ============================================================
 # ENCRYPTION (32 bytes, base64)
@@ -896,15 +896,15 @@ services:
   postgres:
     image: postgres:15
     environment:
-      POSTGRES_USER: netforge
-      POSTGRES_PASSWORD: netforge123
-      POSTGRES_DB: netforge
+      POSTGRES_USER: nial_infra
+      POSTGRES_PASSWORD: nial_infra123
+      POSTGRES_DB: nial_infra
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U netforge"]
+      test: ["CMD-SHELL", "pg_isready -U nial_infra"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -914,7 +914,7 @@ services:
     ports:
       - "5000:5000"
     environment:
-      DATABASE_URL: postgresql://netforge:netforge123@postgres:5432/netforge
+      DATABASE_URL: postgresql://nial_infra:nial_infra123@postgres:5432/nial_infra
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       JWT_SECRET: ${JWT_SECRET}
       PORT: 5000
@@ -978,7 +978,7 @@ volumes:
 
 **Made with ❤️ for MSPs and network architects worldwide.**
 
-**[⬆ Back to Top](#-infra-tech)**
+**[⬆ Back to Top](#-nial-infra)**
 
 </div>
 ```

@@ -1,19 +1,19 @@
 {
-  "name": "@infra-tech/desktop",
+  "name": "@nial-infra/desktop",
   "version": "1.1.0",
   "private": true,
-  "description": "Infra-Tech desktop app (Electron shell around the web UI)",
+  "description": "Nial-Infra desktop app (Electron shell around the web UI)",
   "main": "main.js",
   "author": {
-    "name": "Infra-Tech",
+    "name": "Nial-Infra",
     "email": "contact@nial-tech.com"
   },
   "license": "MIT",
   "scripts": {
-    "dev": "INFRATECH_DEV_URL=http://localhost:3000 electron .",
+    "dev": "NIAL_INFRA_DEV_URL=http://localhost:3000 electron .",
     "start": "electron .",
     "prepare-renderer": "node scripts/copy-web.js",
-    "build": "npm run build -w @infra-tech/web && node scripts/copy-web.js",
+    "build": "npm run build -w @nial-infra/web && node scripts/copy-web.js",
     "dist": "npm run build && electron-builder",
     "typecheck": "node --check main.js && node --check preload.js"
   },
@@ -22,12 +22,12 @@
     "electron-builder": "^26.18.0"
   },
   "build": {
-    "appId": "com.infratech.desktop",
-    "productName": "Infra-Tech",
+    "appId": "com.nialinfra.desktop",
+    "productName": "NialInfra",
     "directories": {
       "output": "release"
     },
-    "artifactName": "Infra-Tech-${version}-${os}-${arch}.${ext}",
+    "artifactName": "Nial-Infra-${version}-${os}-${arch}.${ext}",
     "files": [
       "main.js",
       "preload.js",
@@ -41,7 +41,8 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Nial-Infra"
     },
     "mac": {
       "target": [
@@ -57,8 +58,8 @@
         "deb"
       ],
       "category": "Network",
-      "maintainer": "Infra-Tech <contact@nial-tech.com>"
+      "maintainer": "Nial-Infra <contact@nial-tech.com>"
     }
   },
-  "homepage": "https://github.com/Flunch4456/Infra-Tech"
+  "homepage": "https://github.com/Nial-Techcom/Nial-Infra"
 }

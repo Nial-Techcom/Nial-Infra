@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MEMBER_ROLES, type Invitation, type Member, type MemberRole } from '@infra-tech/shared';
+import { MEMBER_ROLES, type Invitation, type Member, type MemberRole } from '@nial-infra/shared';
 import { api, errorText } from '../../lib/api';
 import { useTopology } from '../../store/topology';
 import { useUi } from '../../store/ui';

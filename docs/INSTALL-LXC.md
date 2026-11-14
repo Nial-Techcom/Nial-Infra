@@ -1,10 +1,10 @@
-# Installer le serveur Infra-Tech de A à Z sur un LXC Proxmox neuf
+# Installer le serveur Nial-Infra de A à Z sur un LXC Proxmox neuf
 
-Objectif : partir d'un Proxmox, finir avec Infra-Tech qui tourne en permanence, joignable par le site web, l'app Windows/Mac et l'app mobile.
+Objectif : partir d'un Proxmox, finir avec Nial-Infra qui tourne en permanence, joignable par le site web, l'app Windows/Mac et l'app mobile.
 Durée : environ 20 minutes. **Fais les étapes dans l'ordre et vérifie le ✅ avant de continuer.**
 
 ```
-Proxmox ──► LXC « infra-tech » ──► Docker ──► [ PostgreSQL + API + site web (nginx) ]
+Proxmox ──► LXC « nial-infra » ──► Docker ──► [ PostgreSQL + API + site web (nginx) ]
                                                        ▲
                       web · Windows · macOS · Android · iPhone  (même adresse)
 ```
@@ -25,7 +25,7 @@ Bouton **Create CT** (en haut à droite). Onglet par onglet :
 
 | Onglet | Réglage | Pourquoi |
 |---|---|---|
-| General | Hostname `infra-tech`, mot de passe root fort, **Unprivileged container coché** | Un conteneur non privilégié est plus sûr : si quelqu'un s'échappe de Docker, il n'est pas root sur Proxmox |
+| General | Hostname `nial-infra`, mot de passe root fort, **Unprivileged container coché** | Un conteneur non privilégié est plus sûr : si quelqu'un s'échappe de Docker, il n'est pas root sur Proxmox |
 | Template | Le modèle Debian téléchargé | |
 | Disks | **8 Go** (16 si tu veux garder beaucoup de sauvegardes) | Docker + base + images |
 | CPU | **2 cœurs** | La construction des images est plus rapide |
@@ -39,7 +39,7 @@ Termine par **Finish**, **sans** cocher « Start after created ».
 Sélectionne le CT → **Options** → **Features** → Edit → coche **Nesting** et **keyctl** → OK.
 *Pourquoi ?* Docker crée lui-même des conteneurs à l'intérieur du LXC ; sans « nesting » il refuse de démarrer.
 
-Ensuite **Options → Start at boot → Yes**. *Pourquoi ?* Si Proxmox redémarre (coupure de courant), Infra-Tech revient tout seul.
+Ensuite **Options → Start at boot → Yes**. *Pourquoi ?* Si Proxmox redémarre (coupure de courant), Nial-Infra revient tout seul.
 
 > Équivalent en ligne de commande, sur l'hôte Proxmox (remplace `105` par l'ID du CT) :
 > `pct set 105 --features nesting=1,keyctl=1 --onboot 1`
@@ -56,7 +56,7 @@ Si le ping échoue, la passerelle ou le DNS de l'onglet Network est faux : corri
 
 ---
 
-## Partie B — Installer Infra-Tech (dans la console du LXC)
+## Partie B — Installer Nial-Infra (dans la console du LXC)
 
 ### B1. Mettre le système à jour
 ```bash
@@ -70,8 +70,8 @@ Le dépôt est privé : Git te demandera ton identifiant GitHub et, **comme mot 
 Pour le créer : GitHub → ta photo → *Settings* → *Developer settings* → *Personal access tokens* → *Tokens (classic)* → *Generate new token*, coche **`repo`**, copie-le.
 
 ```bash
-git clone --branch server https://github.com/Flunch4456/Infra-Tech.git
-cd Infra-Tech
+git clone --branch server https://github.com/Nial-Techcom/Nial-Infra.git
+cd Nial-Infra
 ```
 ✅ `ls` affiche `docker-compose.yml`, `apps`, `scripts`…
 
@@ -83,11 +83,11 @@ Il fait tout, avec une explication à chaque étape :
 1. installe les paquets de base ;
 2. installe **Docker** et **Compose** (script officiel) ;
 3. te demande l'e-mail admin, un mot de passe (vide = il en génère un) et le port, puis **crée le `.env`** avec des secrets aléatoires (`chmod 600` : lisible seulement par root) ;
-4. construit et démarre Infra-Tech, puis attend que le serveur réponde.
+4. construit et démarre Nial-Infra, puis attend que le serveur réponde.
 
 La construction prend **3 à 8 minutes** la première fois : c'est normal.
 
-✅ À la fin : `Infra-Tech fonctionne. Ouvre http://192.168.1.50:3000`.
+✅ À la fin : `Nial-Infra fonctionne. Ouvre http://192.168.1.50:3000`.
 
 ### B4. ⚠️ Sauvegarder la clé de chiffrement — maintenant
 ```bash
@@ -96,7 +96,7 @@ grep ENCRYPTION_KEY .env
 Copie cette ligne dans ton gestionnaire de mots de passe. **Si elle est perdue, les mots de passe des équipements enregistrés sont définitivement illisibles**, même avec une sauvegarde de la base.
 
 ### B5. Premier écran
-Depuis ton PC (même réseau) : ouvre `http://192.168.1.50:3000` et connecte-toi avec l'e-mail et le mot de passe admin. Tu dois voir l'écran Infra-Tech vide, avec la bibliothèque d'équipements à gauche.
+Depuis ton PC (même réseau) : ouvre `http://192.168.1.50:3000` et connecte-toi avec l'e-mail et le mot de passe admin. Tu dois voir l'écran Nial-Infra vide, avec la bibliothèque d'équipements à gauche.
 
 Change tout de suite le mot de passe : menu en haut à droite → **Changer le mot de passe**.
 
@@ -112,7 +112,7 @@ curl http://localhost:3000/api/v1/health              # {"status":"ok"}
 docker compose logs --tail 20 server                  # pas de ligne « error »
 ```
 
-**Test du redémarrage** (le plus important) : dans Proxmox, **Shutdown** puis **Start** le CT, attends 1 minute, rouvre le site. S'il répond, Infra-Tech survit aux coupures. *Pourquoi ?* Les conteneurs ont `restart: unless-stopped` et le CT démarre au boot : c'est ce qu'on vient de prouver.
+**Test du redémarrage** (le plus important) : dans Proxmox, **Shutdown** puis **Start** le CT, attends 1 minute, rouvre le site. S'il répond, Nial-Infra survit aux coupures. *Pourquoi ?* Les conteneurs ont `restart: unless-stopped` et le CT démarre au boot : c'est ce qu'on vient de prouver.
 
 ---
 
@@ -138,16 +138,16 @@ Toutes utilisent la même adresse : `http://192.168.1.50:3000` (ou ton domaine, 
 
 Sans HTTPS, ne l'expose **pas** : les mots de passe passeraient en clair.
 
-1. Dans Cloudflare, crée un enregistrement pour `infra-tech.tondomaine.fr`.
-2. Dans ton reverse proxy (Zoraxy…), ajoute une règle : `infra-tech.tondomaine.fr` → `http://192.168.1.50:3000`, avec certificat HTTPS.
+1. Dans Cloudflare, crée un enregistrement pour `nial-infra.tondomaine.fr`.
+2. Dans ton reverse proxy (Zoraxy…), ajoute une règle : `nial-infra.tondomaine.fr` → `http://192.168.1.50:3000`, avec certificat HTTPS.
 3. Dans le LXC :
    ```bash
-   cd ~/Infra-Tech
-   echo 'CORS_ORIGINS=https://infra-tech.tondomaine.fr' >> .env
+   cd ~/Nial-Infra
+   echo 'CORS_ORIGINS=https://nial-infra.tondomaine.fr' >> .env
    docker compose up -d
    ```
    *Pourquoi ?* Le navigateur n'autorise le site à parler à l'API que depuis les adresses déclarées. Les apps Windows/Mac et mobiles n'en ont pas besoin.
-4. Dans les apps, mets `https://infra-tech.tondomaine.fr` comme adresse.
+4. Dans les apps, mets `https://nial-infra.tondomaine.fr` comme adresse.
 
 Seul le port du site (3000) est ouvert : la base et l'API ne sont pas exposées directement.
 
@@ -156,21 +156,21 @@ Seul le port du site (3000) est ouvert : la base et l'API ne sont pas exposées 
 ## Partie F — Sauvegardes et mises à jour
 
 ### Sauvegarde Proxmox (la plus simple)
-Datacenter → **Backup** → Add : choisis le CT `infra-tech`, une planification (ex. chaque nuit), mode *Snapshot*. Ça sauvegarde tout : système, Docker, base, `.env`.
+Datacenter → **Backup** → Add : choisis le CT `nial-infra`, une planification (ex. chaque nuit), mode *Snapshot*. Ça sauvegarde tout : système, Docker, base, `.env`.
 
 ### Sauvegarde de la base seule (plus légère, à copier ailleurs)
 ```bash
-cd ~/Infra-Tech
-docker compose exec -T postgres pg_dump -U netforge netforge | gzip > ~/infra-tech-$(date +%F).sql.gz
+cd ~/Nial-Infra
+docker compose exec -T postgres sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' | gzip > ~/nial-infra-$(date +%F).sql.gz
 ```
 Restaurer :
 ```bash
-gunzip -c ~/infra-tech-2026-11-08.sql.gz | docker compose exec -T postgres psql -U netforge netforge
+gunzip -c ~/nial-infra-2026-11-08.sql.gz | docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" "$POSTGRES_DB"'
 ```
 
-### Mettre à jour Infra-Tech
+### Mettre à jour Nial-Infra
 ```bash
-cd ~/Infra-Tech && git pull && docker compose up -d --build
+cd ~/Nial-Infra && git pull && docker compose up -d --build
 ```
 Les données sont dans un volume Docker : elles restent. Les migrations s'appliquent toutes seules. Tuto détaillé : [UPDATE.md](UPDATE.md).
 

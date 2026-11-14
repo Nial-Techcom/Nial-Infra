@@ -1,6 +1,6 @@
 # Installation sur Debian vierge
 
-Ce guide installe Infra-Tech sur une machine Debian neuve avec un hébergement local simple et reproductible.
+Ce guide installe Nial-Infra sur une machine Debian neuve avec un hébergement local simple et reproductible.
 
 ## 1. Mettre la machine à jour
 
@@ -19,8 +19,8 @@ sudo apt install -y nginx git curl unzip
 
 ```bash
 cd /var/www
-sudo git clone https://github.com/ton-compte/Infra-Tech.git infra-tech
-cd infra-tech
+sudo git clone https://github.com/ton-compte/Nial-Infra.git nial-infra
+cd nial-infra
 ```
 
 Si tu copies les fichiers autrement, il faut juste que `index.html`, `styles.css` et `app.js` se trouvent dans le même dossier.
@@ -28,20 +28,20 @@ Si tu copies les fichiers autrement, il faut juste que `index.html`, `styles.css
 ## 4. Donner les bons droits
 
 ```bash
-sudo chown -R www-data:www-data /var/www/infra-tech
-sudo chmod -R 755 /var/www/infra-tech
+sudo chown -R www-data:www-data /var/www/nial-infra
+sudo chmod -R 755 /var/www/nial-infra
 ```
 
 ## 5. Créer la configuration Nginx
 
-Crée le fichier `/etc/nginx/sites-available/infra-tech` :
+Crée le fichier `/etc/nginx/sites-available/nial-infra` :
 
 ```nginx
 server {
     listen 80;
     server_name _;
 
-    root /var/www/infra-tech;
+    root /var/www/nial-infra;
     index index.html;
 
     location / {
@@ -53,7 +53,7 @@ server {
 Puis active le site :
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/infra-tech /etc/nginx/sites-enabled/infra-tech
+sudo ln -s /etc/nginx/sites-available/nial-infra /etc/nginx/sites-enabled/nial-infra
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t
 sudo systemctl reload nginx

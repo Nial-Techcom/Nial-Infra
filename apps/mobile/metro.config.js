@@ -1,4 +1,4 @@
-// Monorepo setup: Metro must see the workspace root so it can resolve @infra-tech/shared and hoisted packages.
+// Monorepo setup: Metro must see the workspace root so it can resolve @nial-infra/shared and hoisted packages.
 const { getDefaultConfig } = require('expo/metro-config');
 const path = require('node:path');
 

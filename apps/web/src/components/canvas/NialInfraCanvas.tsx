@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import ReactFlow, { Background, BackgroundVariant, Controls, MiniMap, useEdgesState, useNodesState, useReactFlow, type Connection, type Edge, type Node } from 'reactflow';
 import { useTranslation } from 'react-i18next';
-import { DEVICE_COLORS, DEVICE_LIBRARY, type Alert } from '@infra-tech/shared';
+import { DEVICE_COLORS, DEVICE_LIBRARY, type Alert } from '@nial-infra/shared';
 import { createFromPreset, findPreset } from '../../lib/devices';
 import { useAlerts } from '../../lib/useAlerts';
 import { useCanEdit } from '../../store/auth';
@@ -20,7 +20,7 @@ function worst(alerts: Alert[]): 'critical' | 'warning' | 'info' | null {
   return best;
 }
 
-export function InfraTechCanvas() {
+export function NialInfraCanvas() {
   const { t } = useTranslation();
   const rf = useReactFlow();
   const { devices, links, sites, racks, library, activeSiteId, focus, clientId, moveDevice } = useTopology();
@@ -101,7 +101,7 @@ export function InfraTechCanvas() {
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    const key = e.dataTransfer.getData('application/infra-tech-preset');
+    const key = e.dataTransfer.getData('application/nial-infra-preset');
     const preset = findPreset(key, library, DEVICE_LIBRARY);
     if (!preset || !editable) return;
     const p = rf.screenToFlowPosition({ x: e.clientX, y: e.clientY });
