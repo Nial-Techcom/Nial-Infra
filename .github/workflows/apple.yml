@@ -35,14 +35,15 @@ jobs:
       - name: Build unsigned app
         working-directory: apps/mobile
         run: |
-          xcodebuild -workspace ios/Nial-Infra.xcworkspace -scheme Nial-Infra \
+          WS="$(ls -d ios/*.xcworkspace | head -1)"
+          xcodebuild -workspace "$WS" -scheme "$(basename "$WS" .xcworkspace)" \
             -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
             -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
       - name: Package unsigned IPA (for SideStore / LiveContainer)
         working-directory: apps/mobile
         run: |
           mkdir Payload
-          cp -R build/Build/Products/Release-iphoneos/Nial-Infra.app Payload/
+          cp -R build/Build/Products/Release-iphoneos/*.app Payload/
           zip -qr ../../Nial-Infra-ios-unsigned.ipa Payload
       - uses: actions/upload-artifact@v4
         with:
