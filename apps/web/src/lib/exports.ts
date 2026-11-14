@@ -1,4 +1,4 @@
-import { buildShmnlt, cablingMatrixCsv, parseShmnlt } from '@infra-tech/shared';
+import { buildShmnlt, cablingMatrixCsv, parseShmnlt } from '@nial-infra/shared';
 import i18n from '../i18n';
 import { useTopology } from '../store/topology';
 import { useUi } from '../store/ui';

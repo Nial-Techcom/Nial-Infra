@@ -2,7 +2,7 @@ import type { Translation } from './en';
 
 export const fr: Translation = {
   app: {
-    title: 'Infra-Tech - Concepteur d’infrastructure',
+    title: 'Nial-Infra - Concepteur d’infrastructure',
     description: 'Concevez votre infrastructure réseau avec VLANs, Trunks et Tagging',
     tagline: 'Concepteur de topologie d’infrastructure',
   },
@@ -90,7 +90,7 @@ export const fr: Translation = {
   },
   mobile: {
     diagram: 'Schéma', cables: 'Câbles', addCable: 'Ajouter un câble', addDevice: 'Ajouter un équipement', pickDevice: 'Choisir un équipement', pickPort: 'Choisir un port',
-    server: 'URL du serveur (ex. https://infra-tech.exemple.com)', empty: 'Rien ici pour le moment', pullToRefresh: 'Tirez vers le bas pour actualiser',
+    server: 'URL du serveur (ex. https://nial-infra.exemple.com)', empty: 'Rien ici pour le moment', pullToRefresh: 'Tirez vers le bas pour actualiser',
     shareFailed: 'Impossible de partager le fichier', settings: 'Réglages', deleteDevice: 'Supprimer l’équipement', deleteCable: 'Supprimer le câble',
     portInUse: 'utilisé', sameDevice: 'Choisissez deux équipements différents', tapDevice: 'Touchez un équipement pour l’ouvrir', imported: 'Import terminé',
   },
@@ -106,11 +106,11 @@ export const fr: Translation = {
     inviteAccept: 'Rejoindre le client', inviteAccepted: 'Tu as rejoint le client.', inviteInvalid: 'Cette invitation est invalide, déjà utilisée ou expirée.', inviteHintMobile: 'Colle le lien ou le code d’invitation reçu par e-mail',
   },
   admin: {
-    title: 'Administration', general: 'Général', publicUrl: 'Adresse publique de Infra-Tech', publicUrlHint: 'Utilisée dans les liens envoyés par e-mail, ex. https://infra-tech.exemple.com',
+    title: 'Administration', general: 'Général', publicUrl: 'Adresse publique de Nial-Infra', publicUrlHint: 'Utilisée dans les liens envoyés par e-mail, ex. https://nial-infra.exemple.com',
     allowRegistration: 'Autoriser tout le monde à créer un compte (sans invitation, aucun client n’est visible)', smtp: 'Serveur d’e-mail (SMTP)',
     smtpHelp: 'Nécessaire pour envoyer les invitations et les liens de réinitialisation.', host: 'Serveur', port: 'Port', secure: 'TLS implicite (port 465)',
     smtpUser: 'Identifiant', smtpPassword: 'Mot de passe', smtpPasswordKept: 'Un mot de passe est enregistré. Laisse vide pour le garder.', from: 'Adresse d’expédition',
-    fromHint: 'ex. Infra-Tech <infra-tech@exemple.com>', testTo: 'Envoyer un test à', test: 'Envoyer un e-mail de test', testSent: 'E-mail de test envoyé', saved: 'Réglages enregistrés',
+    fromHint: 'ex. Nial-Infra <nial-infra@exemple.com>', testTo: 'Envoyer un test à', test: 'Envoyer un e-mail de test', testSent: 'E-mail de test envoyé', saved: 'Réglages enregistrés',
     library: 'Catalogue d’équipements', libraryHelp: 'Les modèles ajoutés ici apparaissent dans la bibliothèque de tous les clients.', libraryAdd: 'Ajouter un modèle',
     libraryEmpty: 'Aucun modèle personnalisé pour le moment.', label: 'Nom dans la bibliothèque', units: 'Hauteur (U)', users: 'Utilisateurs',
   },
@@ -127,7 +127,7 @@ export const fr: Translation = {
     dragHint: 'Glisse un équipement de la liste dans une baie, ou clique sur un emplacement libre.', cablesOut: 'Câbles qui sortent de cette baie', none: 'Aucun câble ne sort de cette baie.',
   },
   conn: {
-    title: 'Serveur injoignable', body: 'Infra-Tech a besoin d’une connexion à ton serveur et ne fonctionne pas hors ligne. Rien n’est stocké sur cet appareil ; ça reprend tout seul dès que le serveur répond.',
+    title: 'Serveur injoignable', body: 'Nial-Infra a besoin d’une connexion à ton serveur et ne fonctionne pas hors ligne. Rien n’est stocké sur cet appareil ; ça reprend tout seul dès que le serveur répond.',
     server: 'Serveur', retry: 'Réessayer maintenant', changeServer: 'Changer de serveur', checking: 'Tentative de reconnexion…', signOut: 'Se déconnecter',
   },
   errors: {

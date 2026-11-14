@@ -4,7 +4,7 @@ import { useAuth } from './auth';
 import { useTopology } from './topology';
 
 /**
- * Infra-Tech never works offline: everything lives on the server, nothing is cached on the device.
+ * Nial-Infra never works offline: everything lives on the server, nothing is cached on the device.
  * This store tracks whether the server answers; while it does not, the UI is blocked by <ConnectionGate>.
  */
 interface ConnectionState {

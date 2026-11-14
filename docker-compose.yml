@@ -1,15 +1,15 @@
-# Infra-Tech: PostgreSQL + API + web UI (nginx). Web, desktop and mobile apps all talk to the same API.
+# Nial-Infra: PostgreSQL + API + web UI (nginx). Web, desktop and mobile apps all talk to the same API.
 services:
   postgres:
     image: postgres:16
     environment:
-      POSTGRES_USER: netforge
+      POSTGRES_USER: ${POSTGRES_USER:-nial_infra}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
-      POSTGRES_DB: netforge
+      POSTGRES_DB: ${POSTGRES_DB:-nial_infra}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U netforge"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -18,12 +18,12 @@ services:
     restart: unless-stopped
 
   server:
-    image: ghcr.io/flunch4456/infra-tech-server:latest
+    image: ghcr.io/flunch4456/nial-infra-server:latest
     build:
       context: .
       dockerfile: apps/server/Dockerfile
     environment:
-      DATABASE_URL: postgresql://netforge:${POSTGRES_PASSWORD}@postgres:5432/netforge
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nial_infra}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-nial_infra}
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY in .env}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
@@ -42,7 +42,7 @@ services:
     restart: unless-stopped
 
   web:
-    image: ghcr.io/flunch4456/infra-tech-web:latest
+    image: ghcr.io/flunch4456/nial-infra-web:latest
     build:
       context: .
       dockerfile: apps/web/Dockerfile

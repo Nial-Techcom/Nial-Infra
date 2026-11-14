@@ -2,7 +2,7 @@ const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron')
 const fs = require('node:fs');
 const path = require('node:path');
 
-const DEV_URL = process.env.INFRATECH_DEV_URL;
+const DEV_URL = process.env.NIAL_INFRA_DEV_URL;
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
 
 function readSettings() {
@@ -42,7 +42,7 @@ app.on('web-contents-created', (_e, contents) => {
 function createWindow() {
   const bounds = readSettings().bounds ?? { width: 1360, height: 860 };
   win = new BrowserWindow({
-    ...bounds, minWidth: 900, minHeight: 600, backgroundColor: '#141A22', title: 'Infra-Tech',
+    ...bounds, minWidth: 900, minHeight: 600, backgroundColor: '#141A22', title: 'Nial-Infra',
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   if (DEV_URL) win.loadURL(DEV_URL);
@@ -104,7 +104,7 @@ ipcMain.handle('nf:save-file', guard(async (_e, { name, data, mime }) => {
 
 ipcMain.handle('nf:open-file', guard(async (_e, { extensions }) => {
   const exts = Array.isArray(extensions) ? extensions.filter((x) => /^[a-z0-9]+$/i.test(x)) : [];
-  const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: exts.length ? [{ name: 'Infra-Tech', extensions: exts }] : [] });
+  const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: exts.length ? [{ name: 'Nial-Infra', extensions: exts }] : [] });
   if (r.canceled || !r.filePaths[0]) return null;
   const file = r.filePaths[0];
   if (fs.statSync(file).size > 20 * 1024 * 1024) throw new Error('File too large');

@@ -1,5 +1,5 @@
-const STORAGE_KEY = 'infra-tech-editor-state-v2';
-const LANG_KEY = 'infra-tech-lang';
+const STORAGE_KEY = 'nial-infra-editor-state-v2';
+const LANG_KEY = 'nial-infra-lang';
 
 const deviceCatalog = [
   { type: 'firewall', icon: 'FW', color: 'var(--device-firewall)', ports: 8, fr: 'Pare-feu', en: 'Firewall', metaFr: 'Edge security', metaEn: 'Edge security' },
@@ -699,7 +699,7 @@ function loadLocal() {
 }
 
 function exportJson() {
-  downloadFile('infra-tech-topology.json', JSON.stringify({ nodes: state.nodes, links: state.links, rackSize: state.rackSize }, null, 2), 'application/json');
+  downloadFile('nial-infra-topology.json', JSON.stringify({ nodes: state.nodes, links: state.links, rackSize: state.rackSize }, null, 2), 'application/json');
   renderHint(tr('exported'));
 }
 
@@ -711,7 +711,7 @@ function exportCsv() {
   state.links.forEach((l) => {
     rows.push(['link', l.id, '', '', '', '', '', '', '', '', l.sourceId, l.destId, l.sourcePort, l.destPort, l.mode, l.nativeVlan || '', (l.taggedVlans || []).join('|'), l.accessVlan || ''].map(csvSafe).join(','));
   });
-  downloadFile('infra-tech-topology.csv', rows.join('\n'), 'text/csv');
+  downloadFile('nial-infra-topology.csv', rows.join('\n'), 'text/csv');
   renderHint(tr('exported'));
 }
 
@@ -749,7 +749,7 @@ function exportSvg() {
     ${nodeContent}
   </svg>`;
 
-  downloadFile('infra-tech-topology.svg', svg, 'image/svg+xml');
+  downloadFile('nial-infra-topology.svg', svg, 'image/svg+xml');
   renderHint(tr('exported'));
 }
 

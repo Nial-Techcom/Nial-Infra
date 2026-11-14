@@ -4,7 +4,7 @@ import { loadConfig } from './config';
 import { createPool, migrate } from './db';
 import * as store from './store';
 
-/** Usage: npm run create-admin -w @infra-tech/server -- admin@example.com "Strong password" ["Display name"] */
+/** Usage: npm run create-admin -w @nial-infra/server -- admin@example.com "Strong password" ["Display name"] */
 async function main() {
   const [email, password, name = 'Administrator'] = process.argv.slice(2);
   if (!email || !password || password.length < 10) throw new Error('Usage: create-admin <email> <password (10+ chars)> [name]');

@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import type { Role, User } from '@infra-tech/shared';
+import type { Role, User } from '@nial-infra/shared';
 import type { Pool } from 'pg';
 import type { Config } from './config';
 import { HttpError } from './errors';
