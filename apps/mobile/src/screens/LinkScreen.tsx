@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
-import { devicePorts, formatVlanList, isValidVlan, parseVlanList, type LinkMode } from '@infra-tech/shared';
+import { devicePorts, formatVlanList, isValidVlan, parseVlanList, type LinkMode } from '@nial-infra/shared';
 import { api, useCanEdit, errorText, useSession, useT, useTopology } from '../store';
 import { useTheme } from '../theme';
 import { Button, Chip, Field, Header, Muted } from '../ui';

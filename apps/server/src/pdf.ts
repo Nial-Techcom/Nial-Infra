@@ -1,13 +1,13 @@
 import PDFDocument from 'pdfkit';
 import type { Writable } from 'node:stream';
-import { buildCablingMatrix, type Alert, type Client, type Device, type Link } from '@infra-tech/shared';
+import { buildCablingMatrix, type Alert, type Client, type Device, type Link } from '@nial-infra/shared';
 
 /** Streams a landscape A4 PDF: summary, alerts and the full cabling matrix. */
 export function writeCablingPdf(out: Writable, client: Client, devices: Device[], links: Link[], alerts: Alert[]) {
-  const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 36, info: { Title: `Infra-Tech - ${client.name}`, Producer: 'Infra-Tech' } });
+  const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 36, info: { Title: `Nial-Infra - ${client.name}`, Producer: 'Nial-Infra' } });
   doc.pipe(out);
 
-  doc.fontSize(20).text(`Infra-Tech - ${client.name}`);
+  doc.fontSize(20).text(`Nial-Infra - ${client.name}`);
   doc.fontSize(10).fillColor('#555').text(`${new Date().toISOString().slice(0, 10)}  |  ${devices.length} devices  |  ${links.length} links  |  ${alerts.length} alerts`).fillColor('#000').moveDown();
 
   if (alerts.length) {

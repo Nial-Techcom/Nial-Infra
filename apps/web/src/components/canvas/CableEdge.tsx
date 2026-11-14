@@ -1,6 +1,6 @@
 import { BaseEdge, EdgeLabelRenderer, useStore, type EdgeProps } from 'reactflow';
-import type { Link } from '@infra-tech/shared';
-import { formatVlanList } from '@infra-tech/shared';
+import type { Link } from '@nial-infra/shared';
+import { formatVlanList } from '@nial-infra/shared';
 
 export interface CableEdgeData {
   link: Link;

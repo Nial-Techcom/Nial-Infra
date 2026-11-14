@@ -1,6 +1,6 @@
 import { Handle, Position, type NodeProps } from 'reactflow';
 import { Monitor, Network, Router, Server, Shield, Wifi, type LucideIcon } from 'lucide-react';
-import { DEVICE_COLORS, devicePorts, type Device, type DeviceType, type LinkMode } from '@infra-tech/shared';
+import { DEVICE_COLORS, devicePorts, type Device, type DeviceType, type LinkMode } from '@nial-infra/shared';
 
 export interface DeviceNodeData {
   device: Device;

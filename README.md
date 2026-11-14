@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🛜 Infra-Tech
+# 🛜 Nial-Infra
 
 **Concepteur de topologie d'infrastructure réseau — VLANs, trunks, tagging, câblage et gestion des équipements sur un seul canvas.**
 *Network infrastructure topology designer — VLANs, trunks, tagging, cabling and device management on one canvas.*
@@ -61,15 +61,15 @@ npm install
 npm run build:shared                       # le package partagé doit être construit une fois
 
 # API (PostgreSQL requis)
-export DATABASE_URL=postgresql://user:pass@localhost:5432/netforge
+export DATABASE_URL=postgresql://user:pass@localhost:5432/nial_infra
 export JWT_SECRET=...  ENCRYPTION_KEY=$(openssl rand -base64 32)
 npm run dev:server
-npm run create-admin -w @infra-tech/server -- admin@example.com "MotDePasse8+"
+npm run create-admin -w @nial-infra/server -- admin@example.com "MotDePasse8+"
 
 npm run dev:web                            # http://localhost:3000 (proxy /api -> :5000)
 
-# Desktop : npm run build -w @infra-tech/desktop && npm run start -w @infra-tech/desktop
-#           npm run dist -w @infra-tech/desktop   -> installeurs dans apps/desktop/release
+# Desktop : npm run build -w @nial-infra/desktop && npm run start -w @nial-infra/desktop
+#           npm run dist -w @nial-infra/desktop   -> installeurs dans apps/desktop/release
 # Mobile  : cd apps/mobile && npx expo start   (Expo Go ou émulateur)
 #           (sur téléphone, l'URL du serveur doit être l'IP de la machine, pas localhost)
 ```
@@ -77,8 +77,8 @@ npm run dev:web                            # http://localhost:3000 (proxy /api -
 ### Tests
 
 ```bash
-npm test -w @infra-tech/shared                                   # moteur de validation, exports, parsing
-TEST_DATABASE_URL=postgresql://user:pass@localhost:5432/netforge_test npm test -w @infra-tech/server
+npm test -w @nial-infra/shared                                   # moteur de validation, exports, parsing
+TEST_DATABASE_URL=postgresql://user:pass@localhost:5432/nial_infra_test npm test -w @nial-infra/server
 npm run typecheck                                              # tous les workspaces
 ```
 Sans `TEST_DATABASE_URL`, les tests serveur démarrent un PostgreSQL embarqué (impossible en root).

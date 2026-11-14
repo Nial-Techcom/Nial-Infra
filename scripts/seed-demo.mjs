@@ -1,4 +1,4 @@
-// Creates a small demo network so you can try Infra-Tech right away.
+// Creates a small demo network so you can try Nial-Infra right away.
 // Usage: node scripts/seed-demo.mjs http://localhost:3000 admin@example.com "password"
 import { createRequire } from 'node:module';
 const { createApi } = createRequire(import.meta.url)('../packages/shared/dist/index.js');
@@ -34,4 +34,4 @@ await link(core, 'Gi1/0/4', acc2, 'Gi1/0/1', { mode: 'access', accessVlan: 10 })
 await link(acc1, 'Gi1/0/5', pc, 'eth1', { mode: 'access', accessVlan: 10 });
 await link(acc2, 'Gi1/0/5', ap, 'eth1', { mode: 'trunk', nativeVlan: 10, taggedVlans: [] }); // trunk with no VLAN -> warning R006
 
-console.log(`Demo client created: ${client.name}. Open Infra-Tech and pick it in the client list.`);
+console.log(`Demo client created: ${client.name}. Open Nial-Infra and pick it in the client list.`);

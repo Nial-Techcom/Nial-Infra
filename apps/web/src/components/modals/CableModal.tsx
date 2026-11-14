@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { devicePorts, formatVlanList, isValidVlan, parseVlanList, type Device, type LinkMedium, type LinkMode } from '@infra-tech/shared';
+import { devicePorts, formatVlanList, isValidVlan, parseVlanList, type Device, type LinkMedium, type LinkMode } from '@nial-infra/shared';
 import { useCanEdit } from '../../store/auth';
 import { useTopology } from '../../store/topology';
 import { useUi } from '../../store/ui';

@@ -1,4 +1,4 @@
-import type { Role, User } from '@infra-tech/shared';
+import type { Role, User } from '@nial-infra/shared';
 import { create } from 'zustand';
 
 const KEY = 'nf.session';
