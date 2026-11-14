@@ -1,5 +1,5 @@
 import { FlatList, Text, View } from 'react-native';
-import { DEVICE_COLORS, connectionsOf, usedUnits } from '@infra-tech/shared';
+import { DEVICE_COLORS, connectionsOf, usedUnits } from '@nial-infra/shared';
 import { useT, useTopology } from '../store';
 import { useTheme } from '../theme';
 import { Card, Muted } from '../ui';

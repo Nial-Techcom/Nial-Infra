@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ApiError, isInsecureRemoteUrl, type AuthConfig, type InvitePreview } from '@infra-tech/shared';
+import { ApiError, isInsecureRemoteUrl, type AuthConfig, type InvitePreview } from '@nial-infra/shared';
 import { api, errorText } from '../lib/api';
 import { getServerUrl, isDesktop, setServerUrl } from '../lib/platform';
 import { useAuth } from '../store/auth';
@@ -25,7 +25,7 @@ export function Card({ children, onSubmit }: { children: React.ReactNode; onSubm
   return (
     <main className="flex min-h-full items-center justify-center p-4">
       <form onSubmit={onSubmit ?? ((e) => e.preventDefault())} className="w-full max-w-sm rounded-lg border border-line bg-panel p-6 shadow-2xl">
-        <div className="mb-5 flex items-center gap-3"><Logo /><div><h1 className="text-lg font-semibold leading-tight">Infra-Tech</h1><p className="text-xs text-mute">{t('app.tagline')}</p></div></div>
+        <div className="mb-5 flex items-center gap-3"><Logo /><div><h1 className="text-lg font-semibold leading-tight">Nial-Infra</h1><p className="text-xs text-mute">{t('app.tagline')}</p></div></div>
         {children}
         <button type="button" className="mt-4 block text-xs text-mute hover:text-ink" onClick={() => i18n.changeLanguage(lang === 'fr' ? 'en' : 'fr')}>{lang === 'fr' ? 'English' : 'Français'}</button>
       </form>

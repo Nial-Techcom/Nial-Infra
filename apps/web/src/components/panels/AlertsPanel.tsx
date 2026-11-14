@@ -1,6 +1,6 @@
 import { CheckCircle2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { alertMessage, type Locale } from '@infra-tech/shared';
+import { alertMessage, type Locale } from '@nial-infra/shared';
 import { useAlerts } from '../../lib/useAlerts';
 import { useTopology } from '../../store/topology';
 import { useUi } from '../../store/ui';

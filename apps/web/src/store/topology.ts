@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Client, Device, LibraryItem, Link, Rack, Site } from '@infra-tech/shared';
+import type { Client, Device, LibraryItem, Link, Rack, Site } from '@nial-infra/shared';
 import { api, errorText } from '../lib/api';
 import { useUi } from './ui';
 import i18n from '../i18n';

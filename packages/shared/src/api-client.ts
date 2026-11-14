@@ -157,4 +157,4 @@ export function createApi(opts: ApiOptions) {
   };
 }
 
-export type InfraTechApi = ReturnType<typeof createApi>;
+export type NialInfraApi = ReturnType<typeof createApi>;

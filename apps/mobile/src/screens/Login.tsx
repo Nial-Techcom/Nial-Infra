@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
-import { ApiError, isInsecureRemoteUrl, translate, type AuthConfig } from '@infra-tech/shared';
+import { ApiError, isInsecureRemoteUrl, translate, type AuthConfig } from '@nial-infra/shared';
 import { api, useSession, useT } from '../store';
 import { useTheme } from '../theme';
 import { Button, Field } from '../ui';
@@ -61,7 +61,7 @@ export function Login() {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: c.bg }}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 20 }} keyboardShouldPersistTaps="handled">
-        <Text style={{ color: c.ink, fontSize: 28, fontWeight: '700' }}>Infra-Tech</Text>
+        <Text style={{ color: c.ink, fontSize: 28, fontWeight: '700' }}>Nial-Infra</Text>
         <Text style={{ color: c.mute, marginBottom: 24 }}>{mode === 'register' ? t('account.createAccount') : mode === 'forgot' ? t('account.forgotTitle') : t('app.tagline')}</Text>
         <Field label={t('auth.serverUrl')} hint={t('mobile.server')} value={server} onChangeText={setServer} keyboardType="url" />
         {isInsecureRemoteUrl(url) ? <Text accessibilityRole="alert" style={{ color: c.warn ?? c.crit, marginBottom: 12 }}>{t('auth.insecureServer')}</Text> : null}

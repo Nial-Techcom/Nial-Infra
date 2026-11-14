@@ -1,19 +1,19 @@
-# Mettre à jour le serveur Infra-Tech
+# Mettre à jour le serveur Nial-Infra
 
 ## Le plus simple : `update.sh` (automatique)
 
 Le script `scripts/update.sh` fait **tout ce qui est décrit plus bas** à ta place : sauvegarde, `git pull`, reconstruction, vérification. S'il y a un problème, il **revient tout seul à l'ancienne version** et restaure la base.
 
 ```bash
-cd ~/Infra-Tech
+cd ~/Nial-Infra
 ./scripts/update.sh --check   # dit s'il y a une mise à jour, ne change rien
 ./scripts/update.sh           # met à jour maintenant
 sudo ./scripts/update.sh --auto 4   # met à jour toutes les nuits à 4h17
 ```
 
-- *Pourquoi une sauvegarde à chaque fois ?* La base est copiée dans `/var/backups/infra-tech/` (les 7 dernières sont gardées) **avant** de toucher à quoi que ce soit : c'est ce qui permet le retour arrière.
+- *Pourquoi une sauvegarde à chaque fois ?* La base est copiée dans `/var/backups/nial-infra/` (les 7 dernières sont gardées) **avant** de toucher à quoi que ce soit : c'est ce qui permet le retour arrière.
 - *Pourquoi il peut refuser ?* Si tu as modifié un fichier du dépôt à la main, ou si l'historique distant a été réécrit, il s'arrête sans rien changer.
-- Journal des mises à jour automatiques : `/var/log/infra-tech-update.log`. Pour arrêter : `sudo ./scripts/update.sh --no-auto`.
+- Journal des mises à jour automatiques : `/var/log/nial-infra-update.log`. Pour arrêter : `sudo ./scripts/update.sh --no-auto`.
 - Une mise à jour automatique redémarre le site quelques minutes : choisis une heure creuse. Elle installe tout ce qui est poussé sur la branche `server` ; si tu préfères relire avant, utilise seulement `--check` ou lance-la à la main.
 
 Les étapes manuelles ci-dessous restent utiles pour comprendre, ou si le script échoue.
@@ -22,7 +22,7 @@ Les étapes manuelles ci-dessous restent utiles pour comprendre, ou si le script
 
 Ce tuto explique **comment** mettre à jour, et surtout **pourquoi** chaque étape existe. Compte 5 minutes. Il marche pour une install Docker classique et pour le LXC (c'est le même Docker dedans).
 
-> Les commandes se tapent dans le dossier où tu as installé Infra-Tech (`cd ~/Infra-Tech`), dans la console du serveur (ou du LXC).
+> Les commandes se tapent dans le dossier où tu as installé Nial-Infra (`cd ~/Nial-Infra`), dans la console du serveur (ou du LXC).
 
 ---
 
@@ -38,10 +38,10 @@ Ce tuto explique **comment** mettre à jour, et surtout **pourquoi** chaque éta
 ## Étape 1 — Sauvegarder (ne saute pas celle-là)
 
 ```bash
-cd ~/Infra-Tech
-docker compose exec -T postgres pg_dump -U netforge netforge | gzip > ~/infra-tech-avant-maj-$(date +%F).sql.gz
-cp .env ~/infra-tech-env-$(date +%F).bak
-ls -lh ~/infra-tech-avant-maj-*.sql.gz
+cd ~/Nial-Infra
+docker compose exec -T postgres sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' | gzip > ~/nial-infra-avant-maj-$(date +%F).sql.gz
+cp .env ~/nial-infra-env-$(date +%F).bak
+ls -lh ~/nial-infra-avant-maj-*.sql.gz
 ```
 
 *Pourquoi ?* La migration modifie la base. Elle est testée, mais si quelque chose tourne mal (coupure de courant pendant la mise à jour, par exemple), cette copie est ton **retour en arrière**. Vérifie que le fichier n'est pas vide (`ls -lh`). Sur Proxmox, tu peux aussi faire un **snapshot** du CT avant (Sauvegarde → *Snapshot*) : c'est encore plus rapide.
@@ -62,7 +62,7 @@ nano .env
 ```
 Ajoute à la fin (avec **ton** adresse) :
 ```
-PUBLIC_URL=https://infra-tech.tondomaine.fr
+PUBLIC_URL=https://nial-infra.tondomaine.fr
 ```
 *Pourquoi ?* Les liens des e-mails d'invitation et de mot de passe oublié sont construits avec cette adresse, **jamais** avec l'adresse de la requête reçue (sinon un tiers pourrait faire envoyer des liens vers son propre site). Tu peux aussi la régler plus tard dans **Administration**, sans toucher au fichier. Enregistre : `Ctrl+O`, `Entrée`, `Ctrl+X`.
 
@@ -75,7 +75,7 @@ docker compose logs -f server
 Attends de voir :
 ```
 Migrations applied: 002_accounts_racks_media
-Infra-Tech API listening on :5000
+Nial-Infra API listening on :5000
 ```
 puis `Ctrl+C` (ça ne coupe pas le serveur, ça quitte seulement l'affichage des logs).
 
@@ -125,8 +125,8 @@ Si la mise à jour échoue et que tu veux retrouver l'état d'avant :
 docker compose down
 git checkout <ancien-commit>          # noté avant le git pull : git log --oneline -1
 docker compose up -d postgres
-docker compose exec -T postgres psql -U netforge -c "DROP DATABASE netforge;" -c "CREATE DATABASE netforge;" postgres
-gunzip -c ~/infra-tech-avant-maj-AAAA-MM-JJ.sql.gz | docker compose exec -T postgres psql -U netforge netforge
+docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d postgres -c "DROP DATABASE \"$POSTGRES_DB\";" -c "CREATE DATABASE \"$POSTGRES_DB\";"'
+gunzip -c ~/nial-infra-avant-maj-AAAA-MM-JJ.sql.gz | docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" "$POSTGRES_DB"'
 docker compose up -d --build
 ```
 *Pourquoi recréer la base ?* La sauvegarde contient les tables telles qu'elles étaient **avant** la migration : on repart d'une base vide pour qu'elle soit restaurée proprement. Pense à noter le commit avant le `git pull` (`git log --oneline -1`).
