@@ -1,5 +1,5 @@
 {
-  "name": "@infra-tech/web",
+  "name": "@nial-infra/web",
   "version": "1.1.0",
   "private": true,
   "type": "module",
@@ -12,7 +12,7 @@
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.1.0",
     "@fontsource/ibm-plex-sans": "^5.1.0",
-    "@infra-tech/shared": "*",
+    "@nial-infra/shared": "*",
     "html-to-image": "^1.11.11",
     "i18next": "^23.16.4",
     "i18next-browser-languagedetector": "^8.0.0",

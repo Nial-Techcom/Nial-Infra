@@ -1,8 +1,8 @@
 {
-  "name": "infra-tech",
+  "name": "nial-infra",
   "private": true,
   "version": "1.1.0",
-  "description": "Infra-Tech - Infrastructure Topology Designer (server, web, desktop, mobile)",
+  "description": "Nial-Infra - Infrastructure Topology Designer (server, web, desktop, mobile)",
   "workspaces": [
     "packages/*",
     "apps/server",
@@ -11,12 +11,12 @@
     "apps/mobile"
   ],
   "scripts": {
-    "build:shared": "npm run build -w @infra-tech/shared",
-    "dev:server": "npm run dev -w @infra-tech/server",
-    "dev:web": "npm run dev -w @infra-tech/web",
-    "dev:desktop": "npm run dev -w @infra-tech/desktop",
-    "build": "npm run build -w @infra-tech/shared && npm run build -w @infra-tech/server && npm run build -w @infra-tech/web && npm run build -w @infra-tech/desktop",
-    "test": "npm run test -w @infra-tech/shared && npm run test -w @infra-tech/server",
+    "build:shared": "npm run build -w @nial-infra/shared",
+    "dev:server": "npm run dev -w @nial-infra/server",
+    "dev:web": "npm run dev -w @nial-infra/web",
+    "dev:desktop": "npm run dev -w @nial-infra/desktop",
+    "build": "npm run build -w @nial-infra/shared && npm run build -w @nial-infra/server && npm run build -w @nial-infra/web && npm run build -w @nial-infra/desktop",
+    "test": "npm run test -w @nial-infra/shared && npm run test -w @nial-infra/server",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "seed:demo": "node scripts/seed-demo.mjs"
   },

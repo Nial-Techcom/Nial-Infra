@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Infra-Tech — mise à jour automatique du serveur.
+# Nial-Infra — mise à jour automatique du serveur.
 #
 #   ./scripts/update.sh              met à jour si une nouvelle version existe
 #   ./scripts/update.sh --check      dit seulement s'il y a une mise à jour (ne touche à rien)
@@ -14,11 +14,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-BACKUP_DIR="${BACKUP_DIR:-/var/backups/infra-tech}"   # sauvegardes avant mise à jour
+BACKUP_DIR="${BACKUP_DIR:-/var/backups/nial-infra}"   # sauvegardes avant mise à jour
 KEEP="${KEEP_BACKUPS:-7}"                           # nombre de sauvegardes conservées
 WAIT_SECONDS="${WAIT_SECONDS:-240}"                 # délai max pour que le serveur redémarre
-LOG_FILE="${LOG_FILE:-/var/log/infra-tech-update.log}"
-CRON_FILE=/etc/cron.d/infra-tech-update
+LOG_FILE="${LOG_FILE:-/var/log/nial-infra-update.log}"
+CRON_FILE=/etc/cron.d/nial-infra-update
 
 MODE=update
 case "${1:-}" in
@@ -62,11 +62,11 @@ fi
 # --- vérifications --------------------------------------------------------
 command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1 || die "Docker Compose introuvable."
 command -v git >/dev/null 2>&1 || die "git introuvable."
-[ -f .env ] || die ".env introuvable dans $ROOT (Infra-Tech est-il installé ici ?)."
+[ -f .env ] || die ".env introuvable dans $ROOT (Nial-Infra est-il installé ici ?)."
 [ -d .git ] || die "$ROOT n'est pas un dépôt git."
 
 # un seul exemplaire à la fois (cron + lancement manuel)
-LOCK_FILE="${LOCK_FILE:-/var/lock/infra-tech-update.lock}"
+LOCK_FILE="${LOCK_FILE:-/var/lock/nial-infra-update.lock}"
 [ -w "$(dirname "$LOCK_FILE")" ] || LOCK_FILE="$BACKUP_DIR/.update.lock"
 mkdir -p "$(dirname "$LOCK_FILE")"
 [ ! -L "$LOCK_FILE" ] || die "$LOCK_FILE est un lien symbolique : refusé."
@@ -113,16 +113,23 @@ log "Mise à jour ${OLD:0:7} -> ${NEW:0:7} (branche $BRANCH)"
 umask 077
 mkdir -p "$BACKUP_DIR"; chmod 700 "$BACKUP_DIR"
 STAMP="$(date +%F_%H%M%S)"
-DUMP="$BACKUP_DIR/infra-tech-$STAMP.sql.gz"
+DUMP="$BACKUP_DIR/nial-infra-$STAMP.sql.gz"
 log "1/4 Sauvegarde de la base -> $DUMP"
 docker compose up -d postgres >/dev/null
-docker compose exec -T postgres pg_dump -U netforge netforge | gzip > "$DUMP.part"
+# Serveur installé avec d'anciens noms de base/utilisateur : on les fige dans .env pour qu'ils ne changent jamais.
+for var in POSTGRES_USER POSTGRES_DB; do
+  if ! grep -q "^${var}=" .env; then
+    val="$(docker compose exec -T postgres printenv "$var" 2>/dev/null | tr -d '\r' || true)"
+    [[ "$val" =~ ^[A-Za-z0-9_]+$ ]] && printf '\n%s=%s\n' "$var" "$val" >> .env
+  fi
+done
+docker compose exec -T postgres sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' | gzip > "$DUMP.part"
 [ "$(stat -c %s "$DUMP.part")" -gt 200 ] || { rm -f "$DUMP.part"; die "Sauvegarde vide : mise à jour annulée."; }
 gzip -t "$DUMP.part" || { rm -f "$DUMP.part"; die "Sauvegarde corrompue : mise à jour annulée."; }
 mv "$DUMP.part" "$DUMP"
 cp .env "$BACKUP_DIR/env-$STAMP.bak"
 # ne garde que les N plus récentes
-ls -1t "$BACKUP_DIR"/infra-tech-*.sql.gz 2>/dev/null | tail -n +"$((KEEP + 1))" | xargs -r rm -f
+ls -1t "$BACKUP_DIR"/nial-infra-*.sql.gz 2>/dev/null | tail -n +"$((KEEP + 1))" | xargs -r rm -f
 ls -1t "$BACKUP_DIR"/env-*.bak 2>/dev/null | tail -n +"$((KEEP + 1))" | xargs -r rm -f
 
 wait_healthy() {
@@ -141,7 +148,7 @@ git merge --ff-only -q "origin/$BRANCH" 2>/dev/null || git reset -q --hard "orig
 # --- 3. reconstruction ----------------------------------------------------
 log "3/4 Reconstruction et redémarrage (quelques minutes)"
 if docker compose up -d --build >/dev/null 2>&1 && wait_healthy; then
-  log "4/4 Infra-Tech répond : mise à jour réussie (${NEW:0:7})."
+  log "4/4 Nial-Infra répond : mise à jour réussie (${NEW:0:7})."
   docker image prune -f >/dev/null 2>&1 || true
   exit 0
 fi
@@ -153,9 +160,8 @@ git reset -q --hard "$OLD"
 docker compose down >/dev/null 2>&1 || true
 docker compose up -d postgres >/dev/null
 sleep 5
-if ! { docker compose exec -T postgres psql -U netforge -d postgres -q \
-         -c "DROP DATABASE IF EXISTS netforge;" -c "CREATE DATABASE netforge;" >/dev/null \
-       && gunzip -c "$DUMP" | docker compose exec -T postgres psql -U netforge -d netforge -q >/dev/null; }; then
+if ! { docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d postgres -q -c "DROP DATABASE IF EXISTS \"$POSTGRES_DB\";" -c "CREATE DATABASE \"$POSTGRES_DB\";"' >/dev/null \
+       && gunzip -c "$DUMP" | docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -q' >/dev/null; }; then
   log "La restauration de la base a échoué. Sauvegarde intacte : $DUMP — suis « Revenir en arrière » de docs/UPDATE.md."
   exit 1
 fi

@@ -1,4 +1,4 @@
-import { createApi, ApiError } from '@infra-tech/shared';
+import { createApi, ApiError } from '@nial-infra/shared';
 import { apiBase } from './platform';
 import { useAuth } from '../store/auth';
 

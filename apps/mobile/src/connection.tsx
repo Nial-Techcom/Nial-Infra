@@ -5,7 +5,7 @@ import { api, useSession, useT, useTopology } from './store';
 import { useTheme } from './theme';
 import { Button } from './ui';
 
-/** Infra-Tech has no offline mode: while the server does not answer, the app is blocked (nothing is stored on the phone). */
+/** Nial-Infra has no offline mode: while the server does not answer, the app is blocked (nothing is stored on the phone). */
 interface ConnectionState { online: boolean; checking: boolean; check(): Promise<boolean> }
 
 const FAILS_BEFORE_BLOCK = 2;

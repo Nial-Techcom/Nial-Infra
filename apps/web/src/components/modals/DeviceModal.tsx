@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DEVICE_ROLES, DEVICE_TYPES, MGMT_PROTOCOLS, isValidVlan, parseIpCidr, type DeviceRole, type DeviceType, type MgmtProtocol } from '@infra-tech/shared';
+import { DEVICE_ROLES, DEVICE_TYPES, MGMT_PROTOCOLS, isValidVlan, parseIpCidr, type DeviceRole, type DeviceType, type MgmtProtocol } from '@nial-infra/shared';
 import { api, errorText } from '../../lib/api';
 import { useCanEdit } from '../../store/auth';
 import { useTopology } from '../../store/topology';
