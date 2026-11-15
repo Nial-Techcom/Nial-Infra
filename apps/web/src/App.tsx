@@ -8,22 +8,32 @@ import { ModalHost } from './components/modals/ModalHost';
 import { AlertsPanel } from './components/panels/AlertsPanel';
 import { Sidebar } from './components/sidebar/Sidebar';
 import { ConnectionGate } from './components/ConnectionGate';
+import { LicenseGate } from './components/LicenseGate';
 import { ConfirmHost, ToastHost } from './components/ui';
 import { api } from './lib/api';
 import { desktop } from './lib/platform';
 import { exportCsv, exportPdf, exportShmnlt, importShmnlt } from './lib/exports';
 import { useAuth } from './store/auth';
 import { startConnectionWatch } from './store/connection';
+import { startLicenseWatch } from './store/license';
+import { useLicense } from './store/license';
 import { useTopology } from './store/topology';
+import { useTranslation } from 'react-i18next';
 import { useUi } from './store/ui';
 
 function Workspace() {
   const alertsOpen = useUi((s) => s.alertsOpen);
   const sidebarOpen = useUi((s) => s.sidebarOpen);
   const view = useUi((s) => s.view);
+  const { t } = useTranslation();
+  const lic = useLicense((s) => s.summary);
+  const admin = useAuth((s) => s.user?.role === 'admin');
   return (
     <div className="flex h-full flex-col">
       <Header />
+      {admin && lic?.state === 'trial' && (lic.daysLeft ?? 99) <= 7 && (
+        <button className="bg-amber-500/15 px-3 py-1 text-center text-xs text-amber-200" onClick={() => useUi.getState().open({ kind: 'admin' })}>{t('license.trial', { n: lic.daysLeft ?? 0 })} — {t('license.request')}</button>
+      )}
       <div className="relative flex min-h-0 flex-1">
         {/* On narrow screens the sidebar slides over the canvas instead of squeezing it. */}
         <div className={`${sidebarOpen ? 'block' : 'hidden'} absolute inset-y-0 left-0 z-30 lg:static lg:block`}>
@@ -50,6 +60,7 @@ export function App() {
 
   // No offline mode: keep checking that the server answers (blocks the UI while it does not).
   useEffect(() => startConnectionWatch(), []);
+  useEffect(() => (token ? startLicenseWatch() : undefined), [token]);
 
   // Validate the stored session once, then load the clients.
   useEffect(() => {
@@ -95,6 +106,7 @@ export function App() {
       ) : (
         <AuthScreens />
       )}
+      <LicenseGate />
       <ConnectionGate />
       <ConfirmHost />
       <ToastHost />

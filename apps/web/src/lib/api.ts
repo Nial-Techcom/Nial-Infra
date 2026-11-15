@@ -8,6 +8,8 @@ export const api = createApi({
   },
   getToken: () => useAuth.getState().token,
   onUnauthorized: () => useAuth.getState().logout(),
+  // 402 = trial over / no valid licence: the licence store listens and shows the blocking screen.
+  onLicenseRequired: () => window.dispatchEvent(new Event('nf-license-required')),
 });
 
 /** Human message for an error, translated for the common cases. */

@@ -4,9 +4,10 @@ import { DEVICE_ROLES, DEVICE_TYPES, type AdminSettings, type DeviceRole, type D
 import { api, errorText } from '../../lib/api';
 import { useTopology } from '../../store/topology';
 import { useUi } from '../../store/ui';
+import { LicensePanel } from '../LicensePanel';
 import { Field, Modal, Tabs } from '../ui';
 
-type Tab = 'general' | 'catalog';
+type Tab = 'general' | 'catalog' | 'license';
 const toastErr = (e: unknown, t: (k: string) => string) => useUi.getState().toast(errorText(e, t), 'error');
 
 function General() {
@@ -127,8 +128,8 @@ export function AdminModal() {
   const [tab, setTab] = useState<Tab>('general');
   return (
     <Modal title={t('admin.title')} onClose={close} width="max-w-2xl">
-      <Tabs tabs={[{ id: 'general', label: `${t('admin.general')} · SMTP` }, { id: 'catalog', label: t('admin.library') }]} value={tab} onChange={setTab} />
-      {tab === 'general' ? <General /> : <Catalog />}
+      <Tabs tabs={[{ id: 'general', label: `${t('admin.general')} · SMTP` }, { id: 'catalog', label: t('admin.library') }, { id: 'license', label: t('license.tab') }]} value={tab} onChange={setTab} />
+      {tab === 'general' ? <General /> : tab === 'catalog' ? <Catalog /> : <LicensePanel />}
     </Modal>
   );
 }

@@ -54,6 +54,10 @@ Audit complet : dépendances (`npm audit`), revue du code serveur / web / deskto
 | Mise à jour automatique = confiance dans la branche `server` du dépôt | C'est le principe de l'auto-update ; protège ta branche (Settings → Branches) et active l'authentification 2FA GitHub | `update.sh --check` pour relire avant d'appliquer |
 | `http://` autorisé sur réseau local | Nécessaire pour un serveur maison sans HTTPS | Alerte pour toute adresse publique ; HTTPS conseillé (INSTALLATION.md §7) |
 
+## Licences
+
+Les licences sont signées Ed25519 (clé publique seule dans ce dépôt, clé privée uniquement sur le serveur de licences privé). Les réponses de révocation sont signées avec nonce. Voir `docs/LICENSING.md`.
+
 ## Check-list d'un serveur sain
 
 1. HTTPS devant Nial-Infra (INSTALLATION.md §7) et `PUBLIC_URL` en `https://…`.
