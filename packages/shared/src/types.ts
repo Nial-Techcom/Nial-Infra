@@ -193,3 +193,22 @@ export interface Topology {
   devices: Device[];
   links: Link[];
 }
+
+export type LicenseState = 'trial' | 'licensed' | 'blocked';
+export type LicenseBlockReason = 'trial_expired' | 'license_expired' | 'revoked' | 'unverified' | 'invalid';
+
+/** Public, minimal licence state (anyone can read it, so every app can show the "licence required" screen). */
+export interface LicenseSummary {
+  state: LicenseState;
+  reason?: LicenseBlockReason;
+  daysLeft: number | null;
+  contact: string;
+}
+
+/** Full licence state, administrators only. */
+export interface LicenseStatus extends LicenseSummary {
+  installationId: string;
+  trialEndsAt: string;
+  license: { id: string; customer: string; email: string; expiresAt: string | null } | null;
+  verifiedAt: string | null;
+}

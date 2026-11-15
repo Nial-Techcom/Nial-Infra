@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, BackHandler, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { api, useSession, useTopology } from './src/store';
+import { LicenseGate } from './src/license';
 import { ConnectionGate, useConnectionWatch } from './src/connection';
 import { useTheme } from './src/theme';
 import { Clients } from './src/screens/Clients';
@@ -46,6 +47,7 @@ export default function App() {
             {route.name === 'link' && <LinkScreen key={route.id ?? 'new'} id={route.id} onBack={pop} />}
           </>
         )}
+        <LicenseGate />
         <ConnectionGate />
       </SafeAreaView>
     </SafeAreaProvider>

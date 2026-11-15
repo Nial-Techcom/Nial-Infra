@@ -126,6 +126,17 @@ export const fr: Translation = {
     full: 'Plus de place dans cette baie.', overlap: 'Cette position est déjà prise.', deleteRack: 'Supprimer la baie', renameRack: 'Renommer la baie', connections: 'Câbles de cet équipement',
     dragHint: 'Glisse un équipement de la liste dans une baie, ou clique sur un emplacement libre.', cablesOut: 'Câbles qui sortent de cette baie', none: 'Aucun câble ne sort de cette baie.',
   },
+  license: {
+    tab: 'Licence', title: 'Licence', trial: 'Essai : {{n}} jour(s) restant(s)', licensed: 'Sous licence', blocked: 'Licence requise',
+    blockedTitle: 'Une licence est requise', blockedBody: 'Ce serveur Nial-Infra n’a pas de licence valide. Tes données sont intactes ; elles redeviennent accessibles dès qu’une licence est installée.',
+    adminOnlyBody: 'Demande à un administrateur du serveur de demander ou d’installer la licence.',
+    reason_trial_expired: 'La période d’essai de 14 jours est terminée.', reason_license_expired: 'La licence a expiré.', reason_revoked: 'La licence a été révoquée.',
+    reason_unverified: 'La licence n’a pas pu être vérifiée en ligne depuis trop longtemps. Vérifie que le serveur peut joindre le serveur de licences.', reason_invalid: 'La licence installée n’est pas valide pour cette installation.',
+    installationId: 'Identifiant d’installation', request: 'Demander une licence par e-mail', requestHelp: 'Ouvre un e-mail vers {{contact}} avec cet identifiant d’installation. Nial-Tech te renvoie un texte de licence à coller ci-dessous.',
+    mailSubject: 'Demande de licence Nial-Infra', mailBody: 'Bonjour,\n\nJe souhaite demander une licence pour Nial-Infra.\n\nIdentifiant d’installation : {{id}}\nSociété / nom :\nNombre d’utilisateurs :\n\nMerci.',
+    paste: 'Texte de la licence', pastePlaceholder: 'NIAL1.…', import: 'Installer la licence', installed: 'Licence installée', recheck: 'Vérifier maintenant',
+    customer: 'Licence au nom de', expires: 'Expire le', never: 'Jamais', lastCheck: 'Dernière vérification en ligne', trialEnds: 'Fin de l’essai', daysLeftChecks: 'Vérification en ligne requise sous {{n}} jour(s)', copied: 'Copié',
+  },
   conn: {
     title: 'Serveur injoignable', body: 'Nial-Infra a besoin d’une connexion à ton serveur et ne fonctionne pas hors ligne. Rien n’est stocké sur cet appareil ; ça reprend tout seul dès que le serveur répond.',
     server: 'Serveur', retry: 'Réessayer maintenant', changeServer: 'Changer de serveur', checking: 'Tentative de reconnexion…', signOut: 'Se déconnecter',

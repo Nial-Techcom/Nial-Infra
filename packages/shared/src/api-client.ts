@@ -1,5 +1,5 @@
 import type {
-  AdminSettings, Alert, AuthConfig, Client, Device, Invitation, InvitePreview, Link, LibraryItem, Member, MemberRole, Rack, Revision, Role, Site, User, Vendor,
+  AdminSettings, Alert, AuthConfig, Client, Device, Invitation, InvitePreview, LicenseStatus, LicenseSummary, Link, LibraryItem, Member, MemberRole, Rack, Revision, Role, Site, User, Vendor,
 } from './types';
 import type { ShmnltFile } from './shmnlt';
 
@@ -15,6 +15,8 @@ export interface ApiOptions {
   baseUrl: string;
   getToken: () => string | null | undefined;
   onUnauthorized?: () => void;
+  /** Called when the server answers 402: the trial is over and no valid licence is installed. */
+  onLicenseRequired?: () => void;
   fetchImpl?: typeof fetch;
 }
 
@@ -60,6 +62,7 @@ export function createApi(opts: ApiOptions) {
         /* non JSON body */
       }
       if (res.status === 401 && token) opts.onUnauthorized?.();
+      if (res.status === 402) opts.onLicenseRequired?.();
       throw new ApiError(res.status, message, details);
     }
     return res;
@@ -81,6 +84,12 @@ export function createApi(opts: ApiOptions) {
     invitations: {
       preview: (token: string) => json<InvitePreview>('GET', '/invitations/preview', undefined, { token }),
       accept: (token: string) => json<{ clientId: string }>('POST', '/invitations/accept', { token }),
+    },
+    license: {
+      status: () => json<LicenseSummary>('GET', '/license/status'),
+      get: () => json<{ license: LicenseStatus }>('GET', '/license'),
+      import: (license: string) => json<{ license: LicenseStatus }>('POST', '/license', { license }),
+      check: () => json<{ license: LicenseStatus }>('POST', '/license/check'),
     },
     admin: {
       settings: () => json<AdminSettings>('GET', '/admin/settings'),
