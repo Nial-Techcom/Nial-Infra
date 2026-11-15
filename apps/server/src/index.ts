@@ -3,6 +3,7 @@ import { createApp } from './app';
 import { ensureAdmin } from './bootstrap';
 import { loadConfig } from './config';
 import { createPool, migrate } from './db';
+import { LicenseService } from './license/service';
 
 async function main() {
   const cfg = loadConfig();
@@ -10,8 +11,11 @@ async function main() {
   const applied = await migrate(pool);
   if (applied.length) console.log('Migrations applied:', applied.join(', '));
   await ensureAdmin(pool, cfg);
-  const server = createApp(pool, cfg).listen(cfg.port, () => console.log(`Nial-Infra API listening on :${cfg.port}`));
-  const stop = () => server.close(() => pool.end().then(() => process.exit(0)));
+  const license = new LicenseService(pool, cfg);
+  await license.init();
+  license.start();
+  const server = createApp(pool, cfg, license).listen(cfg.port, () => console.log(`Nial-Infra API listening on :${cfg.port}`));
+  const stop = () => { license.stop(); server.close(() => pool.end().then(() => process.exit(0))); };
   process.on('SIGTERM', stop);
   process.on('SIGINT', stop);
 }
