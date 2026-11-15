@@ -33,6 +33,7 @@ services:
       TRUST_PROXY: "1"
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:${WEB_PORT:-3000}}
       PUBLIC_URL: ${PUBLIC_URL:-}
+      LICENSE_SERVER_URL: ${LICENSE_SERVER_URL:-https://license.nial-tech.com}
     depends_on:
       postgres:
         condition: service_healthy

@@ -15,6 +15,7 @@ import { baseUrl, inviteMail, resetMail, sendMail, smtpReady } from '../mailer';
 import type { Config } from '../config';
 import { adminOnly, authenticate, signToken } from '../auth';
 import { tx } from '../db';
+import type { LicenseService } from '../license/service';
 import { LoginThrottle } from '../throttle';
 import { ah, HttpError } from '../errors';
 import { writeCablingPdf } from '../pdf';
@@ -25,7 +26,7 @@ const param = (req: Request, name: string) => String(req.params[name]);
 const safeFile = (s: string) => s.replace(/[^A-Za-z0-9_.-]+/g, '_').slice(0, 60) || 'nial-infra';
 const q = (req: Request, name: string) => (req.query[name] ? String(req.query[name]) : undefined);
 
-export function buildRouter(pool: Pool, cfg: Config): Router {
+export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): Router {
   const r = Router();
   const auth = authenticate(pool, cfg);
   const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: cfg.loginRateLimit, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many attempts, try again later' } });
@@ -33,6 +34,17 @@ export function buildRouter(pool: Pool, cfg: Config): Router {
   const accountThrottle = new LoginThrottle(cfg.accountLockLimit);
 
   r.get('/health', ah(async (_req, res) => { await pool.query('SELECT 1'); res.json({ status: 'ok' }); }));
+
+  /* -------------------------------- licence -------------------------------- */
+  // Public, minimal: lets every app show the "licence required" screen. Details are admin-only.
+  r.get('/license/status', ah(async (_req, res) => { const st = await license.status(); res.json({ state: st.state, reason: st.reason, daysLeft: st.daysLeft, contact: st.contact }); }));
+  r.get('/license', auth, adminOnly, ah(async (_req, res) => { res.json({ license: await license.status() }); }));
+  r.post('/license', auth, adminOnly, ah(async (req, res) => {
+    const text = typeof req.body?.license === 'string' ? req.body.license : '';
+    if (!text || text.length > 4000) throw new HttpError(400, 'Licence text is required');
+    res.json({ license: await license.importToken(text) });
+  }));
+  r.post('/license/check', auth, adminOnly, ah(async (_req, res) => { await license.checkOnline(); res.json({ license: await license.status() }); }));
 
   /* ---------------------------------- auth ---------------------------------- */
   r.post('/auth/login', loginLimiter, ah(async (req, res) => {

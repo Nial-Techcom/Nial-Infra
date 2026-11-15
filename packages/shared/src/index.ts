@@ -10,3 +10,4 @@ export * from './csv';
 export * from './shmnlt';
 export * from './api-client';
 export * from './i18n';
+export * from './license';
