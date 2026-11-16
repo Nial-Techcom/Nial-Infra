@@ -1,3 +1,5 @@
+import { LICENSE_PUBLIC_KEY } from './license/core';
+
 export interface Config {
   nodeEnv: string;
   port: number;
@@ -16,6 +18,13 @@ export interface Config {
   publicUrl: string;
   adminEmail?: string;
   adminPassword?: string;
+  /** Licence server used for revocation checks. Empty = no online check (signed file only). */
+  licenseServerUrl: string;
+  /** Ed25519 public key (base64 DER). Overridable outside production only (tests). */
+  licensePublicKey: string;
+  trialDays: number;
+  /** days the server keeps working when the licence server cannot be reached */
+  licenseGraceDays: number;
 }
 
 // Sample values shipped in .env.example / old docs: public, so never acceptable as real secrets.
@@ -65,5 +74,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     trustProxy: env.TRUST_PROXY === '1' || env.TRUST_PROXY === 'true',
     adminEmail: env.ADMIN_EMAIL || undefined,
     adminPassword: env.ADMIN_PASSWORD || undefined,
+    licenseServerUrl: (env.LICENSE_SERVER_URL ?? 'https://lcsinfra.nial-tech.com').trim().replace(/\/+$/, ''),
+    // Trial length and key can only be changed outside production, so a customer cannot shorten the checks via .env.
+    licensePublicKey: (!prod && env.LICENSE_PUBLIC_KEY) || LICENSE_PUBLIC_KEY,
+    trialDays: (!prod && Number(env.LICENSE_TRIAL_DAYS)) || 14,
+    licenseGraceDays: 30,
   };
 }

@@ -27,6 +27,8 @@ Une seule API, trois clients qui partagent le même moteur de validation, les m�
 
 🖥️ **Installer le serveur sur un LXC Proxmox neuf : [docs/INSTALL-LXC.md](docs/INSTALL-LXC.md)** (de A à Z, avec script) · version générique : [INSTALLATION.md](INSTALLATION.md)
 
+🔑 **Licence** : chaque serveur a 14 jours d'essai, puis une licence (demande à contact@nial-tech.com depuis Administration → Licence) : [docs/LICENSING.md](docs/LICENSING.md)
+
 📘 **Nouveau ici ? Lis le [tutoriel pas à pas](docs/TUTORIAL.md)** (installation, démo, VLANs, alertes, desktop, mobile).
 
 ## Fonctionnalités

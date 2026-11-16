@@ -124,6 +124,17 @@ export const en = {
     full: 'No room left in this rack.', overlap: 'That position is taken.', deleteRack: 'Delete rack', renameRack: 'Rename rack', connections: 'Cables of this device',
     dragHint: 'Drag a device from the list into a rack, or click a free slot.', cablesOut: 'Cables leaving this rack', none: 'No cable leaves this rack.',
   },
+  license: {
+    tab: 'Licence', title: 'Licence', trial: 'Trial: {{n}} day(s) left', licensed: 'Licensed', blocked: 'Licence required',
+    blockedTitle: 'A licence is required', blockedBody: 'This Nial-Infra server has no valid licence. Your data is safe and untouched; it becomes available again as soon as a licence is installed.',
+    adminOnlyBody: 'Ask a server administrator to request or install the licence.',
+    reason_trial_expired: 'The 14-day trial has ended.', reason_license_expired: 'The licence has expired.', reason_revoked: 'The licence has been revoked.',
+    reason_unverified: 'The licence could not be verified online for too long. Check that the server can reach the licence server.', reason_invalid: 'The installed licence is not valid for this installation.',
+    installationId: 'Installation ID', request: 'Request a licence by email', requestHelp: 'Opens an email to {{contact}} with this installation ID. Nial-Tech sends back a licence text to paste below.',
+    mailSubject: 'Nial-Infra licence request', mailBody: 'Hello,\n\nI would like to request a licence for Nial-Infra.\n\nInstallation ID: {{id}}\nCompany / name:\nNumber of users:\n\nThank you.',
+    paste: 'Licence text', pastePlaceholder: 'NIAL1.…', import: 'Install the licence', installed: 'Licence installed', recheck: 'Check now',
+    customer: 'Licensed to', expires: 'Expires', never: 'Never', lastCheck: 'Last online check', trialEnds: 'Trial ends', daysLeftChecks: 'Online check required within {{n}} day(s)', copied: 'Copied',
+  },
   conn: {
     title: 'Server unreachable', body: 'Nial-Infra needs a connection to your server and does not work offline. Nothing is stored on this device; it will resume by itself as soon as the server answers.',
     server: 'Server', retry: 'Retry now', changeServer: 'Change server', checking: 'Trying to reconnect…', signOut: 'Sign out',

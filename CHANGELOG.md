@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0 — 2026-11-16 — licences
+
+- **Licence obligatoire** : chaque serveur démarre avec **14 jours d'essai**, puis l'API répond `402` tant qu'aucune licence valide n'est installée (connexion, `/health` et écrans de licence restent accessibles ; **aucune donnée n'est supprimée**).
+- Licence = texte signé **Ed25519** lié à l'identifiant d'installation ; vérification hors ligne par la clé publique embarquée + **vérification en ligne** auprès du serveur de licences (révocation possible, tolérance de 30 jours si ce serveur est injoignable).
+- Administration → onglet **Licence** (web, desktop) et écran de blocage (web, desktop, mobile) : demande par e-mail à contact@nial-tech.com avec l'identifiant d'installation, installation de la licence reçue.
+- Le serveur de licences est un **projet séparé et privé** (`Nial-Infra-Licensing`). Voir `docs/LICENSING.md`.
+
 ## 1.1.0 — 2026-11-10 — version de sécurité
 
 ### Ajouts de dernière minute

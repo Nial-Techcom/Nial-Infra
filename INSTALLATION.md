@@ -119,6 +119,10 @@ Si tu as perdu l'accès admin :
 docker compose exec server node apps/server/dist/cli-create-admin.js ton@mail.fr "NouveauMotDePasse"
 ```
 
+## 5 bis. Licence (obligatoire après 14 jours)
+
+Le serveur fonctionne 14 jours, puis demande une licence : **Administration → Licence → Demander une licence par e-mail** (envoie l'identifiant d'installation à contact@nial-tech.com), puis colle le texte reçu. Détails : [docs/LICENSING.md](docs/LICENSING.md). Le serveur doit pouvoir joindre `https://lcsinfra.nial-tech.com` en HTTPS.
+
 ## 6. (Optionnel) Charger le réseau de démo
 
 Pour voir quelque chose tout de suite, depuis une machine avec Node 20 :
