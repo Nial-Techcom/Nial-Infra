@@ -74,7 +74,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     trustProxy: env.TRUST_PROXY === '1' || env.TRUST_PROXY === 'true',
     adminEmail: env.ADMIN_EMAIL || undefined,
     adminPassword: env.ADMIN_PASSWORD || undefined,
-    licenseServerUrl: (env.LICENSE_SERVER_URL ?? 'https://license.nial-tech.com').trim().replace(/\/+$/, ''),
+    licenseServerUrl: (env.LICENSE_SERVER_URL ?? 'https://lcsinfra.nial-tech.com').trim().replace(/\/+$/, ''),
     // Trial length and key can only be changed outside production, so a customer cannot shorten the checks via .env.
     licensePublicKey: (!prod && env.LICENSE_PUBLIC_KEY) || LICENSE_PUBLIC_KEY,
     trialDays: (!prod && Number(env.LICENSE_TRIAL_DAYS)) || 14,
