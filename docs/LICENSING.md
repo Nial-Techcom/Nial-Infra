@@ -11,7 +11,7 @@ Toute installation du serveur Nial-Infra demande une licence délivrée par Nial
 
 Après les 14 jours sans licence, l'API est bloquée (code 402) : toutes les apps affichent « Une licence est requise » et seul un administrateur peut installer la licence. **Les données ne sont jamais supprimées** et reviennent dès l'installation.
 
-Le serveur contacte `LICENSE_SERVER_URL` (par défaut `https://license.nial-tech.com`, variable du `.env`) toutes les 6 h pour confirmer que la licence n'est pas révoquée. S'il ne peut pas le joindre, il continue de fonctionner **30 jours**, puis se bloque jusqu'à la prochaine confirmation (sortie HTTPS nécessaire vers ce domaine).
+Le serveur contacte `LICENSE_SERVER_URL` (par défaut `https://lcsinfra.nial-tech.com`, variable du `.env`) toutes les 6 h pour confirmer que la licence n'est pas révoquée. S'il ne peut pas le joindre, il continue de fonctionner **30 jours**, puis se bloque jusqu'à la prochaine confirmation (sortie HTTPS nécessaire vers ce domaine).
 
 Une licence est liée à **une installation** : si tu réinstalles le serveur avec une base vide, l'identifiant change et il faut en demander une nouvelle. En restaurant une sauvegarde de la base, l'identifiant est conservé.
 
