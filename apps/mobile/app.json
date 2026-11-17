@@ -19,7 +19,11 @@
     "android": {
       "package": "com.nialinfra.mobile",
       "versionCode": 3,
-      "allowBackup": false
+      "allowBackup": false,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F4F7FB"
+      }
     },
     "plugins": [
       "expo-secure-store",
@@ -32,6 +36,7 @@
           }
         }
       ]
-    ]
+    ],
+    "icon": "./assets/icon.png"
   }
 }

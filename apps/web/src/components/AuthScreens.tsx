@@ -16,7 +16,7 @@ export const clearUrlParams = () => { try { window.history.replaceState({}, '', 
 type Mode = 'login' | 'register' | 'forgot' | 'reset';
 
 const Logo = () => (
-  <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden><rect width="32" height="32" rx="6" fill="rgb(var(--bg))" stroke="rgb(var(--line))" /><path d="M6 22h6v-6h8v-6h6" stroke="rgb(var(--trunk))" strokeWidth="3" fill="none" strokeLinejoin="round" /></svg>
+  <img src={`${import.meta.env.BASE_URL}logo-mark.svg`} height={52} width={80} alt="Nial-Tech Infrastructure" className="h-[52px] w-auto rounded" draggable={false} />
 );
 
 export function Card({ children, onSubmit }: { children: React.ReactNode; onSubmit?: (e: React.FormEvent) => void }) {
