@@ -37,9 +37,13 @@ describe('auth', () => {
 });
 
 describe('RBAC', () => {
-  it('only admins create clients', async () => {
-    expect((await c.api.post(`${B}/clients`).set(c.as(c.tokens.viewer)).send({ name: 'X' })).status).toBe(403);
-    expect((await c.api.post(`${B}/clients`).set(c.as(c.tokens.tech)).send({ name: 'X' })).status).toBe(403);
+  it('every user can create their own client (they own it); admin-created clients have no owner', async () => {
+    for (const tok of [c.tokens.viewer, c.tokens.tech]) {
+      const mine = await c.api.post(`${B}/clients`).set(c.as(tok)).send({ name: 'X' });
+      expect(mine.status).toBe(201);
+      expect(mine.body.client.isOwner).toBe(true);
+      expect((await c.api.delete(`${B}/clients/${mine.body.client.id}`).set(c.as(tok))).status).toBe(200);
+    }
     const r = await c.api.post(`${B}/clients`).set(c.as(c.tokens.admin)).send({ name: 'ACME' });
     expect(r.status).toBe(201);
     clientId = r.body.client.id;
@@ -296,7 +300,7 @@ describe('accounts, invitations and password reset', () => {
     // the database only holds a hash
     expect((await c.pool.query('SELECT token_hash FROM invitations')).rows.every((x) => x.token_hash !== inviteToken)).toBe(true);
     const pv = await c.api.get(`${B}/invitations/preview?token=${inviteToken}`);
-    expect(pv.body).toEqual({ clientName: 'ACME', email: 'guest@test.io', role: 'technician' });
+    expect(pv.body).toEqual({ clientName: 'ACME', invitedByName: 'admin', email: 'guest@test.io', role: 'technician' });
     expect((await c.api.get(`${B}/invitations/preview?token=${'x'.repeat(30)}`)).status).toBe(404);
   });
 
@@ -581,11 +585,16 @@ describe('security: cross-client isolation (IDOR)', () => {
       ['export pdf', c.api.get(`${B}/export/pdf?clientId=${Bc}`).set(h)],
       ['export config', c.api.get(`${B}/export/config?clientId=${Bc}&vendor=cisco`).set(h)],
       ['sites of B', c.api.get(`${B}/sites?clientId=${Bc}`).set(h)],
+      ['PATCH client B', c.api.patch(`${B}/clients/${Bc}`).set(h).send({ name: 'pwned' })],
+      ['DELETE client B', c.api.delete(`${B}/clients/${Bc}`).set(h)],
+      ['members of B', c.api.get(`${B}/clients/${Bc}/members`).set(h)],
+      ['share B', c.api.post(`${B}/clients/${Bc}/invitations`).set(h).send({ email: 'z@test.io', role: 'technician' })],
+      ['POST site in B', c.api.post(`${B}/sites`).set(h).send({ clientId: Bc, name: 'evil' })],
     ];
     // A->B links are refused with 400 (devices of different clients), everything else is hidden (404) or forbidden (403).
     for (const [name, p] of attempts) expect([400, 403, 404], name).toContain((await p).status);
     // admin-only surfaces
-    for (const p of [c.api.get(`${B}/users`), c.api.get(`${B}/admin/settings`), c.api.get(`${B}/clients/${A}/members`), c.api.post(`${B}/clients`).send({ name: 'x' })])
+    for (const p of [c.api.get(`${B}/users`), c.api.get(`${B}/admin/settings`), c.api.get(`${B}/clients/${A}/members`), c.api.patch(`${B}/clients/${A}`).send({ name: 'x' }), c.api.post(`${B}/clients/${A}/invitations`).send({ email: 'z@test.io', role: 'viewer' })])
       expect((await p.set(h)).status).toBe(403);
     // nothing of B was altered
     const still = (await c.api.get(`${B}/clients/${Bc}/topology`).set(c.as(c.tokens.admin))).body;

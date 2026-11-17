@@ -1,10 +1,11 @@
-import { Cable, Pencil, Plus, Trash2, Users } from 'lucide-react';
+import { Cable, LogOut, Pencil, Plus, Trash2, Users } from 'lucide-react';
 import { useReactFlow } from 'reactflow';
 import { useTranslation } from 'react-i18next';
 import { DEVICE_COLORS, DEVICE_LIBRARY, DEVICE_TYPES, type DevicePreset } from '@nial-infra/shared';
 import { canvasCenter, createFromPreset } from '../../lib/devices';
 import type { LibraryItem } from '@nial-infra/shared';
-import { useCanEdit, useIsAdmin } from '../../store/auth';
+import { useAuth, useCanEdit, useIsAdmin } from '../../store/auth';
+import { api, errorText } from '../../lib/api';
 import { useTopology } from '../../store/topology';
 import { useUi } from '../../store/ui';
 
@@ -13,8 +14,15 @@ export function Sidebar() {
   const rf = useReactFlow();
   const edit = useCanEdit();
   const admin = useIsAdmin();
+  const me = useAuth((s) => s.user);
   const { clients, clientId, sites, devices, activeSiteId, library } = useTopology();
   const ui = useUi.getState;
+  // Owners (and admins) manage their client: share it, rename it, delete it, edit its sites.
+  const manage = admin || !!clients.find((c) => c.id === clientId)?.isOwner;
+  const leave = async (id: string, name: string) => {
+    try { await api.members.remove(id, me!.id); await useTopology.getState().loadClients(); useUi.getState().toast(t('members.leave')); } catch (e) { useUi.getState().toast(errorText(e, (k) => t(k)), 'error'); }
+    void name;
+  };
   let stagger = 0;
 
   const askName = (title: string, label: string, initial: string, onSubmit: (v: string) => Promise<void>) => ui().open({ kind: 'name', title, label, initial, onSubmit });
@@ -26,7 +34,7 @@ export function Sidebar() {
       <section className="border-b border-line p-3">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-sm font-semibold">{t('sidebar.clients')}</h2>
-          {admin && <button className="nf-btn nf-btn-ghost !p-1" title={t('sidebar.newClient')} aria-label={t('sidebar.newClient')} onClick={() => askName(t('sidebar.newClient'), t('sidebar.clientName'), '', (v) => useTopology.getState().createClient(v))}><Plus size={16} /></button>}
+          <button className="nf-btn nf-btn-ghost !p-1" title={t('sidebar.newClient')} aria-label={t('sidebar.newClient')} onClick={() => askName(t('sidebar.newClient'), t('sidebar.clientName'), '', (v) => useTopology.getState().createClient(v))}><Plus size={16} /></button>
         </div>
         {clients.length === 0 && <p className="text-sm text-mute">{t('sidebar.noClient')}</p>}
         <ul className="space-y-0.5">
@@ -35,8 +43,11 @@ export function Sidebar() {
             return (
               <li key={c.id}>
                 <div className={`group flex items-center rounded ${active ? 'bg-raised' : 'hover:bg-raised/60'}`}>
-                  <button className={`min-w-0 flex-1 truncate px-2 py-1.5 text-left ${active ? 'font-semibold' : ''}`} onClick={() => void useTopology.getState().selectClient(c.id)}>{c.name}</button>
-                  {admin && active && (
+                  <button className={`min-w-0 flex-1 truncate px-2 py-1.5 text-left ${active ? 'font-semibold' : ''}`} onClick={() => void useTopology.getState().selectClient(c.id)}>{c.name}{!admin && !c.isOwner && <span className="ml-1 text-[11px] font-normal text-mute" title={t('members.sharedWithMe')}>· {c.myRole === 'viewer' ? t('members.readOnlyBadge') : t('members.sharedWithMe')}</span>}</button>
+                  {!admin && !c.isOwner && active && (
+                    <button className="nf-btn nf-btn-ghost !p-1 mr-1" title={t('members.leave')} aria-label={t('members.leave')} onClick={() => ui().ask({ title: t('members.leave'), message: t('members.leaveConfirm', { name: c.name }), danger: true, confirmLabel: t('members.leave'), onConfirm: () => leave(c.id, c.name) })}><LogOut size={13} /></button>
+                  )}
+                  {(admin || c.isOwner) && active && (
                     <span className="flex pr-1">
                       <button className="nf-btn nf-btn-ghost !p-1" title={t('members.title')} aria-label={t('members.title')} onClick={() => ui().open({ kind: 'members' })}><Users size={13} /></button>
                       <button className="nf-btn nf-btn-ghost !p-1" title={t('sidebar.renameClient')} aria-label={t('sidebar.renameClient')} onClick={() => askName(t('sidebar.renameClient'), t('sidebar.clientName'), c.name, (v) => useTopology.getState().renameClient(c.id, v))}><Pencil size={13} /></button>
@@ -53,12 +64,12 @@ export function Sidebar() {
                           <button className={`min-w-0 flex-1 truncate rounded px-2 py-1 text-left text-[13px] ${activeSiteId === s.id ? 'bg-access/20 text-ink' : 'text-mute hover:text-ink'}`} onClick={() => useTopology.getState().setActiveSite(activeSiteId === s.id ? null : s.id)}>
                             {s.name} <span className="mono text-[11px]">{n}</span>
                           </button>
-                          {admin && <button className="nf-btn nf-btn-ghost nf-btn-danger !p-1 opacity-0 group-hover:opacity-100 focus:opacity-100" aria-label={t('common.delete')} onClick={() => confirmDelete(s.name, () => useTopology.getState().deleteSite(s.id))}><Trash2 size={12} /></button>}
+                          {manage && <button className="nf-btn nf-btn-ghost nf-btn-danger !p-1 opacity-0 group-hover:opacity-100 focus:opacity-100" aria-label={t('common.delete')} onClick={() => confirmDelete(s.name, () => useTopology.getState().deleteSite(s.id))}><Trash2 size={12} /></button>}
                         </li>
                       );
                     })}
                     {devices.some((d) => !d.siteId) && sites.length > 0 && <li className="px-2 py-1 text-[13px] text-mute">{t('sidebar.unassigned')} <span className="mono text-[11px]">{devices.filter((d) => !d.siteId).length}</span></li>}
-                    {admin && <li><button className="px-2 py-1 text-[13px] text-mute hover:text-ink" onClick={() => askName(t('sidebar.newSite'), t('sidebar.siteName'), '', (v) => useTopology.getState().createSite(v))}>+ {t('sidebar.newSite')}</button></li>}
+                    {manage && <li><button className="px-2 py-1 text-[13px] text-mute hover:text-ink" onClick={() => askName(t('sidebar.newSite'), t('sidebar.siteName'), '', (v) => useTopology.getState().createSite(v))}>+ {t('sidebar.newSite')}</button></li>}
                   </ul>
                 )}
               </li>
