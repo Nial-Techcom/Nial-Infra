@@ -37,3 +37,17 @@ export const clientOf = {
   async rack(db: Db, id: string) { return need(await store.racks.get(db, id), 'Rack').clientId; },
   async revision(db: Db, id: string) { return need(await store.revisions.getRaw(db, id), 'Revision').client_id as string; },
 };
+
+/**
+ * Sharing / renaming / deleting a client and managing its sites: global admins, or the client's owner.
+ * Other members (even technicians) get 403; people with no access at all get 404 so existence is not revealed.
+ */
+export async function requireManage(db: Db, req: Request, clientId: string | undefined): Promise<void> {
+  if (!clientId) throw new HttpError(400, 'clientId is required');
+  const client = await store.clients.get(db, clientId);
+  if (!client) throw new HttpError(404, 'Client not found');
+  const user = req.user!;
+  if (user.role === 'admin' || client.ownerId === user.id) return;
+  if (!(await store.members.roleOf(db, clientId, user.id))) throw new HttpError(404, 'Client not found');
+  throw new HttpError(403, 'Insufficient permissions');
+}
