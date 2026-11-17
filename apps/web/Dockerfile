@@ -12,4 +12,6 @@ RUN npm run build:shared && npm run build -w @nial-infra/web
 FROM nginx:stable-alpine
 COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html
+# nginx runs as an unprivileged user: whatever the file modes were in the build context, the site must be world-readable (else 403).
+RUN chmod -R a+rX /usr/share/nginx/html
 EXPOSE 80
