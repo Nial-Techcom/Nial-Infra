@@ -156,4 +156,14 @@ CREATE TABLE library_items (
 );
 `,
   },
+  {
+    id: '003_client_owner',
+    sql: `
+-- Every user can create their own clients and share them. NULL owner = created by an admin (managed by admins only).
+ALTER TABLE clients ADD COLUMN owner_id text REFERENCES users(id) ON DELETE SET NULL;
+-- Names only have to be unique among one owner's clients (and among admin-created ones): users must not see each other's names.
+DROP INDEX clients_name_unique;
+CREATE UNIQUE INDEX clients_name_unique ON clients (COALESCE(owner_id, ''), lower(name));
+`,
+  },
 ];

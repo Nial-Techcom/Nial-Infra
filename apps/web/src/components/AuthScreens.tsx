@@ -92,7 +92,7 @@ export function AuthScreens() {
     <Card onSubmit={submit}>
       <div className="space-y-3">
         {title && <h2 className="text-base font-semibold">{title}</h2>}
-        {invite && <p className="rounded border border-access/50 bg-access/10 p-2 text-sm">{t('account.inviteFor', { client: invite.clientName, role: t(`roles.${invite.role}`) })}</p>}
+        {invite && <p className="rounded border border-access/50 bg-access/10 p-2 text-sm">{(invite.invitedByName ? t('account.inviteBy', { name: invite.invitedByName, client: invite.clientName, role: t(invite.role === 'technician' ? 'members.canEdit' : 'members.canRead') }) : t('account.inviteFor', { client: invite.clientName, role: t(invite.role === 'technician' ? 'members.canEdit' : 'members.canRead') }))}</p>}
         {inviteBad && <p role="alert" className="rounded border border-crit p-2 text-sm text-crit">{t('account.inviteInvalid')}</p>}
         {isDesktop && mode !== 'reset' && <Field label={t('auth.serverUrl')}><input className="nf-input mono" value={server} onChange={(e) => setServer(e.target.value)} required inputMode="url" autoCapitalize="off" /></Field>}
         {isDesktop && isInsecureRemoteUrl(server) && <p role="alert" className="rounded border border-warn p-2 text-xs text-warn">{t('auth.insecureServer')}</p>}
@@ -135,7 +135,7 @@ export function InviteAccept({ token, onDone }: { token: string; onDone: () => v
     <Card>
       <h2 className="mb-3 text-base font-semibold">{t('account.inviteTitle')}</h2>
       {bad && <p role="alert" className="mb-3 text-sm text-crit">{t('account.inviteInvalid')}</p>}
-      {preview && <p className="mb-3 text-sm">{t('account.inviteFor', { client: preview.clientName, role: t(`roles.${preview.role}`) })}</p>}
+      {preview && <p className="mb-3 text-sm">{(preview.invitedByName ? t('account.inviteBy', { name: preview.invitedByName, client: preview.clientName, role: t(preview.role === 'technician' ? 'members.canEdit' : 'members.canRead') }) : t('account.inviteFor', { client: preview.clientName, role: t(preview.role === 'technician' ? 'members.canEdit' : 'members.canRead') }))}</p>}
       {wrong && <p role="alert" className="mb-3 text-sm text-crit">{t('account.inviteWrongUser', { email: preview!.email })}</p>}
       {error && <p role="alert" className="mb-3 text-sm text-crit">{error}</p>}
       <div className="flex gap-2">

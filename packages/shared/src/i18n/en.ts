@@ -99,8 +99,8 @@ export const en = {
     emailDisabled: 'Email is not set up on this server. Ask an administrator to reset your password.', resetTitle: 'Choose a new password',
     resetDone: 'Password updated. You can sign in.', resetInvalid: 'This link is invalid or has expired. Request a new one.', backToSignIn: 'Back to sign in',
     registrationClosed: 'Account creation is disabled on this server.', fullName: 'Full name', passwordHint: '8 characters minimum',
-    noClientTitle: 'No client yet', noClientBody: 'Your account has no access to any client. Ask an administrator or a colleague to invite you by email, then open the link you receive.',
-    inviteTitle: 'Invitation', inviteFor: 'You are invited to join "{{client}}" as {{role}}.', inviteWrongUser: 'This invitation was sent to {{email}}. Sign in with that address.',
+    noClientTitle: 'No client yet', noClientBody: 'Your account has no access to any client. Create your first client below, or ask someone to share theirs with you by email, then open the link you receive.',
+    inviteTitle: 'Invitation', inviteFor: 'You are invited to join "{{client}}" ({{role}}).', inviteBy: '{{name}} is sharing "{{client}}" with you ({{role}}). It will be added to your data.', inviteWrongUser: 'This invitation was sent to {{email}}. Sign in with that address.',
     inviteAccept: 'Join the client', inviteAccepted: 'You joined the client.', inviteInvalid: 'This invitation is invalid, already used or expired.', inviteHintMobile: 'Paste the invitation link or code from your email',
   },
   admin: {
@@ -113,9 +113,12 @@ export const en = {
     libraryEmpty: 'No custom model yet.', label: 'Name in the library', units: 'Height (U)', users: 'Users',
   },
   members: {
-    title: 'Access to this client', invite: 'Invite by email', email: 'Email address', role: 'Role', pending: 'Pending invitations', revoke: 'Cancel invitation',
+    canEdit: 'Can edit', canRead: 'Read-only', owner: 'Owner', leave: 'Leave this client', leaveConfirm: 'Leave "{{name}}"? You will no longer have access to it.',
+    shareHint: 'They get an email: once accepted, the client is added to their data. You choose whether they can edit or only read.',
+    sharedWithMe: 'Shared with you', readOnlyBadge: 'read-only',
+    title: 'Share this client', invite: 'Share by email', email: 'Email address', role: 'Permission', pending: 'Pending invitations', revoke: 'Cancel invitation',
     copyLink: 'Copy link', sent: 'Invitation sent to {{email}}', notSent: 'Email not sent (SMTP not configured or failing). Copy the link and send it yourself.',
-    remove: 'Remove access', empty: 'Nobody else has access.', expires: 'expires {{date}}', admins: 'Administrators always have access.',
+    remove: 'Remove access', empty: 'This client is not shared with anyone.', expires: 'expires {{date}}', admins: 'Administrators always have access.',
   },
   rack: {
     viewSchema: 'Schema', viewRack: 'Racks', racks: 'Racks', addRack: 'Add a rack', rackName: 'Rack name', units: 'Height (U)', unplaced: 'Not in a rack',

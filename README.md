@@ -42,7 +42,8 @@ Une seule API, trois clients qui partagent le même moteur de validation, les m�
 - Exports : matrice de câblage CSV/PDF, schéma PNG/SVG (web/desktop), scripts CLI Cisco/Huawei/Arista, fichier `.shmnlt`
 - **Vue Baies** (rack 42 U, placement par glisser-déposer, câbles vers une autre baie signalés) et **vue Schéma** : mêmes données, deux affichages
 - Historique des versions avec restauration
-- Comptes : création de compte, **mot de passe oublié**, **invitation par e-mail** à un client (un nouveau compte ne voit aucun client sans invitation)
+- Comptes : création de compte, **mot de passe oublié**
+- **Clients personnels et partage** : chaque utilisateur crée ses clients et peut les **partager par e-mail** avec le droit *Peut modifier* ou *Lecture seule* ; la personne invitée reçoit un e-mail et le client est ajouté à ses données une fois accepté
 - Rôles : **Admin** (tout, SMTP, catalogue d'équipements), **Technicien** / **Lecteur** **par client**
 - Interface FR/EN, thème clair/sombre
 
@@ -87,7 +88,7 @@ Sans `TEST_DATABASE_URL`, les tests serveur démarrent un PostgreSQL embarqué (
 
 ## API (`/api/v1`)
 
-`POST /auth/login|register|forgot-password|reset-password` · `GET /auth/me|config` · `/invitations/preview|accept` · `/clients/:id/members|invitations` · `/admin/settings` (+ `/smtp-test`) · `/library` · `/racks` · `/users` · `/clients` (+ `/topology`, `/export`, `/import`, `/revisions`) · `/sites` · `/devices` (+ `/:id/credentials`) · `/links` · `POST /validate` · `GET /export/csv|pdf|config`.
+`POST /auth/login|register|forgot-password|reset-password` · `GET /auth/me|config` · `/invitations/preview|accept` · `/clients/:id/members|invitations` (propriétaire ou admin) · `/admin/settings` (+ `/smtp-test`) · `/library` · `/racks` · `/users` · `/clients` (+ `/topology`, `/export`, `/import`, `/revisions`) · `/sites` · `/devices` (+ `/:id/credentials`) · `/links` · `POST /validate` · `GET /export/csv|pdf|config`.
 Détails des schémas : `packages/shared/src/schemas.ts`. Toutes les routes sauf `/auth/*` (login, register, forgot/reset, config), `/invitations/preview` et `/health` demandent `Authorization: Bearer <jwt>`.
 
 ## Sécurité
