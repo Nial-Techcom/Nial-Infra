@@ -48,7 +48,7 @@ export function Header() {
     <header className="flex h-12 shrink-0 items-center gap-2 border-b border-line bg-panel px-3">
       <button className="nf-btn nf-btn-ghost !p-1.5 lg:hidden" aria-label="Menu" onClick={() => ui.setSidebarOpen(!ui.sidebarOpen)}><PanelLeft size={18} /></button>
       <div className="flex items-center gap-2 pr-2">
-        <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden><rect width="32" height="32" rx="6" fill="rgb(var(--bg))" stroke="rgb(var(--line))" /><path d="M6 22h6v-6h8v-6h6" stroke="rgb(var(--trunk))" strokeWidth="3" fill="none" strokeLinejoin="round" /></svg>
+        <img src={`${import.meta.env.BASE_URL}logo-mark.svg`} height={28} width={43} alt="Nial-Tech Infrastructure" className="h-7 w-auto rounded" draggable={false} />
         <span className="font-semibold tracking-tight">Nial-Infra</span>
       </div>
       <select className="nf-input !w-auto max-w-[14rem]" value={clientId ?? ''} onChange={(e) => void selectClient(e.target.value || null)} aria-label={t('modals.device.client')}>
