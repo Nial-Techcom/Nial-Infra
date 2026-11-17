@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="236 110 396 396" role="img" aria-label="Nial-Tech Infrastructure">
+  <defs>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#168cff"/><stop offset="1" stop-color="#123fce"/>
+    </linearGradient>
+    <linearGradient id="dark" x1="0" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#354253"/><stop offset="1" stop-color="#151c28"/>
+    </linearGradient>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="15" result="blur"/><feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.04  0 0 0 0 0.34  0 0 0 0 1  0 0 0 .6 0" result="blueGlow"/><feMerge><feMergeNode in="blueGlow"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect x="236" y="110" width="396" height="396" rx="72" fill="#F4F7FB"/>
+  <!-- Monogramme NT angulaire -->
+  <g stroke="#111827" stroke-width="2" stroke-linejoin="round">
+    <path d="M258 150 L258 390 L307 390 L307 250 L488 390 L534 359 Z" fill="url(#blue)" filter="url(#glow)"/>
+    <path d="M352 151 L610 151 L610 203 L526 203 L526 345 L478 308 L478 203 L405 203 Z" fill="url(#dark)"/>
+    <path d="M258 412 H307 V461 H258 Z" fill="url(#blue)"/>
+  </g>
+</svg>
