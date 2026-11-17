@@ -142,6 +142,8 @@ wait_healthy() {
 }
 
 # --- 2. code --------------------------------------------------------------
+# Le umask 077 ne sert qu'aux sauvegardes : les fichiers du dépôt doivent rester lisibles (sinon nginx renvoie 403 sur les nouveaux fichiers).
+umask 022
 log "2/4 Récupération du code"
 git merge --ff-only -q "origin/$BRANCH" 2>/dev/null || git reset -q --hard "origin/$BRANCH"
 
