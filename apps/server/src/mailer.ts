@@ -28,13 +28,20 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&
 const wrap = (body: string) => `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#111">${body}<hr style="border:0;border-top:1px solid #ddd;margin:24px 0"><p style="color:#888;font-size:12px">Nial-Infra</p></div>`;
 const button = (href: string, label: string) => `<p><a href="${esc(href)}" style="background:#2563eb;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block">${esc(label)}</a></p><p style="font-size:12px;color:#666;word-break:break-all">${esc(href)}</p>`;
 
-export function inviteMail(rawClientName: string, role: string, link: string) {
-  const clientName = rawClientName.replace(/[\r\n\u2028\u2029]+/g, ' '); // never let a name inject mail headers
-  const roleFr = role === 'technician' ? 'technicien' : 'lecteur';
+const clean = (v: string) => v.replace(/[\r\n\u2028\u2029]+/g, ' '); // never let a name inject mail headers
+
+export function inviteMail(rawClientName: string, role: string, link: string, rawInviter?: string | null) {
+  const clientName = clean(rawClientName);
+  const inviter = rawInviter ? clean(rawInviter) : '';
+  const edit = role === 'technician';
+  const rightsFr = edit ? 'modifier le client' : 'consulter le client (lecture seule)';
+  const rightsEn = edit ? 'edit the client' : 'view the client (read-only)';
+  const whoFr = inviter ? `${inviter} vous invite` : 'Vous êtes invité(e)';
+  const whoEn = inviter ? `${inviter} invites you` : 'You are invited';
   return {
-    subject: `Nial-Infra – invitation : ${clientName}`,
-    text: `FR : Vous êtes invité(e) à rejoindre le client « ${clientName} » (rôle : ${roleFr}).\nCréez votre compte ou connectez-vous : ${link}\nCe lien expire dans 7 jours.\n\nEN: You are invited to join the client "${clientName}" (role: ${role}).\nCreate your account or sign in: ${link}\nThis link expires in 7 days.`,
-    html: wrap(`<h2>Invitation Nial-Infra</h2><p>Vous êtes invité(e) à rejoindre le client <b>${esc(clientName)}</b> (rôle : ${roleFr}). Le lien expire dans 7 jours.</p><p style="color:#555">You are invited to join the client <b>${esc(clientName)}</b> (role: ${esc(role)}). The link expires in 7 days.</p>${button(link, 'Rejoindre / Join')}`),
+    subject: `Nial-Infra – ${inviter ? `${inviter} partage « ${clientName} » avec vous` : `invitation : ${clientName}`}`,
+    text: `FR : ${whoFr} à rejoindre le client « ${clientName} » : il sera ajouté à vos données. Vous pourrez ${rightsFr}.\nCréez votre compte ou connectez-vous pour accepter : ${link}\nCe lien expire dans 7 jours.\n\nEN: ${whoEn} to join the client "${clientName}": it will be added to your data. You will be able to ${rightsEn}.\nCreate your account or sign in to accept: ${link}\nThis link expires in 7 days.`,
+    html: wrap(`<h2>${inviter ? `${esc(inviter)} partage un client avec vous` : 'Invitation Nial-Infra'}</h2><p>${esc(whoFr)} à rejoindre le client <b>${esc(clientName)}</b> : il sera ajouté à vos données. Vous pourrez <b>${esc(rightsFr)}</b>. Le lien expire dans 7 jours.</p><p style="color:#555">${esc(whoEn)} to join the client <b>${esc(clientName)}</b>: it will be added to your data. You will be able to <b>${esc(rightsEn)}</b>. The link expires in 7 days.</p>${button(link, 'Accepter / Accept')}`),
   };
 }
 

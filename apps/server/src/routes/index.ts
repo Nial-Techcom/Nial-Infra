@@ -9,7 +9,7 @@ import {
   forgotPasswordSchema, inviteAcceptSchema, inviteCreateSchema, libraryItemSchema, memberUpdateSchema, rackSchema, rackUpdateSchema,
   registerSchema, resetPasswordSchema, settingsUpdateSchema, smtpTestSchema, type AdminSettings, type MemberRole,
 } from '@nial-infra/shared';
-import { clientOf, requireClient } from '../access';
+import { clientOf, requireClient, requireManage } from '../access';
 import { encrypt } from '../crypto';
 import { baseUrl, inviteMail, resetMail, sendMail, smtpReady } from '../mailer';
 import type { Config } from '../config';
@@ -120,7 +120,7 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
   r.get('/invitations/preview', accountLimiter, ah(async (req, res) => {
     const inv = await store.invitations.findValid(pool, String(req.query.token ?? ''));
     if (!inv) throw new HttpError(404, 'Invitation is invalid or expired');
-    res.json({ clientName: inv.clientName, email: inv.email, role: inv.role });
+    res.json({ clientName: inv.clientName, invitedByName: inv.invitedByName ?? null, email: inv.email, role: inv.role });
   }));
   r.post('/invitations/accept', auth, accountLimiter, ah(async (req, res) => {
     const { token } = inviteAcceptSchema.parse(req.body);
@@ -131,39 +131,52 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
     res.json({ clientId: inv.clientId });
   }));
 
-  /* ------------------------- members of a client (admin) ------------------------- */
-  r.get('/clients/:id/members', auth, adminOnly, ah(async (req, res) => {
+  /* --------------- sharing a client (owner or admin): members & invitations --------------- */
+  r.get('/clients/:id/members', auth, ah(async (req, res) => {
     const id = param(req, 'id');
-    if (!(await store.clients.get(pool, id))) throw new HttpError(404, 'Client not found');
+    await requireManage(pool, req, id);
     res.json({ members: await store.members.list(pool, id), invitations: await store.invitations.listPending(pool, id) });
   }));
-  r.post('/clients/:id/invitations', auth, adminOnly, ah(async (req, res) => {
+  r.post('/clients/:id/invitations', auth, ah(async (req, res) => {
     const id = param(req, 'id');
-    const client = await store.clients.get(pool, id);
-    if (!client) throw new HttpError(404, 'Client not found');
+    await requireManage(pool, req, id);
+    const client = (await store.clients.get(pool, id))!;
     const { email, role } = inviteCreateSchema.parse(req.body);
+    if (email.toLowerCase() === req.user!.email.toLowerCase()) throw new HttpError(400, 'You cannot share a client with yourself');
     const { invitation, token } = await store.invitations.create(pool, id, email, role as MemberRole, req.user!.id);
     const st = await store.settings.get(pool);
     const link = `${baseUrl(st, cfg)}/?invite=${token}`;
     let emailSent = false;
     if (smtpReady(st.smtp)) {
-      try { await sendMail(pool, cfg, { to: email, ...inviteMail(client.name, role, link) }); emailSent = true; } catch (e) { console.error('invitation mail failed:', (e as Error).message); }
+      try { await sendMail(pool, cfg, { to: email, ...inviteMail(client.name, role, link, req.user!.name) }); emailSent = true; } catch (e) { console.error('invitation mail failed:', (e as Error).message); }
     }
-    // The link is returned to the admin so it can be passed on by hand when no mail could be sent.
+    // The link is returned to the sender so it can be passed on by hand when no mail could be sent.
     res.status(201).json({ invitation, emailSent, link });
   }));
-  r.delete('/invitations/:id', auth, adminOnly, ah(async (req, res) => {
-    if (!(await store.invitations.remove(pool, param(req, 'id')))) throw new HttpError(404, 'Invitation not found');
+  r.delete('/invitations/:id', auth, ah(async (req, res) => {
+    const inv = await store.invitations.get(pool, param(req, 'id'));
+    if (!inv) throw new HttpError(404, 'Invitation not found');
+    await requireManage(pool, req, inv.clientId);
+    await store.invitations.remove(pool, inv.id);
     res.json({ success: true });
   }));
-  r.patch('/clients/:id/members/:userId', auth, adminOnly, ah(async (req, res) => {
+  r.patch('/clients/:id/members/:userId', auth, ah(async (req, res) => {
+    const id = param(req, 'id'), userId = param(req, 'userId');
+    await requireManage(pool, req, id);
     const { role } = memberUpdateSchema.parse(req.body);
-    if (!(await store.members.roleOf(pool, param(req, 'id'), param(req, 'userId')))) throw new HttpError(404, 'Member not found');
-    await store.members.set(pool, param(req, 'id'), param(req, 'userId'), role as MemberRole);
+    if (!(await store.members.roleOf(pool, id, userId))) throw new HttpError(404, 'Member not found');
+    if ((await store.clients.get(pool, id))?.ownerId === userId) throw new HttpError(400, 'The owner keeps full access');
+    await store.members.set(pool, id, userId, role as MemberRole);
     res.json({ success: true });
   }));
-  r.delete('/clients/:id/members/:userId', auth, adminOnly, ah(async (req, res) => {
-    if (!(await store.members.remove(pool, param(req, 'id'), param(req, 'userId')))) throw new HttpError(404, 'Member not found');
+  /** The owner/admin removes someone; any other member can also remove themselves (= leave a shared client). */
+  r.delete('/clients/:id/members/:userId', auth, ah(async (req, res) => {
+    const id = param(req, 'id'), userId = param(req, 'userId');
+    if (userId === req.user!.id && req.user!.role !== 'admin') {
+      if (!(await store.members.roleOf(pool, id, userId))) throw new HttpError(404, 'Client not found');
+    } else await requireManage(pool, req, id);
+    if ((await store.clients.get(pool, id))?.ownerId === userId) throw new HttpError(400, 'The owner cannot be removed; delete the client instead');
+    if (!(await store.members.remove(pool, id, userId))) throw new HttpError(404, 'Member not found');
     res.json({ success: true });
   }));
 
@@ -230,15 +243,18 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
 
   /* -------------------------------- clients -------------------------------- */
   r.get('/clients', auth, ah(async (req, res) => { res.json({ clients: await store.clients.listFor(pool, req.user!) }); }));
-  r.post('/clients', auth, adminOnly, ah(async (req, res) => {
+  // Every signed-in user can create their own clients (and then share them); admin-created ones have no owner.
+  r.post('/clients', auth, ah(async (req, res) => {
     const { name } = clientSchema.parse(req.body);
-    res.status(201).json({ client: await store.clients.create(pool, name) });
+    res.status(201).json({ client: await store.clients.create(pool, name, req.user!.role === 'admin' ? null : req.user!.id) });
   }));
-  r.patch('/clients/:id', auth, adminOnly, ah(async (req, res) => {
+  r.patch('/clients/:id', auth, ah(async (req, res) => {
+    await requireManage(pool, req, param(req, 'id'));
     const { name } = clientSchema.parse(req.body);
     res.json({ client: await store.clients.rename(pool, param(req, 'id'), name) });
   }));
-  r.delete('/clients/:id', auth, adminOnly, ah(async (req, res) => {
+  r.delete('/clients/:id', auth, ah(async (req, res) => {
+    await requireManage(pool, req, param(req, 'id'));
     if (!(await store.clients.remove(pool, param(req, 'id')))) throw new HttpError(404, 'Client not found');
     res.json({ success: true });
   }));
@@ -319,14 +335,17 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
     if (clientId || req.user!.role !== 'admin') await requireClient(pool, req, clientId);
     res.json({ sites: await store.sites.list(pool, clientId) });
   }));
-  r.post('/sites', auth, adminOnly, ah(async (req, res) => {
+  r.post('/sites', auth, ah(async (req, res) => {
     const s = siteSchema.parse(req.body);
+    await requireManage(pool, req, s.clientId);
     res.status(201).json({ site: await store.sites.create(pool, s.clientId, s.name) });
   }));
-  r.patch('/sites/:id', auth, adminOnly, ah(async (req, res) => {
+  r.patch('/sites/:id', auth, ah(async (req, res) => {
+    await requireManage(pool, req, await clientOf.site(pool, param(req, 'id')));
     res.json({ site: await store.sites.rename(pool, param(req, 'id'), siteUpdateSchema.parse(req.body).name) });
   }));
-  r.delete('/sites/:id', auth, adminOnly, ah(async (req, res) => {
+  r.delete('/sites/:id', auth, ah(async (req, res) => {
+    await requireManage(pool, req, await clientOf.site(pool, param(req, 'id')));
     if (!(await store.sites.remove(pool, param(req, 'id')))) throw new HttpError(404, 'Site not found');
     res.json({ success: true });
   }));
