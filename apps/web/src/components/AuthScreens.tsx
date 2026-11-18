@@ -4,6 +4,7 @@ import { ApiError, isInsecureRemoteUrl, type AuthConfig, type InvitePreview } fr
 import { api, errorText } from '../lib/api';
 import { getServerUrl, isDesktop, setServerUrl } from '../lib/platform';
 import { useAuth } from '../store/auth';
+import { useTopology } from '../store/topology';
 import { Field } from './ui';
 
 /** Query-string tokens from the links sent by email: ?reset=… and ?invite=… */
@@ -149,10 +150,24 @@ export function InviteAccept({ token, onDone }: { token: string; onDone: () => v
 /** Shown to a signed-in user who is not a member of any client yet. */
 export function NoClient() {
   const { t } = useTranslation();
+  const [name, setName] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  async function create(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setBusy(true); setError('');
+    try { await useTopology.getState().createClient(name.trim()); } catch (err) { setError(errorText(err, (k) => t(k))); } finally { setBusy(false); }
+  }
   return (
-    <Card>
+    <Card onSubmit={create}>
       <h2 className="mb-2 text-base font-semibold">{t('account.noClientTitle')}</h2>
       <p className="mb-4 text-sm text-mute">{t('account.noClientBody')}</p>
+      <div className="mb-4 space-y-2">
+        <Field label={t('sidebar.clientName')}><input className="nf-input" value={name} maxLength={100} onChange={(e) => setName(e.target.value)} /></Field>
+        {error && <p role="alert" className="text-sm text-crit">{error}</p>}
+        <button className="nf-btn nf-btn-primary w-full" disabled={busy || !name.trim()}>{t('sidebar.newClient')}</button>
+      </div>
       <div className="flex gap-2">
         <button type="button" className="nf-btn flex-1" onClick={() => void import('../store/topology').then((m) => m.useTopology.getState().loadClients())}>{t('common.refresh')}</button>
         <button type="button" className="nf-btn" onClick={() => useAuth.getState().logout()}>{t('common.logout')}</button>

@@ -53,6 +53,7 @@ export function useT() {
 export function errorText(e: unknown, locale: Locale): string {
   if (e instanceof ApiError) {
     if (e.status === 0) return translate(locale, 'errors.network');
+    if (e.status === 423) return translate(locale, 'errors.locked');
     if (e.status === 401) return translate(locale, 'errors.unauthorized');
     if (e.status === 403) return translate(locale, 'errors.forbidden');
     return e.message;

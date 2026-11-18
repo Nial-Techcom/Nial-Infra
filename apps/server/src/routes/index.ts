@@ -7,7 +7,7 @@ import {
   generateDeviceConfig, linkCreateSchema, linkUpdateSchema, loginSchema, parseIpCidr, revisionCreateSchema, shmnltSchema, siteSchema,
   siteUpdateSchema, userCreateSchema, userUpdateSchema, validateSchema, validateTopology, VENDORS, type Vendor,
   forgotPasswordSchema, inviteAcceptSchema, inviteCreateSchema, libraryItemSchema, memberUpdateSchema, rackSchema, rackUpdateSchema,
-  registerSchema, resetPasswordSchema, settingsUpdateSchema, smtpTestSchema, type AdminSettings, type MemberRole,
+  registerSchema, resetPasswordSchema, settingsUpdateSchema, smtpTestSchema, type AdminSettings, type AdminUser, type MemberRole,
 } from '@nial-infra/shared';
 import { clientOf, requireClient, requireManage } from '../access';
 import { encrypt } from '../crypto';
@@ -56,6 +56,7 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
     const ok = await bcrypt.compare(password, row?.password_hash ?? DUMMY_HASH);
     if (!row || !ok) { accountThrottle.fail(key); throw new HttpError(401, 'Invalid email or password'); }
     accountThrottle.ok(key);
+    if (row.locked_at) throw new HttpError(423, 'Account locked');
     const user = store.mapUser(row);
     res.json({ token: signToken(user, cfg, store.passwordVersion(row)), user });
   }));
@@ -101,7 +102,7 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
     try {
       const st = await store.settings.get(pool);
       const row = await store.users.getWithHash(pool, email);
-      if (!row || !smtpReady(st.smtp)) return;
+      if (!row || row.locked_at || !smtpReady(st.smtp)) return;
       const token = await store.passwordResets.create(pool, row.id);
       await sendMail(pool, cfg, { to: row.email, ...resetMail(`${baseUrl(st, cfg)}/?reset=${token}`) });
     } catch (e) {
@@ -217,19 +218,37 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
     res.json({ success: true });
   }));
 
-  /* --------------------------------- users --------------------------------- */
-  r.get('/users', auth, adminOnly, ah(async (_req, res) => { res.json({ users: await store.users.list(pool) }); }));
+  /* --------------------------------- users ---------------------------------
+   * Admins manage accounts, not roles: they see name + e-mail, can send a password-reset link (by e-mail only: the link
+   * is never shown to the admin), lock/unlock an account, or delete it. Everybody else is a normal user. */
+  const adminView = (u: { id: string; email: string; name: string; createdAt: string; locked?: boolean }): AdminUser => ({ id: u.id, email: u.email, name: u.name, createdAt: u.createdAt, locked: !!u.locked });
+  r.get('/users', auth, adminOnly, ah(async (_req, res) => { res.json({ users: (await store.users.list(pool)).map(adminView) }); }));
   r.post('/users', auth, adminOnly, ah(async (req, res) => {
     const u = userCreateSchema.parse(req.body);
-    res.status(201).json({ user: await store.users.create(pool, { email: u.email, name: u.name, role: u.role, passwordHash: await bcrypt.hash(u.password, cfg.bcryptRounds) }) });
+    // 'viewer' is the plain non-admin account; what a user can do comes from the clients they own or that are shared with them.
+    res.status(201).json({ user: adminView(await store.users.create(pool, { email: u.email, name: u.name, role: 'viewer', passwordHash: await bcrypt.hash(u.password, cfg.bcryptRounds) })) });
   }));
   r.patch('/users/:id', auth, adminOnly, ah(async (req, res) => {
-    const id = param(req, 'id');
     const u = userUpdateSchema.parse(req.body);
-    const target = await store.users.get(pool, id);
+    res.json({ user: adminView(await store.users.update(pool, param(req, 'id'), { name: u.name })) });
+  }));
+  r.post('/users/:id/lock', auth, adminOnly, ah(async (req, res) => {
+    const id = param(req, 'id');
+    if (id === req.user!.id) throw new HttpError(400, 'You cannot lock your own account');
+    res.json({ user: adminView(await store.users.setLocked(pool, id, true)) });
+  }));
+  r.post('/users/:id/unlock', auth, adminOnly, ah(async (req, res) => {
+    res.json({ user: adminView(await store.users.setLocked(pool, param(req, 'id'), false)) });
+  }));
+  r.post('/users/:id/send-reset', auth, adminOnly, ah(async (req, res) => {
+    const target = await store.users.get(pool, param(req, 'id'));
     if (!target) throw new HttpError(404, 'User not found');
-    if (u.role && u.role !== 'admin' && target.role === 'admin' && (await store.users.adminCount(pool)) <= 1) throw new HttpError(400, 'Cannot demote the last admin');
-    res.json({ user: await store.users.update(pool, id, { name: u.name, role: u.role, passwordHash: u.password ? await bcrypt.hash(u.password, cfg.bcryptRounds) : undefined }) });
+    const st = await store.settings.get(pool);
+    if (!smtpReady(st.smtp)) throw new HttpError(400, 'E-mail (SMTP) is not configured: set it up first');
+    const token = await store.passwordResets.create(pool, target.id);
+    try { await sendMail(pool, cfg, { to: target.email, ...resetMail(`${baseUrl(st, cfg)}/?reset=${token}`) }); }
+    catch (e) { throw new HttpError(400, `SMTP error: ${(e as Error).message}`.slice(0, 300)); }
+    res.json({ success: true });
   }));
   r.delete('/users/:id', auth, adminOnly, ah(async (req, res) => {
     const id = param(req, 'id');
