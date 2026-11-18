@@ -18,14 +18,11 @@ export const userCreateSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
   name: z.string().trim().min(1).max(100),
   password: z.string().min(8).max(200),
-  role: z.enum(ROLES as [string, ...string[]]),
 });
 
 export const userUpdateSchema = z
   .object({
     name: z.string().trim().min(1).max(100),
-    password: z.string().min(8).max(200),
-    role: z.enum(ROLES as [string, ...string[]]),
   })
   .partial();
 

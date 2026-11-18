@@ -204,7 +204,7 @@ describe('.shmnlt import/export and revisions', () => {
 
 describe('users', () => {
   it('admins manage users', async () => {
-    const r = await c.api.post(`${B}/users`).set(c.as(c.tokens.admin)).send({ email: 'New@Test.io', name: 'New', password: 'longpassword', role: 'viewer' });
+    const r = await c.api.post(`${B}/users`).set(c.as(c.tokens.admin)).send({ email: 'New@Test.io', name: 'New', password: 'longpassword' });
     expect(r.status).toBe(201);
     expect(r.body.user.email).toBe('new@test.io');
     expect((await c.api.get(`${B}/users`).set(c.as(c.tokens.tech))).status).toBe(403);
@@ -216,7 +216,7 @@ describe('users', () => {
   it('protects the last admin and self-deletion', async () => {
     const me = (await c.api.get(`${B}/auth/me`).set(c.as(c.tokens.admin))).body.user;
     expect((await c.api.delete(`${B}/users/${me.id}`).set(c.as(c.tokens.admin))).status).toBe(400);
-    expect((await c.api.patch(`${B}/users/${me.id}`).set(c.as(c.tokens.admin)).send({ role: 'viewer' })).status).toBe(400);
+    expect((await c.api.post(`${B}/users/${me.id}/lock`).set(c.as(c.tokens.admin))).status).toBe(400);
   });
   it('changes password', async () => {
     expect((await c.api.post(`${B}/auth/change-password`).set(c.as(c.tokens.viewer)).send({ currentPassword: 'wrong', newPassword: 'newpassword1' })).status).toBe(400);
@@ -473,13 +473,6 @@ describe('security: sessions and brute force', () => {
     expect(r.body.token).toBeTruthy();
     expect((await c.api.get(`${B}/auth/me`).set(c.as(old))).status).toBe(401);
     expect((await c.api.get(`${B}/auth/me`).set(c.as(r.body.token))).status).toBe(200);
-  });
-
-  it('an admin resetting someone else\'s password revokes that user\'s sessions', async () => {
-    const u = await mkUser('victim@test.io');
-    const old = await c.login('victim@test.io');
-    expect((await c.api.patch(`${B}/users/${u.id}`).set(c.as(c.tokens.admin)).send({ password: 'reset-by-admin-1' })).status).toBe(200);
-    expect((await c.api.get(`${B}/auth/me`).set(c.as(old))).status).toBe(401);
   });
 
   it('rejects forged, unsigned ("alg":"none") and wrong-secret tokens', async () => {

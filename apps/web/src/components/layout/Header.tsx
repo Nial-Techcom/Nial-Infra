@@ -96,7 +96,7 @@ export function Header() {
         <Menu label={<span className="max-w-[8rem] truncate">{user.name}</span>}>
           {(close) => (
             <>
-              <div className="px-3 py-1.5 text-xs text-mute">{user.email}<br />{t(`roles.${user.role}`)}</div>
+              <div className="px-3 py-1.5 text-xs text-mute">{user.email}{user.role === 'admin' && <><br />{t('roles.admin')}</>}</div>
               <div className="my-1 border-t border-line" />
               {admin && <Item onClick={() => { close(); ui.open({ kind: 'admin' }); }}><Settings size={14} />{t('admin.title')}</Item>}
               {admin && <Item onClick={() => { close(); ui.open({ kind: 'users' }); }}><Users size={14} />{t('users.title')}</Item>}
