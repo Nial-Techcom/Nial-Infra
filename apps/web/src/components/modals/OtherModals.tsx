@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  DEVICE_TYPES, ROLES, VENDORS, generateClientConfig, generateDeviceConfig, type Revision, type Role, type User, type Vendor, type DeviceType,
+  DEVICE_TYPES, VENDORS, generateClientConfig, generateDeviceConfig, type AdminUser, type Revision, type Vendor, type DeviceType,
 } from '@nial-infra/shared';
 import { api, errorText } from '../../lib/api';
 import { createFromPreset } from '../../lib/devices';
@@ -136,42 +136,55 @@ export function HistoryModal() {
   );
 }
 
+/** Accounts, as the admin may see them: name and e-mail only (no roles), reset link by e-mail, lock/unlock, delete. */
 export function UsersModal() {
   const { t } = useTranslation();
   const close = useUi((s) => s.close);
   const me = useAuth((s) => s.user);
-  const [users, setUsers] = useState<User[]>([]);
-  const [n, setN] = useState({ email: '', name: '', password: '', role: 'technician' as Role });
+  const [users, setUsers] = useState<AdminUser[] | null>(null);
+  const [n, setN] = useState({ email: '', name: '', password: '' });
   const load = () => api.users.list().then((r) => setUsers(r.users)).catch((e) => toastErr(e, t));
   useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const ask = useUi.getState().ask;
+  const toast = (m: string) => useUi.getState().toast(m);
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
-    try { await api.users.create(n); setN({ email: '', name: '', password: '', role: 'technician' }); await load(); } catch (err) { toastErr(err, t); }
+    try { await api.users.create(n); setN({ email: '', name: '', password: '' }); await load(); } catch (err) { toastErr(err, t); }
   }
-  const remove = (u: User) => {
-    if (u.id === me?.id) return useUi.getState().toast(t('users.deleteSelf'), 'error');
-    useUi.getState().ask({ title: t('common.delete'), message: t('common.deleteConfirm', { name: u.email }), danger: true, confirmLabel: t('common.delete'),
-      onConfirm: async () => { try { await api.users.remove(u.id); await load(); } catch (e) { toastErr(e, t); } } });
-  };
-  const setRole = async (u: User, role: Role) => { try { await api.users.update(u.id, { role }); await load(); } catch (e) { toastErr(e, t); } };
+  const lock = (u: AdminUser) => ask({ title: t('users.lock'), message: t('users.lockConfirm', { name: u.name }), danger: true, confirmLabel: t('users.lock'),
+    onConfirm: async () => { try { await api.users.lock(u.id); toast(t('users.locked_toast')); await load(); } catch (e) { toastErr(e, t); } } });
+  const unlock = (u: AdminUser) => ask({ title: t('users.unlock'), message: t('users.unlockConfirm', { name: u.name }), confirmLabel: t('users.unlock'),
+    onConfirm: async () => { try { await api.users.unlock(u.id); toast(t('users.unlocked_toast')); await load(); } catch (e) { toastErr(e, t); } } });
+  const reset = (u: AdminUser) => ask({ title: t('users.sendReset'), message: t('users.resetConfirm', { email: u.email }), confirmLabel: t('users.sendReset'),
+    onConfirm: async () => { try { await api.users.sendReset(u.id); toast(t('users.resetSent')); } catch (e) { toastErr(e, t); } } });
+  const remove = (u: AdminUser) => ask({ title: t('common.delete'), message: t('common.deleteConfirm', { name: u.email }), danger: true, confirmLabel: t('common.delete'),
+    onConfirm: async () => { try { await api.users.remove(u.id); await load(); } catch (e) { toastErr(e, t); } } });
 
   return (
     <Modal title={t('users.title')} onClose={close} width="max-w-2xl">
-      <ul className="mb-4 divide-y divide-line">
-        {users.map((u) => (
-          <li key={u.id} className="flex items-center gap-2 py-2 text-sm">
-            <div className="min-w-0 flex-1"><div className="truncate font-medium">{u.name}</div><div className="truncate text-xs text-mute">{u.email}</div></div>
-            <select className="nf-input !w-auto" value={u.role} disabled={u.id === me?.id} onChange={(e) => void setRole(u, e.target.value as Role)} aria-label={t('users.role')}>{ROLES.map((r) => <option key={r} value={r}>{t(`roles.${r}`)}</option>)}</select>
-            <button className="nf-btn nf-btn-danger" onClick={() => remove(u)}>{t('common.delete')}</button>
-          </li>
-        ))}
-      </ul>
+      <p className="mb-3 text-xs text-mute">{t('users.help')}</p>
+      {!users ? <p className="text-sm text-mute">…</p> : users.length === 0 ? <p className="mb-4 text-sm text-mute">{t('users.empty')}</p> : (
+        <ul className="mb-4 divide-y divide-line">
+          {users.map((u) => (
+            <li key={u.id} className="flex flex-wrap items-center gap-2 py-2 text-sm">
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-medium">{u.name}{u.id === me?.id && <span className="ml-1 text-xs font-normal text-mute">({t('users.you')})</span>}{u.locked && <span className="ml-2 rounded bg-raised px-1.5 py-0.5 text-xs text-crit">{t('users.locked')}</span>}</div>
+                <div className="truncate text-xs text-mute">{u.email}</div>
+              </div>
+              <button className="nf-btn" onClick={() => reset(u)}>{t('users.sendReset')}</button>
+              {u.id !== me?.id && (<>
+                {u.locked ? <button className="nf-btn" onClick={() => unlock(u)}>{t('users.unlock')}</button> : <button className="nf-btn" onClick={() => lock(u)}>{t('users.lock')}</button>}
+                <button className="nf-btn nf-btn-danger" onClick={() => remove(u)}>{t('common.delete')}</button>
+              </>)}
+            </li>
+          ))}
+        </ul>
+      )}
       <form onSubmit={add} className="grid grid-cols-1 gap-2 border-t border-line pt-4 sm:grid-cols-2">
         <input className="nf-input" type="email" required placeholder={t('users.email')} value={n.email} onChange={(e) => setN({ ...n, email: e.target.value })} />
         <input className="nf-input" required placeholder={t('users.name')} value={n.name} onChange={(e) => setN({ ...n, name: e.target.value })} />
-        <input className="nf-input" type="password" required minLength={8} autoComplete="new-password" placeholder={t('users.password')} value={n.password} onChange={(e) => setN({ ...n, password: e.target.value })} />
-        <select className="nf-input" value={n.role} onChange={(e) => setN({ ...n, role: e.target.value as Role })}>{ROLES.map((r) => <option key={r} value={r}>{t(`roles.${r}`)}</option>)}</select>
+        <input className="nf-input sm:col-span-2" type="password" required minLength={8} autoComplete="new-password" placeholder={t('users.password')} value={n.password} onChange={(e) => setN({ ...n, password: e.target.value })} />
         <button className="nf-btn nf-btn-primary sm:col-span-2">{t('users.add')}</button>
       </form>
     </Modal>

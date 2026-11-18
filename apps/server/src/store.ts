@@ -8,7 +8,7 @@ type Row = Record<string, any>;
 const iso = (d: Date | string) => (d instanceof Date ? d.toISOString() : new Date(d).toISOString());
 
 /* ------------------------------- mappers ------------------------------- */
-export const mapUser = (r: Row): User => ({ id: r.id, email: r.email, name: r.name, role: r.role, createdAt: iso(r.created_at) });
+export const mapUser = (r: Row): User => ({ id: r.id, email: r.email, name: r.name, role: r.role, createdAt: iso(r.created_at), locked: !!r.locked_at });
 export const mapClient = (r: Row): Client => ({ id: r.id, name: r.name, createdAt: iso(r.created_at), updatedAt: iso(r.updated_at), ownerId: r.owner_id ?? null });
 export const mapRack = (r: Row): Rack => ({ id: r.id, clientId: r.client_id, siteId: r.site_id, name: r.name, units: r.units });
 /** Time of the last password change in ms (0 = never): the token "password version". */
@@ -53,6 +53,11 @@ export const users = {
     return mapUser(r);
   },
   async remove(db: Db, id: string) { return (await db.query('DELETE FROM users WHERE id=$1', [id])).rowCount! > 0; },
+  async setLocked(db: Db, id: string, locked: boolean) {
+    const r = (await db.query('UPDATE users SET locked_at=CASE WHEN $2 THEN COALESCE(locked_at, now()) ELSE NULL END WHERE id=$1 RETURNING *', [id, locked])).rows[0];
+    if (!r) throw notFound('User');
+    return mapUser(r);
+  },
   async setPassword(db: Db, id: string, passwordHash: string, invalidateTokens: boolean) {
     await db.query('UPDATE users SET password_hash=$2, password_changed_at=CASE WHEN $3 THEN now() ELSE password_changed_at END WHERE id=$1', [id, passwordHash, invalidateTokens]);
   },

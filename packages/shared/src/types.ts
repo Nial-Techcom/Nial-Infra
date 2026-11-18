@@ -26,6 +26,17 @@ export interface User {
   name: string;
   role: Role;
   createdAt: string;
+  /** Locked by an admin: cannot sign in, sessions are cut. */
+  locked?: boolean;
+}
+
+/** What an admin sees of an account: no role, no password. */
+export interface AdminUser {
+  id: string;
+  email: string;
+  name: string;
+  createdAt: string;
+  locked: boolean;
 }
 
 export interface Client {

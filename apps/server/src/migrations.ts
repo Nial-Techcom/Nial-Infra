@@ -166,4 +166,11 @@ DROP INDEX clients_name_unique;
 CREATE UNIQUE INDEX clients_name_unique ON clients (COALESCE(owner_id, ''), lower(name));
 `,
   },
+  {
+    id: '004_user_lock',
+    sql: `
+-- An admin can lock an account: no login, existing sessions stop working immediately. NULL = not locked.
+ALTER TABLE users ADD COLUMN locked_at timestamptz;
+`,
+  },
 ];

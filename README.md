@@ -42,7 +42,7 @@ Une seule API, trois clients qui partagent le même moteur de validation, les m�
 - Exports : matrice de câblage CSV/PDF, schéma PNG/SVG (web/desktop), scripts CLI Cisco/Huawei/Arista, fichier `.shmnlt`
 - **Vue Baies** (rack 42 U, placement par glisser-déposer, câbles vers une autre baie signalés) et **vue Schéma** : mêmes données, deux affichages
 - Historique des versions avec restauration
-- Comptes : création de compte, **mot de passe oublié**
+- Comptes : création de compte (tout nouvel inscrit est un **utilisateur normal** avec son propre espace), **mot de passe oublié** ; l'admin ne voit que nom + e-mail, peut **envoyer un lien de réinitialisation** et **verrouiller / déverrouiller** un compte
 - **Clients personnels et partage** : chaque utilisateur crée ses clients et peut les **partager par e-mail** avec le droit *Peut modifier* ou *Lecture seule* ; la personne invitée reçoit un e-mail et le client est ajouté à ses données une fois accepté
 - Rôles : **Admin** (tout, SMTP, catalogue d'équipements), **Technicien** / **Lecteur** **par client**
 - Interface FR/EN, thème clair/sombre

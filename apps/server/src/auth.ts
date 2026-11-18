@@ -41,6 +41,7 @@ export function authenticate(pool: Pool, cfg: Config) {
       const found = payload.sub ? await users.getAuth(pool, payload.sub) : null;
       if (!found) throw new HttpError(401, 'Invalid or expired token');
       if ((typeof payload.pv === 'number' ? payload.pv : 0) !== found.passwordChangedAt) throw new HttpError(401, 'Invalid or expired token');
+      if (found.user.locked) throw new HttpError(401, 'Account locked'); // sessions of a locked account stop at once
       req.user = found.user;
       next();
     } catch (e) {
