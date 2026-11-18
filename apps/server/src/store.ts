@@ -8,8 +8,8 @@ type Row = Record<string, any>;
 const iso = (d: Date | string) => (d instanceof Date ? d.toISOString() : new Date(d).toISOString());
 
 /* ------------------------------- mappers ------------------------------- */
-export const mapUser = (r: Row): User => ({ id: r.id, email: r.email, name: r.name, role: r.role, createdAt: iso(r.created_at) });
-export const mapClient = (r: Row): Client => ({ id: r.id, name: r.name, createdAt: iso(r.created_at), updatedAt: iso(r.updated_at) });
+export const mapUser = (r: Row): User => ({ id: r.id, email: r.email, name: r.name, role: r.role, createdAt: iso(r.created_at), locked: !!r.locked_at });
+export const mapClient = (r: Row): Client => ({ id: r.id, name: r.name, createdAt: iso(r.created_at), updatedAt: iso(r.updated_at), ownerId: r.owner_id ?? null });
 export const mapRack = (r: Row): Rack => ({ id: r.id, clientId: r.client_id, siteId: r.site_id, name: r.name, units: r.units });
 /** Time of the last password change in ms (0 = never): the token "password version". */
 export const passwordVersion = (r: Row): number => (r.password_changed_at ? new Date(r.password_changed_at).getTime() : 0);
@@ -53,6 +53,11 @@ export const users = {
     return mapUser(r);
   },
   async remove(db: Db, id: string) { return (await db.query('DELETE FROM users WHERE id=$1', [id])).rowCount! > 0; },
+  async setLocked(db: Db, id: string, locked: boolean) {
+    const r = (await db.query('UPDATE users SET locked_at=CASE WHEN $2 THEN COALESCE(locked_at, now()) ELSE NULL END WHERE id=$1 RETURNING *', [id, locked])).rows[0];
+    if (!r) throw notFound('User');
+    return mapUser(r);
+  },
   async setPassword(db: Db, id: string, passwordHash: string, invalidateTokens: boolean) {
     await db.query('UPDATE users SET password_hash=$2, password_changed_at=CASE WHEN $3 THEN now() ELSE password_changed_at END WHERE id=$1', [id, passwordHash, invalidateTokens]);
   },
@@ -70,10 +75,15 @@ export const clients = {
   async listFor(db: Db, user: User): Promise<Client[]> {
     if (user.role === 'admin') return (await db.query('SELECT * FROM clients ORDER BY lower(name)')).rows.map((r) => ({ ...mapClient(r), myRole: 'admin' as Role }));
     const r = await db.query('SELECT c.*, m.role AS my_role FROM clients c JOIN client_members m ON m.client_id=c.id WHERE m.user_id=$1 ORDER BY lower(c.name)', [user.id]);
-    return r.rows.map((x) => ({ ...mapClient(x), myRole: x.my_role as Role }));
+    return r.rows.map((x) => ({ ...mapClient(x), myRole: x.my_role as Role, isOwner: x.owner_id === user.id }));
   },
   async get(db: Db, id: string) { const r = (await db.query('SELECT * FROM clients WHERE id=$1', [id])).rows[0]; return r ? mapClient(r) : null; },
-  async create(db: Db, name: string) { return mapClient((await db.query('INSERT INTO clients (name) VALUES ($1) RETURNING *', [name])).rows[0]); },
+  /** With an owner, the creator also becomes a member (technician) so the client shows up in their list. */
+  async create(db: Db, name: string, ownerId: string | null = null) {
+    const c = mapClient((await db.query('INSERT INTO clients (name, owner_id) VALUES ($1,$2) RETURNING *', [name, ownerId])).rows[0]);
+    if (ownerId) await db.query("INSERT INTO client_members (client_id,user_id,role) VALUES ($1,$2,'technician')", [c.id, ownerId]);
+    return ownerId ? { ...c, myRole: 'technician' as Role, isOwner: true } : c;
+  },
   async rename(db: Db, id: string, name: string) {
     const r = (await db.query('UPDATE clients SET name=$2, updated_at=now() WHERE id=$1 RETURNING *', [id, name])).rows[0];
     if (!r) throw notFound('Client');
@@ -354,12 +364,13 @@ export const racks = {
 
 /* ------------------------- members & invitations ------------------------- */
 const INVITE_DAYS = 7;
-const mapInvitation = (r: Row): Invitation => ({ id: r.id, clientId: r.client_id, clientName: r.client_name, email: r.email, role: r.role, createdAt: iso(r.created_at), expiresAt: iso(r.expires_at) });
+const mapInvitation = (r: Row): Invitation => ({ id: r.id, clientId: r.client_id, clientName: r.client_name, invitedByName: r.invited_by_name ?? null, email: r.email, role: r.role, createdAt: iso(r.created_at), expiresAt: iso(r.expires_at) });
+const INV_SELECT = 'SELECT i.*, c.name AS client_name, (SELECT name FROM users WHERE id=i.invited_by) AS invited_by_name FROM invitations i JOIN clients c ON c.id=i.client_id';
 
 export const members = {
   async list(db: Db, clientId: string): Promise<Member[]> {
-    const r = await db.query('SELECT u.id AS user_id,u.email,u.name,m.role FROM client_members m JOIN users u ON u.id=m.user_id WHERE m.client_id=$1 ORDER BY lower(u.name)', [clientId]);
-    return r.rows.map((x) => ({ userId: x.user_id, email: x.email, name: x.name, role: x.role }));
+    const r = await db.query('SELECT u.id AS user_id,u.email,u.name,m.role,(c.owner_id=u.id) AS is_owner FROM client_members m JOIN users u ON u.id=m.user_id JOIN clients c ON c.id=m.client_id WHERE m.client_id=$1 ORDER BY (c.owner_id=u.id) DESC, lower(u.name)', [clientId]);
+    return r.rows.map((x) => ({ userId: x.user_id, email: x.email, name: x.name, role: x.role, isOwner: !!x.is_owner }));
   },
   async roleOf(db: Db, clientId: string, userId: string): Promise<MemberRole | null> {
     return ((await db.query('SELECT role FROM client_members WHERE client_id=$1 AND user_id=$2', [clientId, userId])).rows[0]?.role as MemberRole | undefined) ?? null;
@@ -372,23 +383,23 @@ export const members = {
 
 export const invitations = {
   async listPending(db: Db, clientId: string) {
-    return (await db.query('SELECT i.*, c.name AS client_name FROM invitations i JOIN clients c ON c.id=i.client_id WHERE i.client_id=$1 AND i.accepted_at IS NULL AND i.expires_at>now() ORDER BY i.created_at DESC', [clientId])).rows.map(mapInvitation);
+    return (await db.query(INV_SELECT + ' WHERE i.client_id=$1 AND i.accepted_at IS NULL AND i.expires_at>now() ORDER BY i.created_at DESC', [clientId])).rows.map(mapInvitation);
   },
   /** Creates an invitation (replacing a pending one for the same address) and returns it with the one-time token. */
   async create(db: Db, clientId: string, email: string, role: MemberRole, invitedBy: string) {
     await db.query('DELETE FROM invitations WHERE client_id=$1 AND email=$2 AND accepted_at IS NULL', [clientId, email]);
     const token = newToken();
     const r = await db.query(
-      `INSERT INTO invitations (client_id,email,role,token_hash,invited_by,expires_at) VALUES ($1,$2,$3,$4,$5, now() + ($6 || ' days')::interval) RETURNING *, (SELECT name FROM clients WHERE id=$1) AS client_name`,
+      `INSERT INTO invitations (client_id,email,role,token_hash,invited_by,expires_at) VALUES ($1,$2,$3,$4,$5, now() + ($6 || ' days')::interval) RETURNING *, (SELECT name FROM clients WHERE id=$1) AS client_name, (SELECT name FROM users WHERE id=$5) AS invited_by_name`,
       [clientId, email, role, sha256(token), invitedBy, String(INVITE_DAYS)],
     );
     return { invitation: mapInvitation(r.rows[0]), token };
   },
   async findValid(db: Db, token: string) {
-    const r = (await db.query('SELECT i.*, c.name AS client_name FROM invitations i JOIN clients c ON c.id=i.client_id WHERE i.token_hash=$1 AND i.accepted_at IS NULL AND i.expires_at>now()', [sha256(token)])).rows[0];
+    const r = (await db.query(INV_SELECT + ' WHERE i.token_hash=$1 AND i.accepted_at IS NULL AND i.expires_at>now()', [sha256(token)])).rows[0];
     return r ? mapInvitation(r) : null;
   },
-  async get(db: Db, id: string) { const r = (await db.query('SELECT i.*, c.name AS client_name FROM invitations i JOIN clients c ON c.id=i.client_id WHERE i.id=$1', [id])).rows[0]; return r ? mapInvitation(r) : null; },
+  async get(db: Db, id: string) { const r = (await db.query(INV_SELECT + ' WHERE i.id=$1', [id])).rows[0]; return r ? mapInvitation(r) : null; },
   async remove(db: Db, id: string) { return (await db.query('DELETE FROM invitations WHERE id=$1', [id])).rowCount! > 0; },
   /** Turns a valid invitation into a membership. Never downgrades an existing member who already has a higher role. */
   async accept(db: Db, inv: Invitation, userId: string) {

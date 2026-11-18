@@ -79,6 +79,10 @@ export const fr: Translation = {
     restored: 'Version restaurée', by: 'par {{name}}',
   },
   users: {
+    help: 'Tu vois seulement le nom et l’e-mail. Les droits sur les clients viennent des clients que chacun crée ou qu’on lui partage.',
+    empty: 'Aucun utilisateur.', you: 'toi', locked: 'Verrouillé', lock: 'Verrouiller', unlock: 'Déverrouiller', sendReset: 'Envoyer un lien de réinitialisation',
+    lockConfirm: 'Verrouiller « {{name}} » ? Sa session est coupée tout de suite et il ne peut plus se connecter.', unlockConfirm: 'Déverrouiller « {{name}} » ?',
+    resetConfirm: 'Envoyer à {{email}} un e-mail pour choisir un nouveau mot de passe ? Ses sessions seront coupées quand il l’aura changé.', resetSent: 'Lien envoyé par e-mail.', locked_toast: 'Compte verrouillé.', unlocked_toast: 'Compte déverrouillé.',
     title: 'Utilisateurs', add: 'Ajouter un utilisateur', role: 'Rôle', email: 'E-mail', name: 'Nom', password: 'Mot de passe',
     deleteSelf: 'Vous ne pouvez pas supprimer votre propre compte.', confirmPassword: 'Confirmer le mot de passe', passwordMismatch: 'Les deux mots de passe sont différents.',
   },
@@ -101,8 +105,8 @@ export const fr: Translation = {
     emailDisabled: 'L’envoi d’e-mails n’est pas configuré sur ce serveur. Demande à un administrateur de réinitialiser ton mot de passe.', resetTitle: 'Choisir un nouveau mot de passe',
     resetDone: 'Mot de passe modifié. Tu peux te connecter.', resetInvalid: 'Ce lien est invalide ou a expiré. Demande-en un nouveau.', backToSignIn: 'Retour à la connexion',
     registrationClosed: 'La création de compte est désactivée sur ce serveur.', fullName: 'Nom complet', passwordHint: '8 caractères minimum',
-    noClientTitle: 'Aucun client pour le moment', noClientBody: 'Ton compte n’a accès à aucun client. Demande à un administrateur ou un collègue de t’inviter par e-mail, puis ouvre le lien reçu.',
-    inviteTitle: 'Invitation', inviteFor: 'Tu es invité à rejoindre « {{client}} » en tant que {{role}}.', inviteWrongUser: 'Cette invitation a été envoyée à {{email}}. Connecte-toi avec cette adresse.',
+    noClientTitle: 'Bienvenue sur ton espace', noClientBody: 'Tu n’as pas encore de client. Crée le tien, ou demande à quelqu’un de t’en partager un par e-mail (ouvre ensuite le lien reçu).',
+    inviteTitle: 'Invitation', inviteFor: 'Tu es invité à rejoindre « {{client}} » ({{role}}).', inviteBy: '{{name}} partage « {{client}} » avec toi ({{role}}). Il sera ajouté à tes données.', inviteWrongUser: 'Cette invitation a été envoyée à {{email}}. Connecte-toi avec cette adresse.',
     inviteAccept: 'Rejoindre le client', inviteAccepted: 'Tu as rejoint le client.', inviteInvalid: 'Cette invitation est invalide, déjà utilisée ou expirée.', inviteHintMobile: 'Colle le lien ou le code d’invitation reçu par e-mail',
   },
   admin: {
@@ -115,9 +119,12 @@ export const fr: Translation = {
     libraryEmpty: 'Aucun modèle personnalisé pour le moment.', label: 'Nom dans la bibliothèque', units: 'Hauteur (U)', users: 'Utilisateurs',
   },
   members: {
-    title: 'Accès à ce client', invite: 'Inviter par e-mail', email: 'Adresse e-mail', role: 'Rôle', pending: 'Invitations en attente', revoke: 'Annuler l’invitation',
+    canEdit: 'Peut modifier', canRead: 'Lecture seule', owner: 'Propriétaire', leave: 'Quitter ce client', leaveConfirm: 'Quitter « {{name}} » ? Tu n’y auras plus accès.',
+    shareHint: 'La personne reçoit un e-mail : une fois acceptée, le client est ajouté à ses données. Tu choisis si elle peut modifier ou seulement lire.',
+    sharedWithMe: 'Partagé avec toi', readOnlyBadge: 'lecture seule',
+    title: 'Partager ce client', invite: 'Partager par e-mail', email: 'Adresse e-mail', role: 'Droits', pending: 'Invitations en attente', revoke: 'Annuler l’invitation',
     copyLink: 'Copier le lien', sent: 'Invitation envoyée à {{email}}', notSent: 'E-mail non envoyé (SMTP non configuré ou en erreur). Copie le lien et envoie-le toi-même.',
-    remove: 'Retirer l’accès', empty: 'Personne d’autre n’a accès.', expires: 'expire le {{date}}', admins: 'Les administrateurs ont toujours accès.',
+    remove: 'Retirer l’accès', empty: 'Ce client n’est partagé avec personne.', expires: 'expire le {{date}}', admins: 'Les administrateurs ont toujours accès.',
   },
   rack: {
     viewSchema: 'Schéma', viewRack: 'Baies', racks: 'Baies', addRack: 'Ajouter une baie', rackName: 'Nom de la baie', units: 'Hauteur (U)', unplaced: 'Hors baie',
@@ -142,6 +149,7 @@ export const fr: Translation = {
     server: 'Serveur', retry: 'Réessayer maintenant', changeServer: 'Changer de serveur', checking: 'Tentative de reconnexion…', signOut: 'Se déconnecter',
   },
   errors: {
+    locked: 'Compte verrouillé : contacte l’administrateur.',
     network: 'Erreur réseau', unauthorized: 'Session expirée, veuillez vous reconnecter', forbidden: 'Vous n’avez pas la permission',
     generic: 'Une erreur est survenue', notFound: 'Introuvable',
   },

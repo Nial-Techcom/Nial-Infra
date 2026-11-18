@@ -16,6 +16,7 @@ export const api = createApi({
 export function errorText(e: unknown, t: (k: string) => string): string {
   if (e instanceof ApiError) {
     if (e.status === 0) return t('errors.network');
+    if (e.status === 423) return t('errors.locked');
     if (e.status === 401) return t('errors.unauthorized');
     if (e.status === 403) return t('errors.forbidden');
     return e.message;

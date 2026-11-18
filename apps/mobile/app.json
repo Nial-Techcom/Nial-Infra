@@ -2,14 +2,14 @@
   "expo": {
     "name": "Nial-Infra",
     "slug": "nial-infra",
-    "version": "1.2.0",
+    "version": "1.4.0",
     "orientation": "default",
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#141A22",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.nialinfra.mobile",
-      "buildNumber": "3",
+      "buildNumber": "5",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
@@ -18,8 +18,12 @@
     },
     "android": {
       "package": "com.nialinfra.mobile",
-      "versionCode": 3,
-      "allowBackup": false
+      "versionCode": 5,
+      "allowBackup": false,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F4F7FB"
+      }
     },
     "plugins": [
       "expo-secure-store",
@@ -32,6 +36,7 @@
           }
         }
       ]
-    ]
+    ],
+    "icon": "./assets/icon.png"
   }
 }

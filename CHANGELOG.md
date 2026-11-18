@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.4.0 — 2026-11-18 — comptes simplifiés et verrouillage
+
+- **Tout nouvel inscrit est un utilisateur normal** : il n'a accès ni à l'Administration ni à la liste des utilisateurs, voit uniquement **ses propres clients** et ceux qu'on lui **partage**, et peut en créer (son premier écran lui propose de créer son premier client).
+- **L'administrateur ne gère plus les rôles** (pour éviter les erreurs) : dans « Utilisateurs » il voit seulement le **nom et l'e-mail**. Il ne peut plus définir de mot de passe ni de rôle à la place de quelqu'un ; il peut **renvoyer un lien de réinitialisation du mot de passe** (envoyé uniquement par e-mail à la personne, jamais affiché à l'admin ; le SMTP doit être configuré), **supprimer** un compte, et **verrouiller / déverrouiller** un compte.
+- **Verrouiller un compte** : connexion refusée (« Compte verrouillé ») et sessions ouvertes coupées immédiatement, sans rien supprimer ; le déverrouiller rétablit l'accès. Un admin ne peut pas verrouiller son propre compte, et un compte verrouillé ne reçoit pas de mail de réinitialisation.
+- Migration `004_user_lock` automatique. API : `POST /users/:id/lock|unlock|send-reset` ; `GET /users` ne renvoie plus de rôle ; `PATCH /users/:id` ne modifie que le nom.
+
+## 1.3.0 — 2026-11-17 — partage de clients
+
+- **Chaque utilisateur a ses propres clients** : tout compte peut créer ses clients (il en est le *propriétaire*), les renommer, les supprimer et gérer leurs sites. Les noms ne doivent être uniques que parmi ses propres clients.
+- **Partager un client** (bouton « Partager » à côté du client, web et desktop) : on saisit l'e-mail de la personne et on choisit **Peut modifier** ou **Lecture seule**. La personne reçoit un e-mail indiquant *qui* partage *quel* client et avec quels droits ; en acceptant (avec son compte ou en en créant un), le client est **ajouté à ses données**. Le propriétaire peut changer les droits, retirer l'accès ou annuler l'invitation à tout moment.
+- Une personne avec qui un client est partagé peut le **quitter** elle-même. Seuls le propriétaire et les administrateurs peuvent partager, renommer ou supprimer un client ; un client partagé en modification n'ouvre pas ces droits.
+- Mobile : tout le monde peut créer un client ; les clients partagés sont repérés (« lecture seule » / « partagé avec toi »). Le partage lui-même se fait depuis le web ou le desktop.
+- Migration `003_client_owner` automatique (les clients existants n'ont pas de propriétaire : ils restent gérés par les administrateurs). Les e-mails nécessitent le SMTP configuré (Administration → E-mail) ; sinon le lien d'invitation est affiché pour être envoyé à la main.
+
 ## 1.2.0 — 2026-11-16 — licences
 
 - **Licence obligatoire** : chaque serveur démarre avec **14 jours d'essai**, puis l'API répond `402` tant qu'aucune licence valide n'est installée (connexion, `/health` et écrans de licence restent accessibles ; **aucune donnée n'est supprimée**).

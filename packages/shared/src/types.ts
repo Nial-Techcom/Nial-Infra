@@ -26,6 +26,17 @@ export interface User {
   name: string;
   role: Role;
   createdAt: string;
+  /** Locked by an admin: cannot sign in, sessions are cut. */
+  locked?: boolean;
+}
+
+/** What an admin sees of an account: no role, no password. */
+export interface AdminUser {
+  id: string;
+  email: string;
+  name: string;
+  createdAt: string;
+  locked: boolean;
 }
 
 export interface Client {
@@ -35,6 +46,10 @@ export interface Client {
   updatedAt: string;
   /** Your effective role in this client (admins are 'admin' everywhere). Only set by GET /clients. */
   myRole?: Role;
+  /** Who created the client (null = created by an admin). The owner can share, rename and delete it. */
+  ownerId?: string | null;
+  /** True when you are the owner. Only set by GET /clients and POST /clients. */
+  isOwner?: boolean;
 }
 
 /** Roles a client member can have (global admins are not members, they see everything). */
@@ -46,12 +61,14 @@ export interface Member {
   email: string;
   name: string;
   role: MemberRole;
+  isOwner?: boolean;
 }
 
 export interface Invitation {
   id: string;
   clientId: string;
   clientName?: string;
+  invitedByName?: string | null;
   email: string;
   role: MemberRole;
   createdAt: string;
@@ -60,6 +77,7 @@ export interface Invitation {
 
 export interface InvitePreview {
   clientName: string;
+  invitedByName?: string | null;
   email: string;
   role: MemberRole;
 }

@@ -1,5 +1,5 @@
 import type {
-  AdminSettings, Alert, AuthConfig, Client, Device, Invitation, InvitePreview, LicenseStatus, LicenseSummary, Link, LibraryItem, Member, MemberRole, Rack, Revision, Role, Site, User, Vendor,
+  AdminSettings, AdminUser, Alert, AuthConfig, Client, Device, Invitation, InvitePreview, LicenseStatus, LicenseSummary, Link, LibraryItem, Member, MemberRole, Rack, Revision, Role, Site, User, Vendor,
 } from './types';
 import type { ShmnltFile } from './shmnlt';
 
@@ -114,10 +114,13 @@ export function createApi(opts: ApiOptions) {
       remove: (id: string) => json<{ success: true }>('DELETE', `/library/${id}`),
     },
     users: {
-      list: () => json<{ users: User[] }>('GET', '/users'),
-      create: (u: { email: string; name: string; password: string; role: Role }) => json<{ user: User }>('POST', '/users', u),
-      update: (id: string, u: Partial<{ name: string; password: string; role: Role }>) => json<{ user: User }>('PATCH', `/users/${id}`, u),
+      list: () => json<{ users: AdminUser[] }>('GET', '/users'),
+      create: (u: { email: string; name: string; password: string }) => json<{ user: AdminUser }>('POST', '/users', u),
+      update: (id: string, u: { name: string }) => json<{ user: AdminUser }>('PATCH', `/users/${id}`, u),
       remove: (id: string) => json<{ success: true }>('DELETE', `/users/${id}`),
+      lock: (id: string) => json<{ user: AdminUser }>('POST', `/users/${id}/lock`),
+      unlock: (id: string) => json<{ user: AdminUser }>('POST', `/users/${id}/unlock`),
+      sendReset: (id: string) => json<{ success: true }>('POST', `/users/${id}/send-reset`),
     },
     clients: {
       list: () => json<{ clients: Client[] }>('GET', '/clients'),

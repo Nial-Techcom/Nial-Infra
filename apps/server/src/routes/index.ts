@@ -7,9 +7,9 @@ import {
   generateDeviceConfig, linkCreateSchema, linkUpdateSchema, loginSchema, parseIpCidr, revisionCreateSchema, shmnltSchema, siteSchema,
   siteUpdateSchema, userCreateSchema, userUpdateSchema, validateSchema, validateTopology, VENDORS, type Vendor,
   forgotPasswordSchema, inviteAcceptSchema, inviteCreateSchema, libraryItemSchema, memberUpdateSchema, rackSchema, rackUpdateSchema,
-  registerSchema, resetPasswordSchema, settingsUpdateSchema, smtpTestSchema, type AdminSettings, type MemberRole,
+  registerSchema, resetPasswordSchema, settingsUpdateSchema, smtpTestSchema, type AdminSettings, type AdminUser, type MemberRole,
 } from '@nial-infra/shared';
-import { clientOf, requireClient } from '../access';
+import { clientOf, requireClient, requireManage } from '../access';
 import { encrypt } from '../crypto';
 import { baseUrl, inviteMail, resetMail, sendMail, smtpReady } from '../mailer';
 import type { Config } from '../config';
@@ -56,6 +56,7 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
     const ok = await bcrypt.compare(password, row?.password_hash ?? DUMMY_HASH);
     if (!row || !ok) { accountThrottle.fail(key); throw new HttpError(401, 'Invalid email or password'); }
     accountThrottle.ok(key);
+    if (row.locked_at) throw new HttpError(423, 'Account locked');
     const user = store.mapUser(row);
     res.json({ token: signToken(user, cfg, store.passwordVersion(row)), user });
   }));
@@ -101,7 +102,7 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
     try {
       const st = await store.settings.get(pool);
       const row = await store.users.getWithHash(pool, email);
-      if (!row || !smtpReady(st.smtp)) return;
+      if (!row || row.locked_at || !smtpReady(st.smtp)) return;
       const token = await store.passwordResets.create(pool, row.id);
       await sendMail(pool, cfg, { to: row.email, ...resetMail(`${baseUrl(st, cfg)}/?reset=${token}`) });
     } catch (e) {
@@ -120,7 +121,7 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
   r.get('/invitations/preview', accountLimiter, ah(async (req, res) => {
     const inv = await store.invitations.findValid(pool, String(req.query.token ?? ''));
     if (!inv) throw new HttpError(404, 'Invitation is invalid or expired');
-    res.json({ clientName: inv.clientName, email: inv.email, role: inv.role });
+    res.json({ clientName: inv.clientName, invitedByName: inv.invitedByName ?? null, email: inv.email, role: inv.role });
   }));
   r.post('/invitations/accept', auth, accountLimiter, ah(async (req, res) => {
     const { token } = inviteAcceptSchema.parse(req.body);
@@ -131,39 +132,52 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
     res.json({ clientId: inv.clientId });
   }));
 
-  /* ------------------------- members of a client (admin) ------------------------- */
-  r.get('/clients/:id/members', auth, adminOnly, ah(async (req, res) => {
+  /* --------------- sharing a client (owner or admin): members & invitations --------------- */
+  r.get('/clients/:id/members', auth, ah(async (req, res) => {
     const id = param(req, 'id');
-    if (!(await store.clients.get(pool, id))) throw new HttpError(404, 'Client not found');
+    await requireManage(pool, req, id);
     res.json({ members: await store.members.list(pool, id), invitations: await store.invitations.listPending(pool, id) });
   }));
-  r.post('/clients/:id/invitations', auth, adminOnly, ah(async (req, res) => {
+  r.post('/clients/:id/invitations', auth, ah(async (req, res) => {
     const id = param(req, 'id');
-    const client = await store.clients.get(pool, id);
-    if (!client) throw new HttpError(404, 'Client not found');
+    await requireManage(pool, req, id);
+    const client = (await store.clients.get(pool, id))!;
     const { email, role } = inviteCreateSchema.parse(req.body);
+    if (email.toLowerCase() === req.user!.email.toLowerCase()) throw new HttpError(400, 'You cannot share a client with yourself');
     const { invitation, token } = await store.invitations.create(pool, id, email, role as MemberRole, req.user!.id);
     const st = await store.settings.get(pool);
     const link = `${baseUrl(st, cfg)}/?invite=${token}`;
     let emailSent = false;
     if (smtpReady(st.smtp)) {
-      try { await sendMail(pool, cfg, { to: email, ...inviteMail(client.name, role, link) }); emailSent = true; } catch (e) { console.error('invitation mail failed:', (e as Error).message); }
+      try { await sendMail(pool, cfg, { to: email, ...inviteMail(client.name, role, link, req.user!.name) }); emailSent = true; } catch (e) { console.error('invitation mail failed:', (e as Error).message); }
     }
-    // The link is returned to the admin so it can be passed on by hand when no mail could be sent.
+    // The link is returned to the sender so it can be passed on by hand when no mail could be sent.
     res.status(201).json({ invitation, emailSent, link });
   }));
-  r.delete('/invitations/:id', auth, adminOnly, ah(async (req, res) => {
-    if (!(await store.invitations.remove(pool, param(req, 'id')))) throw new HttpError(404, 'Invitation not found');
+  r.delete('/invitations/:id', auth, ah(async (req, res) => {
+    const inv = await store.invitations.get(pool, param(req, 'id'));
+    if (!inv) throw new HttpError(404, 'Invitation not found');
+    await requireManage(pool, req, inv.clientId);
+    await store.invitations.remove(pool, inv.id);
     res.json({ success: true });
   }));
-  r.patch('/clients/:id/members/:userId', auth, adminOnly, ah(async (req, res) => {
+  r.patch('/clients/:id/members/:userId', auth, ah(async (req, res) => {
+    const id = param(req, 'id'), userId = param(req, 'userId');
+    await requireManage(pool, req, id);
     const { role } = memberUpdateSchema.parse(req.body);
-    if (!(await store.members.roleOf(pool, param(req, 'id'), param(req, 'userId')))) throw new HttpError(404, 'Member not found');
-    await store.members.set(pool, param(req, 'id'), param(req, 'userId'), role as MemberRole);
+    if (!(await store.members.roleOf(pool, id, userId))) throw new HttpError(404, 'Member not found');
+    if ((await store.clients.get(pool, id))?.ownerId === userId) throw new HttpError(400, 'The owner keeps full access');
+    await store.members.set(pool, id, userId, role as MemberRole);
     res.json({ success: true });
   }));
-  r.delete('/clients/:id/members/:userId', auth, adminOnly, ah(async (req, res) => {
-    if (!(await store.members.remove(pool, param(req, 'id'), param(req, 'userId')))) throw new HttpError(404, 'Member not found');
+  /** The owner/admin removes someone; any other member can also remove themselves (= leave a shared client). */
+  r.delete('/clients/:id/members/:userId', auth, ah(async (req, res) => {
+    const id = param(req, 'id'), userId = param(req, 'userId');
+    if (userId === req.user!.id && req.user!.role !== 'admin') {
+      if (!(await store.members.roleOf(pool, id, userId))) throw new HttpError(404, 'Client not found');
+    } else await requireManage(pool, req, id);
+    if ((await store.clients.get(pool, id))?.ownerId === userId) throw new HttpError(400, 'The owner cannot be removed; delete the client instead');
+    if (!(await store.members.remove(pool, id, userId))) throw new HttpError(404, 'Member not found');
     res.json({ success: true });
   }));
 
@@ -204,19 +218,37 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
     res.json({ success: true });
   }));
 
-  /* --------------------------------- users --------------------------------- */
-  r.get('/users', auth, adminOnly, ah(async (_req, res) => { res.json({ users: await store.users.list(pool) }); }));
+  /* --------------------------------- users ---------------------------------
+   * Admins manage accounts, not roles: they see name + e-mail, can send a password-reset link (by e-mail only: the link
+   * is never shown to the admin), lock/unlock an account, or delete it. Everybody else is a normal user. */
+  const adminView = (u: { id: string; email: string; name: string; createdAt: string; locked?: boolean }): AdminUser => ({ id: u.id, email: u.email, name: u.name, createdAt: u.createdAt, locked: !!u.locked });
+  r.get('/users', auth, adminOnly, ah(async (_req, res) => { res.json({ users: (await store.users.list(pool)).map(adminView) }); }));
   r.post('/users', auth, adminOnly, ah(async (req, res) => {
     const u = userCreateSchema.parse(req.body);
-    res.status(201).json({ user: await store.users.create(pool, { email: u.email, name: u.name, role: u.role, passwordHash: await bcrypt.hash(u.password, cfg.bcryptRounds) }) });
+    // 'viewer' is the plain non-admin account; what a user can do comes from the clients they own or that are shared with them.
+    res.status(201).json({ user: adminView(await store.users.create(pool, { email: u.email, name: u.name, role: 'viewer', passwordHash: await bcrypt.hash(u.password, cfg.bcryptRounds) })) });
   }));
   r.patch('/users/:id', auth, adminOnly, ah(async (req, res) => {
-    const id = param(req, 'id');
     const u = userUpdateSchema.parse(req.body);
-    const target = await store.users.get(pool, id);
+    res.json({ user: adminView(await store.users.update(pool, param(req, 'id'), { name: u.name })) });
+  }));
+  r.post('/users/:id/lock', auth, adminOnly, ah(async (req, res) => {
+    const id = param(req, 'id');
+    if (id === req.user!.id) throw new HttpError(400, 'You cannot lock your own account');
+    res.json({ user: adminView(await store.users.setLocked(pool, id, true)) });
+  }));
+  r.post('/users/:id/unlock', auth, adminOnly, ah(async (req, res) => {
+    res.json({ user: adminView(await store.users.setLocked(pool, param(req, 'id'), false)) });
+  }));
+  r.post('/users/:id/send-reset', auth, adminOnly, ah(async (req, res) => {
+    const target = await store.users.get(pool, param(req, 'id'));
     if (!target) throw new HttpError(404, 'User not found');
-    if (u.role && u.role !== 'admin' && target.role === 'admin' && (await store.users.adminCount(pool)) <= 1) throw new HttpError(400, 'Cannot demote the last admin');
-    res.json({ user: await store.users.update(pool, id, { name: u.name, role: u.role, passwordHash: u.password ? await bcrypt.hash(u.password, cfg.bcryptRounds) : undefined }) });
+    const st = await store.settings.get(pool);
+    if (!smtpReady(st.smtp)) throw new HttpError(400, 'E-mail (SMTP) is not configured: set it up first');
+    const token = await store.passwordResets.create(pool, target.id);
+    try { await sendMail(pool, cfg, { to: target.email, ...resetMail(`${baseUrl(st, cfg)}/?reset=${token}`) }); }
+    catch (e) { throw new HttpError(400, `SMTP error: ${(e as Error).message}`.slice(0, 300)); }
+    res.json({ success: true });
   }));
   r.delete('/users/:id', auth, adminOnly, ah(async (req, res) => {
     const id = param(req, 'id');
@@ -230,15 +262,18 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
 
   /* -------------------------------- clients -------------------------------- */
   r.get('/clients', auth, ah(async (req, res) => { res.json({ clients: await store.clients.listFor(pool, req.user!) }); }));
-  r.post('/clients', auth, adminOnly, ah(async (req, res) => {
+  // Every signed-in user can create their own clients (and then share them); admin-created ones have no owner.
+  r.post('/clients', auth, ah(async (req, res) => {
     const { name } = clientSchema.parse(req.body);
-    res.status(201).json({ client: await store.clients.create(pool, name) });
+    res.status(201).json({ client: await store.clients.create(pool, name, req.user!.role === 'admin' ? null : req.user!.id) });
   }));
-  r.patch('/clients/:id', auth, adminOnly, ah(async (req, res) => {
+  r.patch('/clients/:id', auth, ah(async (req, res) => {
+    await requireManage(pool, req, param(req, 'id'));
     const { name } = clientSchema.parse(req.body);
     res.json({ client: await store.clients.rename(pool, param(req, 'id'), name) });
   }));
-  r.delete('/clients/:id', auth, adminOnly, ah(async (req, res) => {
+  r.delete('/clients/:id', auth, ah(async (req, res) => {
+    await requireManage(pool, req, param(req, 'id'));
     if (!(await store.clients.remove(pool, param(req, 'id')))) throw new HttpError(404, 'Client not found');
     res.json({ success: true });
   }));
@@ -319,14 +354,17 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
     if (clientId || req.user!.role !== 'admin') await requireClient(pool, req, clientId);
     res.json({ sites: await store.sites.list(pool, clientId) });
   }));
-  r.post('/sites', auth, adminOnly, ah(async (req, res) => {
+  r.post('/sites', auth, ah(async (req, res) => {
     const s = siteSchema.parse(req.body);
+    await requireManage(pool, req, s.clientId);
     res.status(201).json({ site: await store.sites.create(pool, s.clientId, s.name) });
   }));
-  r.patch('/sites/:id', auth, adminOnly, ah(async (req, res) => {
+  r.patch('/sites/:id', auth, ah(async (req, res) => {
+    await requireManage(pool, req, await clientOf.site(pool, param(req, 'id')));
     res.json({ site: await store.sites.rename(pool, param(req, 'id'), siteUpdateSchema.parse(req.body).name) });
   }));
-  r.delete('/sites/:id', auth, adminOnly, ah(async (req, res) => {
+  r.delete('/sites/:id', auth, ah(async (req, res) => {
+    await requireManage(pool, req, await clientOf.site(pool, param(req, 'id')));
     if (!(await store.sites.remove(pool, param(req, 'id')))) throw new HttpError(404, 'Site not found');
     res.json({ success: true });
   }));

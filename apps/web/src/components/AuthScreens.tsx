@@ -4,6 +4,7 @@ import { ApiError, isInsecureRemoteUrl, type AuthConfig, type InvitePreview } fr
 import { api, errorText } from '../lib/api';
 import { getServerUrl, isDesktop, setServerUrl } from '../lib/platform';
 import { useAuth } from '../store/auth';
+import { useTopology } from '../store/topology';
 import { Field } from './ui';
 
 /** Query-string tokens from the links sent by email: ?reset=… and ?invite=… */
@@ -16,7 +17,7 @@ export const clearUrlParams = () => { try { window.history.replaceState({}, '', 
 type Mode = 'login' | 'register' | 'forgot' | 'reset';
 
 const Logo = () => (
-  <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden><rect width="32" height="32" rx="6" fill="rgb(var(--bg))" stroke="rgb(var(--line))" /><path d="M6 22h6v-6h8v-6h6" stroke="rgb(var(--trunk))" strokeWidth="3" fill="none" strokeLinejoin="round" /></svg>
+  <img src={`${import.meta.env.BASE_URL}logo-mark.svg`} height={52} width={80} alt="Nial-Tech Infrastructure" className="h-[52px] w-auto rounded" draggable={false} />
 );
 
 export function Card({ children, onSubmit }: { children: React.ReactNode; onSubmit?: (e: React.FormEvent) => void }) {
@@ -92,7 +93,7 @@ export function AuthScreens() {
     <Card onSubmit={submit}>
       <div className="space-y-3">
         {title && <h2 className="text-base font-semibold">{title}</h2>}
-        {invite && <p className="rounded border border-access/50 bg-access/10 p-2 text-sm">{t('account.inviteFor', { client: invite.clientName, role: t(`roles.${invite.role}`) })}</p>}
+        {invite && <p className="rounded border border-access/50 bg-access/10 p-2 text-sm">{(invite.invitedByName ? t('account.inviteBy', { name: invite.invitedByName, client: invite.clientName, role: t(invite.role === 'technician' ? 'members.canEdit' : 'members.canRead') }) : t('account.inviteFor', { client: invite.clientName, role: t(invite.role === 'technician' ? 'members.canEdit' : 'members.canRead') }))}</p>}
         {inviteBad && <p role="alert" className="rounded border border-crit p-2 text-sm text-crit">{t('account.inviteInvalid')}</p>}
         {isDesktop && mode !== 'reset' && <Field label={t('auth.serverUrl')}><input className="nf-input mono" value={server} onChange={(e) => setServer(e.target.value)} required inputMode="url" autoCapitalize="off" /></Field>}
         {isDesktop && isInsecureRemoteUrl(server) && <p role="alert" className="rounded border border-warn p-2 text-xs text-warn">{t('auth.insecureServer')}</p>}
@@ -135,7 +136,7 @@ export function InviteAccept({ token, onDone }: { token: string; onDone: () => v
     <Card>
       <h2 className="mb-3 text-base font-semibold">{t('account.inviteTitle')}</h2>
       {bad && <p role="alert" className="mb-3 text-sm text-crit">{t('account.inviteInvalid')}</p>}
-      {preview && <p className="mb-3 text-sm">{t('account.inviteFor', { client: preview.clientName, role: t(`roles.${preview.role}`) })}</p>}
+      {preview && <p className="mb-3 text-sm">{(preview.invitedByName ? t('account.inviteBy', { name: preview.invitedByName, client: preview.clientName, role: t(preview.role === 'technician' ? 'members.canEdit' : 'members.canRead') }) : t('account.inviteFor', { client: preview.clientName, role: t(preview.role === 'technician' ? 'members.canEdit' : 'members.canRead') }))}</p>}
       {wrong && <p role="alert" className="mb-3 text-sm text-crit">{t('account.inviteWrongUser', { email: preview!.email })}</p>}
       {error && <p role="alert" className="mb-3 text-sm text-crit">{error}</p>}
       <div className="flex gap-2">
@@ -149,10 +150,24 @@ export function InviteAccept({ token, onDone }: { token: string; onDone: () => v
 /** Shown to a signed-in user who is not a member of any client yet. */
 export function NoClient() {
   const { t } = useTranslation();
+  const [name, setName] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  async function create(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setBusy(true); setError('');
+    try { await useTopology.getState().createClient(name.trim()); } catch (err) { setError(errorText(err, (k) => t(k))); } finally { setBusy(false); }
+  }
   return (
-    <Card>
+    <Card onSubmit={create}>
       <h2 className="mb-2 text-base font-semibold">{t('account.noClientTitle')}</h2>
       <p className="mb-4 text-sm text-mute">{t('account.noClientBody')}</p>
+      <div className="mb-4 space-y-2">
+        <Field label={t('sidebar.clientName')}><input className="nf-input" value={name} maxLength={100} onChange={(e) => setName(e.target.value)} /></Field>
+        {error && <p role="alert" className="text-sm text-crit">{error}</p>}
+        <button className="nf-btn nf-btn-primary w-full" disabled={busy || !name.trim()}>{t('sidebar.newClient')}</button>
+      </div>
       <div className="flex gap-2">
         <button type="button" className="nf-btn flex-1" onClick={() => void import('../store/topology').then((m) => m.useTopology.getState().loadClients())}>{t('common.refresh')}</button>
         <button type="button" className="nf-btn" onClick={() => useAuth.getState().logout()}>{t('common.logout')}</button>
