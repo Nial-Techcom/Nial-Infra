@@ -4,6 +4,37 @@
 
 Ouvre un *Security advisory* privé sur GitHub (onglet **Security → Report a vulnerability**) plutôt qu'une issue publique. Merci de ne pas publier la faille avant qu'elle soit corrigée.
 
+## Audit de sécurité — version 1.5.0 (19 novembre 2026)
+
+Cet audit porte sur ce que les versions 1.2 à 1.4 ont ajouté : **clients personnels, partage par e-mail, comptes, verrouillage**. Méthode : revue du code, balayage automatique de **chaque route** de l'API (authentification + garde d'accès + niveau lecture/écriture), `npm audit`, tests d'attaque (`apps/server/test/sharing.test.ts`, `accounts.test.ts`) et essai réel dans un navigateur.
+
+### Failles trouvées et corrigées
+
+| # | Gravité | Problème | Correction |
+|---|---|---|---|
+| 1 | **Élevée** | **Les administrateurs voyaient et pouvaient gérer tous les clients** de tous les utilisateurs (liste, topologie, identifiants d'équipements, partage, suppression). | Plus aucun contournement admin sur les données : un client n'est visible que par son **propriétaire** et les personnes avec qui il est **partagé**. Une admin n'a que la gestion des comptes, du SMTP, du catalogue et de la licence. Les routes ne listent plus « tout » sans `clientId` (400). |
+| 2 | **Élevée** | **Le serveur pouvait servir de relais d'e-mails** : depuis le partage ouvert à tous les comptes, n'importe qui pouvait faire envoyer des invitations à n'importe quelle adresse via le SMTP du serveur (spam, harcèlement, hameçonnage). Renvoyer à la même adresse contournait en plus tout compteur. | Plafonds : **30 invitations/jour par compte**, **5/jour par destinataire** (tous expéditeurs confondus), **100 en attente par client**. Remplacer ou annuler une invitation conserve sa trace : on ne contourne pas le plafond. Le nom de la personne et du client est nettoyé des retours à la ligne (pas d'injection d'en-têtes). |
+| 3 | Moyenne | **Mail-bombing par « mot de passe oublié »** : un attaquant pouvait inonder la boîte d'une victime. | **1 e-mail de réinitialisation par compte toutes les 5 minutes** (réponse identique, rien ne révèle si le compte existe). |
+| 4 | Moyenne | **Clients orphelins** à la suppression d'un compte (inaccessibles, ou jamais supprimés). | Le client passe au membre éditeur le plus ancien, sinon il est supprimé avec le compte. Migration `005` : les clients créés avant la 1.3 sont attribués à l'admin le plus ancien. |
+| 5 | Moyenne | **Aucune trace des actions sensibles.** | Journal de sécurité (une ligne JSON par événement, `docker compose logs server`) : connexions réussies / refusées / compte verrouillé, inscriptions, changements et réinitialisations de mot de passe, invitations, droits, retraits, verrouillage, suppression de compte ou de client. Jamais de mot de passe, jeton ou lien. |
+| 6 | Faible | Mots de passe de plus de 72 octets : bcrypt ignorait silencieusement la fin. | Longueur limitée à 72 caractères. |
+| 7 | Faible | Conteneur serveur inscriptible. | `read_only: true` + `/tmp` en mémoire (le serveur n'écrit rien sur disque). |
+
+### Vérifié sans faille
+
+- **Chaque route** de l'API (63) est authentifiée ou explicitement publique (`/health`, `/auth/*`, `/license/status`, aperçu d'invitation) ; toute écriture exige le niveau « écriture » du client ; les identifiants d'équipements ne sont lisibles que par un éditeur.
+- Isolation entre utilisateurs : lecture, écriture, partage, export, import, révisions et suppression d'un client d'autrui répondent **404** (l'existence n'est pas révélée) ; un invité « lecture seule » ou « peut modifier » ne peut ni partager, ni renommer, ni supprimer le client.
+- Le propriétaire ne peut être ni rétrogradé ni retiré ; l'admin ne peut ni définir un rôle ni un mot de passe ; le lien de réinitialisation envoyé par l'admin n'est **jamais** montré à l'admin.
+- Compte verrouillé : connexion refusée (423) seulement après un mot de passe correct (pas d'énumération), sessions coupées à la requête suivante, aucun e-mail de réinitialisation.
+- Requêtes SQL toutes paramétrées (les seuls noms de colonnes dynamiques viennent du code) ; exports CSV protégés contre l'injection de formules ; noms d'équipements nettoyés dans les configurations CLI exportées ; React n'utilise aucun `innerHTML` ; Electron : `contextIsolation`, `sandbox`, navigation et permissions bloquées ; mobile : jeton dans le coffre sécurisé.
+- `npm audit` : **0 vulnérabilité** pour le serveur, le web et le desktop.
+
+### Risques connus et acceptés (en plus de ceux de la 1.1.0 ci-dessous)
+
+- **Inscription sans vérification d'e-mail** : n'importe qui peut créer un compte avec l'adresse de quelqu'un d'autre ; sans impact sur les données (une invitation exige son lien reçu par e-mail). Sur un serveur exposé à Internet, **décoche « création de compte libre »** dans l'Administration si tu ne veux pas d'inconnus.
+- **Verrou de connexion par compte** (10 échecs / 15 min) : un attaquant peut gêner la connexion d'une personne précise pendant 15 minutes ; c'est le prix de la protection contre le brute-force réparti.
+- Les 21 alertes `npm audit` restantes viennent uniquement des **outils de compilation Expo** (mobile), absents du serveur, du web et du desktop ; leur correction demande de monter Expo SDK (changement majeur) : à faire séparément pour ne pas déstabiliser l'application mobile.
+
 ## Audit de sécurité — version 1.1.0 (10 novembre 2026, 2ᵉ passe le 12 novembre)
 
 Audit complet : dépendances (`npm audit`), revue du code serveur / web / desktop / mobile / Docker, et tests d'attaque automatisés (`apps/server/test/api.test.ts`, section *security*).

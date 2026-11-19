@@ -10,6 +10,7 @@ import {
   registerSchema, resetPasswordSchema, settingsUpdateSchema, smtpTestSchema, type AdminSettings, type AdminUser, type MemberRole,
 } from '@nial-infra/shared';
 import { clientOf, requireClient, requireManage } from '../access';
+import { audit } from '../audit';
 import { encrypt } from '../crypto';
 import { baseUrl, inviteMail, resetMail, sendMail, smtpReady } from '../mailer';
 import type { Config } from '../config';
@@ -54,9 +55,10 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
     if (wait) { res.setHeader('Retry-After', String(wait)); throw new HttpError(429, 'Too many failed attempts for this account, try again later'); }
     const row = await store.users.getWithHash(pool, email);
     const ok = await bcrypt.compare(password, row?.password_hash ?? DUMMY_HASH);
-    if (!row || !ok) { accountThrottle.fail(key); throw new HttpError(401, 'Invalid email or password'); }
+    if (!row || !ok) { accountThrottle.fail(key); audit('login_failed', req, { email: key }); throw new HttpError(401, 'Invalid email or password'); }
     accountThrottle.ok(key);
-    if (row.locked_at) throw new HttpError(423, 'Account locked');
+    if (row.locked_at) { audit('login_refused_locked', req, { user: row.id }); throw new HttpError(423, 'Account locked'); }
+    audit('login', req, { user: row.id });
     const user = store.mapUser(row);
     res.json({ token: signToken(user, cfg, store.passwordVersion(row)), user });
   }));
@@ -68,6 +70,7 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
     // Every session opened before the change stops working; the caller gets a fresh token so it stays signed in.
     await store.users.update(pool, req.user!.id, { passwordHash: await bcrypt.hash(newPassword, cfg.bcryptRounds) });
     const fresh = await store.users.getAuth(pool, req.user!.id);
+    audit('password_changed', req);
     res.json({ success: true, token: signToken(req.user!, cfg, fresh?.passwordChangedAt ?? 0) });
   }));
 
@@ -92,6 +95,7 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
       if (inv) await store.invitations.accept(db, inv, u.id);
       return u;
     });
+    audit('register', req, { user: user.id, invited: !!inv });
     res.status(201).json({ token: signToken(user, cfg), user });
   }));
 
@@ -103,6 +107,8 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
       const st = await store.settings.get(pool);
       const row = await store.users.getWithHash(pool, email);
       if (!row || row.locked_at || !smtpReady(st.smtp)) return;
+      if (await store.passwordResets.recentlyIssued(pool, row.id)) return; // one mail per 5 minutes per account
+      audit('password_reset_requested', req, { user: row.id });
       const token = await store.passwordResets.create(pool, row.id);
       await sendMail(pool, cfg, { to: row.email, ...resetMail(`${baseUrl(st, cfg)}/?reset=${token}`) });
     } catch (e) {
@@ -115,6 +121,7 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
     const userId = await store.passwordResets.consume(pool, token);
     if (!userId) throw new HttpError(400, 'This reset link is invalid or has expired');
     await store.users.setPassword(pool, userId, await bcrypt.hash(newPassword, cfg.bcryptRounds), true);
+    audit('password_reset_done', req, { user: userId });
     res.json({ success: true });
   }));
 
@@ -129,6 +136,7 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
     if (!inv) throw new HttpError(404, 'Invitation is invalid or expired');
     if (inv.email !== req.user!.email.toLowerCase()) throw new HttpError(403, 'This invitation was sent to another e-mail address');
     await store.invitations.accept(pool, inv, req.user!.id);
+    audit('invitation_accepted', req, { client: inv.clientId });
     res.json({ clientId: inv.clientId });
   }));
 
@@ -144,6 +152,10 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
     const client = (await store.clients.get(pool, id))!;
     const { email, role } = inviteCreateSchema.parse(req.body);
     if (email.toLowerCase() === req.user!.email.toLowerCase()) throw new HttpError(400, 'You cannot share a client with yourself');
+    // The server's SMTP account sends these mails to arbitrary addresses: cap what one account, one client and one recipient can trigger.
+    if ((await store.invitations.countRecent(pool, { invitedBy: req.user!.id })) >= 30) throw new HttpError(429, 'Too many invitations today, try again tomorrow');
+    if ((await store.invitations.countRecent(pool, { email: email.toLowerCase() })) >= 5) throw new HttpError(429, 'This address already received several invitations today');
+    if ((await store.invitations.countPending(pool, id)) >= 100) throw new HttpError(429, 'Too many pending invitations for this client');
     const { invitation, token } = await store.invitations.create(pool, id, email, role as MemberRole, req.user!.id);
     const st = await store.settings.get(pool);
     const link = `${baseUrl(st, cfg)}/?invite=${token}`;
@@ -151,6 +163,7 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
     if (smtpReady(st.smtp)) {
       try { await sendMail(pool, cfg, { to: email, ...inviteMail(client.name, role, link, req.user!.name) }); emailSent = true; } catch (e) { console.error('invitation mail failed:', (e as Error).message); }
     }
+    audit('invitation_created', req, { client: id, to: email.toLowerCase(), role, emailSent });
     // The link is returned to the sender so it can be passed on by hand when no mail could be sent.
     res.status(201).json({ invitation, emailSent, link });
   }));
@@ -168,16 +181,18 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
     if (!(await store.members.roleOf(pool, id, userId))) throw new HttpError(404, 'Member not found');
     if ((await store.clients.get(pool, id))?.ownerId === userId) throw new HttpError(400, 'The owner keeps full access');
     await store.members.set(pool, id, userId, role as MemberRole);
+    audit('member_role_changed', req, { client: id, user: userId, role });
     res.json({ success: true });
   }));
   /** The owner/admin removes someone; any other member can also remove themselves (= leave a shared client). */
   r.delete('/clients/:id/members/:userId', auth, ah(async (req, res) => {
     const id = param(req, 'id'), userId = param(req, 'userId');
-    if (userId === req.user!.id && req.user!.role !== 'admin') {
+    if (userId === req.user!.id) {
       if (!(await store.members.roleOf(pool, id, userId))) throw new HttpError(404, 'Client not found');
     } else await requireManage(pool, req, id);
     if ((await store.clients.get(pool, id))?.ownerId === userId) throw new HttpError(400, 'The owner cannot be removed; delete the client instead');
     if (!(await store.members.remove(pool, id, userId))) throw new HttpError(404, 'Member not found');
+    audit('member_removed', req, { client: id, user: userId });
     res.json({ success: true });
   }));
 
@@ -235,9 +250,11 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
   r.post('/users/:id/lock', auth, adminOnly, ah(async (req, res) => {
     const id = param(req, 'id');
     if (id === req.user!.id) throw new HttpError(400, 'You cannot lock your own account');
+    audit('account_locked', req, { user: id });
     res.json({ user: adminView(await store.users.setLocked(pool, id, true)) });
   }));
   r.post('/users/:id/unlock', auth, adminOnly, ah(async (req, res) => {
+    audit('account_unlocked', req, { user: param(req, 'id') });
     res.json({ user: adminView(await store.users.setLocked(pool, param(req, 'id'), false)) });
   }));
   r.post('/users/:id/send-reset', auth, adminOnly, ah(async (req, res) => {
@@ -248,6 +265,7 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
     const token = await store.passwordResets.create(pool, target.id);
     try { await sendMail(pool, cfg, { to: target.email, ...resetMail(`${baseUrl(st, cfg)}/?reset=${token}`) }); }
     catch (e) { throw new HttpError(400, `SMTP error: ${(e as Error).message}`.slice(0, 300)); }
+    audit('admin_sent_reset', req, { user: target.id });
     res.json({ success: true });
   }));
   r.delete('/users/:id', auth, adminOnly, ah(async (req, res) => {
@@ -256,16 +274,17 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
     const target = await store.users.get(pool, id);
     if (!target) throw new HttpError(404, 'User not found');
     if (target.role === 'admin' && (await store.users.adminCount(pool)) <= 1) throw new HttpError(400, 'Cannot delete the last admin');
-    await store.users.remove(pool, id);
+    await tx(pool, (db) => store.users.remove(db, id));
+    audit('account_deleted', req, { user: id });
     res.json({ success: true });
   }));
 
   /* -------------------------------- clients -------------------------------- */
   r.get('/clients', auth, ah(async (req, res) => { res.json({ clients: await store.clients.listFor(pool, req.user!) }); }));
-  // Every signed-in user can create their own clients (and then share them); admin-created ones have no owner.
+  // Every signed-in user (admins too) creates their own private clients and can share them.
   r.post('/clients', auth, ah(async (req, res) => {
     const { name } = clientSchema.parse(req.body);
-    res.status(201).json({ client: await store.clients.create(pool, name, req.user!.role === 'admin' ? null : req.user!.id) });
+    res.status(201).json({ client: await store.clients.create(pool, name, req.user!.id) });
   }));
   r.patch('/clients/:id', auth, ah(async (req, res) => {
     await requireManage(pool, req, param(req, 'id'));
@@ -275,6 +294,7 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
   r.delete('/clients/:id', auth, ah(async (req, res) => {
     await requireManage(pool, req, param(req, 'id'));
     if (!(await store.clients.remove(pool, param(req, 'id')))) throw new HttpError(404, 'Client not found');
+    audit('client_deleted', req, { client: param(req, 'id') });
     res.json({ success: true });
   }));
   r.get('/clients/:id/topology', auth, ah(async (req, res) => {
@@ -351,7 +371,7 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
   /* --------------------------------- sites --------------------------------- */
   r.get('/sites', auth, ah(async (req, res) => {
     const clientId = q(req, 'clientId');
-    if (clientId || req.user!.role !== 'admin') await requireClient(pool, req, clientId);
+    await requireClient(pool, req, clientId);
     res.json({ sites: await store.sites.list(pool, clientId) });
   }));
   r.post('/sites', auth, ah(async (req, res) => {
@@ -372,7 +392,7 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
   /* -------------------------------- devices -------------------------------- */
   r.get('/devices', auth, ah(async (req, res) => {
     const clientId = q(req, 'clientId');
-    const role = clientId || req.user!.role !== 'admin' ? await requireClient(pool, req, clientId) : 'admin';
+    const role = await requireClient(pool, req, clientId);
     const rows = await store.devices.list(pool, clientId);
     res.json({ devices: rows.map((d) => store.mapDevice(d, role !== 'viewer')) });
   }));
@@ -403,7 +423,7 @@ export function buildRouter(pool: Pool, cfg: Config, license: LicenseService): R
   r.get('/links', auth, ah(async (req, res) => {
     const clientId = q(req, 'clientId'), deviceId = q(req, 'deviceId');
     if (deviceId) await requireClient(pool, req, await clientOf.device(pool, deviceId));
-    else if (clientId || req.user!.role !== 'admin') await requireClient(pool, req, clientId);
+    else await requireClient(pool, req, clientId);
     res.json({ links: await store.links.list(pool, { clientId, deviceId }) });
   }));
   r.post('/links', auth, ah(async (req, res) => {
