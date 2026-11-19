@@ -52,7 +52,19 @@ export const users = {
     if (!r) throw notFound('User');
     return mapUser(r);
   },
-  async remove(db: Db, id: string) { return (await db.query('DELETE FROM users WHERE id=$1', [id])).rowCount! > 0; },
+  /**
+   * Deleting an account never leaves an orphan client: each client it owned goes to its oldest other editor
+   * (else oldest other member) when there is one, and is deleted with the account otherwise.
+   */
+  async remove(db: Db, id: string) {
+    const owned = (await db.query('SELECT id FROM clients WHERE owner_id=$1', [id])).rows;
+    for (const c of owned) {
+      const heir = (await db.query("SELECT user_id FROM client_members WHERE client_id=$1 AND user_id<>$2 ORDER BY (role='technician') DESC, user_id LIMIT 1", [c.id, id])).rows[0];
+      if (heir) await db.query("UPDATE clients SET owner_id=$2 WHERE id=$1", [c.id, heir.user_id]), await db.query("UPDATE client_members SET role='technician' WHERE client_id=$1 AND user_id=$2", [c.id, heir.user_id]);
+      else await db.query('DELETE FROM clients WHERE id=$1', [c.id]);
+    }
+    return (await db.query('DELETE FROM users WHERE id=$1', [id])).rowCount! > 0;
+  },
   async setLocked(db: Db, id: string, locked: boolean) {
     const r = (await db.query('UPDATE users SET locked_at=CASE WHEN $2 THEN COALESCE(locked_at, now()) ELSE NULL END WHERE id=$1 RETURNING *', [id, locked])).rows[0];
     if (!r) throw notFound('User');
@@ -71,9 +83,8 @@ export const users = {
 /* ----------------------------- clients ----------------------------- */
 export const clients = {
   async list(db: Db) { return (await db.query('SELECT * FROM clients ORDER BY lower(name)')).rows.map(mapClient); },
-  /** Clients the user can open, each with the user's effective role. Global admins see everything. */
+  /** Clients the user can open, each with the user's effective role. */
   async listFor(db: Db, user: User): Promise<Client[]> {
-    if (user.role === 'admin') return (await db.query('SELECT * FROM clients ORDER BY lower(name)')).rows.map((r) => ({ ...mapClient(r), myRole: 'admin' as Role }));
     const r = await db.query('SELECT c.*, m.role AS my_role FROM clients c JOIN client_members m ON m.client_id=c.id WHERE m.user_id=$1 ORDER BY lower(c.name)', [user.id]);
     return r.rows.map((x) => ({ ...mapClient(x), myRole: x.my_role as Role, isOwner: x.owner_id === user.id }));
   },
@@ -387,7 +398,9 @@ export const invitations = {
   },
   /** Creates an invitation (replacing a pending one for the same address) and returns it with the one-time token. */
   async create(db: Db, clientId: string, email: string, role: MemberRole, invitedBy: string) {
-    await db.query('DELETE FROM invitations WHERE client_id=$1 AND email=$2 AND accepted_at IS NULL', [clientId, email]);
+    // A new invitation voids the previous one for that address but keeps its row: the rows are what the daily mail caps count.
+    await db.query('UPDATE invitations SET expires_at=now() WHERE client_id=$1 AND email=$2 AND accepted_at IS NULL AND expires_at>now()', [clientId, email]);
+    await db.query("DELETE FROM invitations WHERE accepted_at IS NULL AND expires_at < now() - interval '30 days'");
     const token = newToken();
     const r = await db.query(
       `INSERT INTO invitations (client_id,email,role,token_hash,invited_by,expires_at) VALUES ($1,$2,$3,$4,$5, now() + ($6 || ' days')::interval) RETURNING *, (SELECT name FROM clients WHERE id=$1) AS client_name, (SELECT name FROM users WHERE id=$5) AS invited_by_name`,
@@ -400,7 +413,16 @@ export const invitations = {
     return r ? mapInvitation(r) : null;
   },
   async get(db: Db, id: string) { const r = (await db.query(INV_SELECT + ' WHERE i.id=$1', [id])).rows[0]; return r ? mapInvitation(r) : null; },
-  async remove(db: Db, id: string) { return (await db.query('DELETE FROM invitations WHERE id=$1', [id])).rowCount! > 0; },
+  /** Anti-abuse counters (the invitation mail is sent from the server's own SMTP account to arbitrary addresses). */
+  async countRecent(db: Db, by: { invitedBy?: string; email?: string }, hours = 24) {
+    const r = await db.query("SELECT count(*)::int AS n FROM invitations WHERE created_at > now() - make_interval(hours => $1) AND ($2::text IS NULL OR invited_by=$2) AND ($3::text IS NULL OR email=$3)", [hours, by.invitedBy ?? null, by.email ?? null]);
+    return r.rows[0].n as number;
+  },
+  async countPending(db: Db, clientId: string) {
+    return (await db.query('SELECT count(*)::int AS n FROM invitations WHERE client_id=$1 AND accepted_at IS NULL AND expires_at>now()', [clientId])).rows[0].n as number;
+  },
+  /** Cancelling voids the link but keeps the row (the daily caps still count the mail that was sent). */
+  async remove(db: Db, id: string) { return (await db.query('UPDATE invitations SET expires_at=now() WHERE id=$1 AND accepted_at IS NULL', [id])).rowCount! > 0; },
   /** Turns a valid invitation into a membership. Never downgrades an existing member who already has a higher role. */
   async accept(db: Db, inv: Invitation, userId: string) {
     const current = await members.roleOf(db, inv.clientId, userId);
@@ -416,6 +438,10 @@ export const passwordResets = {
     const token = newToken();
     await db.query("INSERT INTO password_resets (user_id,token_hash,expires_at) VALUES ($1,$2, now() + interval '1 hour')", [userId, sha256(token)]);
     return token;
+  },
+  /** True when a reset mail was already issued for this account in the last `minutes` (stops mail-bombing a victim). */
+  async recentlyIssued(db: Db, userId: string, minutes = 5) {
+    return (await db.query("SELECT 1 FROM password_resets WHERE user_id=$1 AND created_at > now() - make_interval(mins => $2)", [userId, minutes])).rowCount! > 0;
   },
   /** Atomically consumes a valid token and returns the user id (null if unknown, used or expired). */
   async consume(db: Db, token: string): Promise<string | null> {
