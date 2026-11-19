@@ -173,4 +173,15 @@ CREATE UNIQUE INDEX clients_name_unique ON clients (COALESCE(owner_id, ''), lowe
 ALTER TABLE users ADD COLUMN locked_at timestamptz;
 `,
   },
+  {
+    id: '005_private_clients',
+    sql: `
+-- Clients are private: nobody (admins included) sees a client unless they own it or it was shared with them.
+-- Clients created before ownership existed go to the oldest admin (else the oldest account) and its owner becomes a member.
+UPDATE clients SET owner_id = (SELECT id FROM users ORDER BY (role='admin') DESC, created_at LIMIT 1) WHERE owner_id IS NULL;
+INSERT INTO client_members (client_id, user_id, role)
+  SELECT id, owner_id, 'technician' FROM clients WHERE owner_id IS NOT NULL
+  ON CONFLICT (client_id, user_id) DO NOTHING;
+`,
+  },
 ];

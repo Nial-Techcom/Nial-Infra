@@ -38,6 +38,8 @@ services:
       postgres:
         condition: service_healthy
     cap_drop: [ALL]            # le serveur Node n'a besoin d'aucun privilège Linux
+    read_only: true            # le serveur n'écrit rien sur son disque
+    tmpfs: [/tmp]
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
