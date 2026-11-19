@@ -72,4 +72,23 @@ describe('plain users and the admin\'s limited view of accounts', () => {
     expect((await c.api.post(`${B}/auth/login`).send({ email: 'sam@test.io', password: 'brand-new-pass1' })).status).toBe(200);
     expect((await c.api.post(`${B}/users/nope/send-reset`).set(c.as(c.tokens.admin))).status).toBe(404);
   });
+
+  it('forgot-password sends at most one mail per account every 5 minutes (no mail-bombing)', async () => {
+    await c.api.post(`${B}/auth/register`).send({ email: 'target@test.io', name: 'Target', password: 'longpassword' });
+    const n = sent.filter((m) => m.to === 'target@test.io').length;
+    for (let i = 0; i < 4; i++) await c.api.post(`${B}/auth/forgot-password`).send({ email: 'target@test.io' });
+    await new Promise((r) => setTimeout(r, 400));
+    expect(sent.filter((m) => m.to === 'target@test.io').length).toBe(n + 1);
+  });
+
+  it('caps invitation mails per recipient and per sender (the server SMTP is not an open relay)', async () => {
+    const tok = (await c.api.post(`${B}/auth/login`).send({ email: 'sam@test.io', password: 'brand-new-pass1' })).body.token; // earlier reset ended old sessions
+    const cl = (await c.api.post(`${B}/clients`).set(c.as(tok)).send({ name: 'Spam test' })).body.client.id;
+    const send = (email: string) => c.api.post(`${B}/clients/${cl}/invitations`).set(c.as(tok)).send({ email, role: 'viewer' });
+    for (let i = 0; i < 5; i++) expect((await send('victim@test.io')).status).toBe(201);
+    expect((await send('victim@test.io')).status).toBe(429);
+    for (let i = 0; i < 24; i++) expect((await send(`ok${i}@test.io`)).status).toBe(201); // 5 + 24 = 29 so far this account's day
+    expect((await send('one-more@test.io')).status).toBe(201); // the 30th
+    expect((await send('over@test.io')).status).toBe(429);
+  });
 });

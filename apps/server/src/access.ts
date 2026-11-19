@@ -7,15 +7,11 @@ import * as store from './store';
 export type Level = 'read' | 'write';
 
 /**
- * Effective role of the signed-in user inside one client: global admins are admins everywhere,
- * everybody else only has the role of their membership. No membership = the client does not exist for them (404).
+ * Role of the signed-in user inside one client. Clients are private to their owner and the people they shared them with:
+ * global admins get NO special access to client data. No membership = the client does not exist for them (404).
  */
 export async function roleIn(db: Db, req: Request, clientId: string): Promise<Role> {
   const user = req.user!;
-  if (user.role === 'admin') {
-    if (!(await store.clients.get(db, clientId))) throw new HttpError(404, 'Client not found');
-    return 'admin';
-  }
   const m = await store.members.roleOf(db, clientId, user.id);
   if (!m) throw new HttpError(404, 'Client not found');
   return m;
@@ -39,7 +35,7 @@ export const clientOf = {
 };
 
 /**
- * Sharing / renaming / deleting a client and managing its sites: global admins, or the client's owner.
+ * Sharing / renaming / deleting a client and managing its sites: the client's owner only (admins included: no bypass).
  * Other members (even technicians) get 403; people with no access at all get 404 so existence is not revealed.
  */
 export async function requireManage(db: Db, req: Request, clientId: string | undefined): Promise<void> {
@@ -47,7 +43,7 @@ export async function requireManage(db: Db, req: Request, clientId: string | und
   const client = await store.clients.get(db, clientId);
   if (!client) throw new HttpError(404, 'Client not found');
   const user = req.user!;
-  if (user.role === 'admin' || client.ownerId === user.id) return;
+  if (client.ownerId === user.id) return;
   if (!(await store.members.roleOf(db, clientId, user.id))) throw new HttpError(404, 'Client not found');
   throw new HttpError(403, 'Insufficient permissions');
 }

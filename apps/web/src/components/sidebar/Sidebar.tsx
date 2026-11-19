@@ -17,8 +17,8 @@ export function Sidebar() {
   const me = useAuth((s) => s.user);
   const { clients, clientId, sites, devices, activeSiteId, library } = useTopology();
   const ui = useUi.getState;
-  // Owners (and admins) manage their client: share it, rename it, delete it, edit its sites.
-  const manage = admin || !!clients.find((c) => c.id === clientId)?.isOwner;
+  // Owners manage their client: share it, rename it, delete it, edit its sites.
+  const manage = !!clients.find((c) => c.id === clientId)?.isOwner;
   const leave = async (id: string, name: string) => {
     try { await api.members.remove(id, me!.id); await useTopology.getState().loadClients(); useUi.getState().toast(t('members.leave')); } catch (e) { useUi.getState().toast(errorText(e, (k) => t(k)), 'error'); }
     void name;
@@ -43,11 +43,11 @@ export function Sidebar() {
             return (
               <li key={c.id}>
                 <div className={`group flex items-center rounded ${active ? 'bg-raised' : 'hover:bg-raised/60'}`}>
-                  <button className={`min-w-0 flex-1 truncate px-2 py-1.5 text-left ${active ? 'font-semibold' : ''}`} onClick={() => void useTopology.getState().selectClient(c.id)}>{c.name}{!admin && !c.isOwner && <span className="ml-1 text-[11px] font-normal text-mute" title={t('members.sharedWithMe')}>· {c.myRole === 'viewer' ? t('members.readOnlyBadge') : t('members.sharedWithMe')}</span>}</button>
-                  {!admin && !c.isOwner && active && (
+                  <button className={`min-w-0 flex-1 truncate px-2 py-1.5 text-left ${active ? 'font-semibold' : ''}`} onClick={() => void useTopology.getState().selectClient(c.id)}>{c.name}{!c.isOwner && <span className="ml-1 text-[11px] font-normal text-mute" title={t('members.sharedWithMe')}>· {c.myRole === 'viewer' ? t('members.readOnlyBadge') : t('members.sharedWithMe')}</span>}</button>
+                  {!c.isOwner && active && (
                     <button className="nf-btn nf-btn-ghost !p-1 mr-1" title={t('members.leave')} aria-label={t('members.leave')} onClick={() => ui().ask({ title: t('members.leave'), message: t('members.leaveConfirm', { name: c.name }), danger: true, confirmLabel: t('members.leave'), onConfirm: () => leave(c.id, c.name) })}><LogOut size={13} /></button>
                   )}
-                  {(admin || c.isOwner) && active && (
+                  {c.isOwner && active && (
                     <span className="flex pr-1">
                       <button className="nf-btn nf-btn-ghost !p-1" title={t('members.title')} aria-label={t('members.title')} onClick={() => ui().open({ kind: 'members' })}><Users size={13} /></button>
                       <button className="nf-btn nf-btn-ghost !p-1" title={t('sidebar.renameClient')} aria-label={t('sidebar.renameClient')} onClick={() => askName(t('sidebar.renameClient'), t('sidebar.clientName'), c.name, (v) => useTopology.getState().renameClient(c.id, v))}><Pencil size={13} /></button>

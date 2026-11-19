@@ -17,7 +17,7 @@ export const loginSchema = z.object({
 export const userCreateSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
   name: z.string().trim().min(1).max(100),
-  password: z.string().min(8).max(200),
+  password: z.string().min(8).max(72),
 });
 
 export const userUpdateSchema = z
@@ -28,7 +28,7 @@ export const userUpdateSchema = z
 
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1).max(200),
-  newPassword: z.string().min(8).max(200),
+  newPassword: z.string().min(8).max(72),
 });
 
 export const clientSchema = z.object({ name: z.string().trim().min(1).max(100) });
@@ -86,12 +86,12 @@ const tokenField = z.string().trim().min(20).max(200);
 export const registerSchema = z.object({
   email: emailField,
   name: z.string().trim().min(1).max(100),
-  password: z.string().min(8).max(200),
+  password: z.string().min(8).max(72),
   /** Token of an invitation: lets the invited person register even when open registration is off. */
   inviteToken: tokenField.optional(),
 });
 export const forgotPasswordSchema = z.object({ email: emailField });
-export const resetPasswordSchema = z.object({ token: tokenField, newPassword: z.string().min(8).max(200) });
+export const resetPasswordSchema = z.object({ token: tokenField, newPassword: z.string().min(8).max(72) });
 export const inviteCreateSchema = z.object({ email: emailField, role: z.enum(MEMBER_ROLES as [string, ...string[]]) });
 export const inviteAcceptSchema = z.object({ token: tokenField });
 export const memberUpdateSchema = z.object({ role: z.enum(MEMBER_ROLES as [string, ...string[]]) });

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.0 — 2026-11-19 — clients privés et audit de sécurité
+
+- **Chaque personne a ses propres clients, pas de clients communs** : plus personne, **administrateurs compris**, ne voit un client qu'il n'a pas créé ou qu'on ne lui a pas partagé. Les administrateurs gèrent les comptes, le SMTP, le catalogue et la licence, pas les données des clients. Les clients d'avant la 1.3 sont attribués à l'admin le plus ancien (migration `005`) ; supprimer un compte transmet ses clients partagés à un membre éditeur, sinon les supprime.
+- **Audit de sécurité** (détail dans `SECURITY.md`) : plafonds d'envoi des invitations (30/jour par compte, 5/jour par destinataire) et d'une réinitialisation de mot de passe toutes les 5 minutes par compte, journal de sécurité des actions sensibles, mot de passe limité à 72 caractères, conteneur serveur en lecture seule.
+
 ## 1.4.0 — 2026-11-18 — comptes simplifiés et verrouillage
 
 - **Tout nouvel inscrit est un utilisateur normal** : il n'a accès ni à l'Administration ni à la liste des utilisateurs, voit uniquement **ses propres clients** et ceux qu'on lui **partage**, et peut en créer (son premier écran lui propose de créer son premier client).
