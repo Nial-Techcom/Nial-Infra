@@ -100,10 +100,35 @@ describe('every user owns and shares their own clients', () => {
     expect((await c.api.delete(`${B}/invitations/${inv.id}`).set(c.as(alice))).status).toBe(200);
   });
 
-  it('admins still manage every client, and the owner can delete theirs', async () => {
-    expect((await c.api.get(`${B}/clients/${clientId}/members`).set(c.as(c.tokens.admin))).status).toBe(200);
+  it('admins get no access to anybody\'s clients, and the owner can delete theirs', async () => {
+    const adm = c.as(c.tokens.admin);
+    expect((await c.api.get(`${B}/clients`).set(adm)).body.clients.map((x: any) => x.id)).not.toContain(clientId);
+    for (const p of [
+      c.api.get(`${B}/clients/${clientId}/members`), c.api.get(`${B}/clients/${clientId}/topology`), c.api.get(`${B}/sites?clientId=${clientId}`),
+      c.api.get(`${B}/devices?clientId=${clientId}`), c.api.patch(`${B}/clients/${clientId}`).send({ name: 'x' }), c.api.delete(`${B}/clients/${clientId}`),
+      c.api.post(`${B}/clients/${clientId}/invitations`).send({ email: 'spy@test.io', role: 'technician' }), c.api.post(`${B}/sites`).send({ clientId, name: 'spy' }),
+      c.api.get(`${B}/export/csv?clientId=${clientId}`),
+    ]) expect((await p.set(adm)).status).toBe(404);
+    // no unscoped listing across clients either
+    expect((await c.api.get(`${B}/devices`).set(adm)).status).toBe(400);
+    expect((await c.api.get(`${B}/sites`).set(adm)).status).toBe(400);
+    expect((await c.api.get(`${B}/links`).set(adm)).status).toBe(400);
     expect((await c.api.patch(`${B}/clients/${clientId}`).set(c.as(alice)).send({ name: 'Alice SA' })).status).toBe(200);
     expect((await c.api.delete(`${B}/clients/${clientId}`).set(c.as(alice))).status).toBe(200);
     expect((await c.api.get(`${B}/clients`).set(c.as(alice))).body.clients).toEqual([]);
+  });
+
+  it('deleting an account passes its shared clients to a member, and removes unshared ones', async () => {
+    const mk = async (tok: string, name: string) => (await c.api.post(`${B}/clients`).set(c.as(tok)).send({ name })).body.client.id as string;
+    const shared = await mk(alice, 'Partagé'), alone = await mk(alice, 'Seul');
+    const inv = await c.api.post(`${B}/clients/${shared}/invitations`).set(c.as(alice)).send({ email: 'bob@test.io', role: 'viewer' });
+    const tok = inv.body.link.match(/invite=([\w-]+)/)[1];
+    await c.api.post(`${B}/invitations/accept`).set(c.as(bob)).send({ token: tok });
+    const aliceId = (await c.api.get(`${B}/auth/me`).set(c.as(alice))).body.user.id;
+    expect((await c.api.delete(`${B}/users/${aliceId}`).set(c.as(c.tokens.admin))).status).toBe(200);
+    const list = (await c.api.get(`${B}/clients`).set(c.as(bob))).body.clients;
+    expect(list).toHaveLength(1);
+    expect(list[0]).toMatchObject({ id: shared, isOwner: true, myRole: 'technician' });
+    expect((await c.pool.query('SELECT 1 FROM clients WHERE id=$1', [alone])).rowCount).toBe(0);
   });
 });
